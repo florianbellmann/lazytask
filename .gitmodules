@@ -1,0 +1,3 @@
+[submodule "adapters/reminders-cli"]
+	path = adapters/reminders-cli
+	url = https://github.com/florianbellmann/reminders-cli.git

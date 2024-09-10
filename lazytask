@@ -30,8 +30,8 @@ if [ ! -f "$REMINDERS_EXECUTABLE_PATH" ]; then
 fi
 
 CLI_DIR="cli"
-CLI_EXECUTABLE="lazytask"
-CLI_BUILD_COMMAND="go build"
+CLI_EXECUTABLE=".build/lazytask"
+CLI_BUILD_COMMAND="go build -o .build/lazytask"
 CLI_EXECUTABLE_PATH="$CLI_DIR/$CLI_EXECUTABLE"
 
 # Check if the executable exists

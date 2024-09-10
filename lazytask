@@ -29,28 +29,28 @@ if [ ! -f "$REMINDERS_EXECUTABLE_PATH" ]; then
   fi
 fi
 
-CLI_DIR="cli"
-CLI_EXECUTABLE=".build/lazytask"
-CLI_BUILD_COMMAND="go build -o .build/lazytask"
-CLI_EXECUTABLE_PATH="$CLI_DIR/$CLI_EXECUTABLE"
+APP_DIR="cli"
+APP_EXECUTABLE=".build/lazytask"
+APP_BUILD_COMMAND="go build -o .build/lazytask"
+APP_EXECUTABLE_PATH="$APP_DIR/$APP_EXECUTABLE"
 
 # Check if the executable exists
-if [ ! -f "$CLI_EXECUTABLE_PATH" ]; then
+if [ ! -f "$APP_EXECUTABLE_PATH" ]; then
   echo "Lazytask not found, running build command..."
   
   # Run the build command
-  cd $CLI_DIR || exit 1
-  $CLI_BUILD_COMMAND
+  cd $APP_DIR || exit 1
+  $APP_BUILD_COMMAND
   cd - || exit 1
   
   # Check if the build was successful
-  if [ ! -f "$CLI_EXECUTABLE_PATH" ]; then
+  if [ ! -f "$APP_EXECUTABLE_PATH" ]; then
     echo "Build failed or executable not found after build."
     exit 1
   fi
 fi
 
 # Run the executable
-"$CLI_EXECUTABLE_PATH"
+"$APP_EXECUTABLE_PATH"
 
 exit 0

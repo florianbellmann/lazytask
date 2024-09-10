@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# INFO:
+# set -e or set -o errexit: if there is an error, then exit immediately.
+# set -u or set -o nounset: disallow unset variables.
+# set -f or set -o noglob: disable filename globbing.
+# set -o pipefail: if a pipe fails, then exit immediately and use the pipe's exit status.
+set -euo pipefail
+
+REMINDERS_DIR="adapters/reminders-cli"
+REMINDERS_EXECUTABLE="reminders"
+REMINDERS_BUILD_COMMAND="make build-release && cp .build/apple/Products/Release/reminders reminders"
+REMINDERS_EXECUTABLE_PATH="$REMINDERS_DIR/$REMINDERS_EXECUTABLE"
+
+# Check if the submodule executable exists
+if [ ! -f "$REMINDERS_EXECUTABLE_PATH" ]; then
+  echo "Submodule executable not found. Pulling submodule and running build command..."
+  git submodule update --init --recursive
+  
+  # Build the submodule
+  cd $REMINDERS_DIR || exit 1
+  eval "$REMINDERS_BUILD_COMMAND"
+  cd - || exit 1
+  
+  # Check if the submodule build was successful
+  if [ ! -f "$REMINDERS_EXECUTABLE_PATH" ]; then
+    echo "Submodule build failed or executable not found after build."
+    exit 1
+  fi
+fi
+
+CLI_DIR="cli"
+CLI_EXECUTABLE="lazytask"
+CLI_BUILD_COMMAND="go build"
+CLI_EXECUTABLE_PATH="$CLI_DIR/$CLI_EXECUTABLE"
+
+# Check if the executable exists
+if [ ! -f "$CLI_EXECUTABLE_PATH" ]; then
+  echo "Lazytask not found, running build command..."
+  
+  # Run the build command
+  cd $CLI_DIR || exit 1
+  $CLI_BUILD_COMMAND
+  cd - || exit 1
+  
+  # Check if the build was successful
+  if [ ! -f "$CLI_EXECUTABLE_PATH" ]; then
+    echo "Build failed or executable not found after build."
+    exit 1
+  fi
+fi
+
+# Run the executable
+"$CLI_EXECUTABLE_PATH"
+
+exit 0

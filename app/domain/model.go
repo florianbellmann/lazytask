@@ -1,3 +1,9 @@
+package domain
+
+import (
+	"time"
+)
+
 type List struct{}
 
 type Task struct {

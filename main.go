@@ -2,7 +2,7 @@ package main
 
 import (
 	"lazytask/domain"
-	"lazytask/tasks"
+	"lazytask/task-controllers"
 	"lazytask/ui"
 )
 
@@ -11,5 +11,5 @@ func main() {
 	ui := ui.Cli{}
 	lazytask := domain.NewLazyTask(tasksImpl, ui)
 
-	lazytask.Start()
+	lazytask.Init()
 }

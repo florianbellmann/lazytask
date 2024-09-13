@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type List struct{}
+type List = string
 
 type Task struct {
 	CreationDate time.Time `json:"creationDate"`
@@ -16,4 +16,3 @@ type Task struct {
 	Priority     int       `json:"priority"`
 	Title        string    `json:"title"`
 }
-

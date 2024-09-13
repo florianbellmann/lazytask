@@ -16,6 +16,5 @@ type TaskController interface {
 	UncompleteTask(task Task)
 }
 type UI interface {
-  Init()
-	ShowTasks(tasks []Task)
+	Show(tasks []Task)
 }

@@ -13,6 +13,7 @@ type Task struct {
 	IsCompleted  bool      `json:"isCompleted"`
 	LastModified time.Time `json:"lastModified"`
 	List         string    `json:"list"`
+	Notes        string    `json:"notes"`
 	Priority     int       `json:"priority"`
 	Title        string    `json:"title"`
 }

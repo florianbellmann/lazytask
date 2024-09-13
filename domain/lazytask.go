@@ -12,10 +12,9 @@ func NewLazyTask(tasks TaskController, ui UI) *LazyTask {
 }
 
 func (lt *LazyTask) Init() {
-	lt.lists = lt.taskController.GetLists()
-	// lt.current_tasks = lt.taskController.GetTasksByList(lt.lists[0])
-	lt.current_tasks = lt.taskController.GetTasksByList("Priv")
+	// lt.lists = lt.taskController.GetLists()
+	// // lt.current_tasks = lt.taskController.GetTasksByList(lt.lists[0])
+	// lt.current_tasks = lt.taskController.GetTasksByList("develop")
 
-	lt.ui.Init()
-	lt.ui.ShowTasks(lt.current_tasks)
+	lt.ui.Show(lt.current_tasks)
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"lazytask/domain"
-	"lazytask/task-controllers"
+	tasks "lazytask/task-controllers"
 	"lazytask/ui"
 )
 

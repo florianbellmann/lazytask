@@ -13,3 +13,8 @@ func main() {
 
 	lazytask.Init()
 }
+
+// TODO:
+// list reminders and archive
+// come up with features
+// performance & caching

@@ -6,6 +6,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// TODO:
+// https://chatgpt.com/c/66e43e4f-0c20-800c-b867-c498218cd040
+
 type listKeyMap struct {
 	toggleSpinner    key.Binding
 	toggleTitleBar   key.Binding
@@ -15,7 +18,7 @@ type listKeyMap struct {
 	insertItem       key.Binding
 }
 
-func NewListKeyMap() *listKeyMap {
+func newListKeyMap() *listKeyMap {
 	return &listKeyMap{
 		insertItem: key.NewBinding(
 			key.WithKeys("a"),
@@ -50,8 +53,9 @@ func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 	d.UpdateFunc = func(msg tea.Msg, m *list.Model) tea.Cmd {
 		var title string
 
-		if i, ok := m.SelectedItem().(ListItem); ok {
-			title = i.task.Title
+		if i, ok := m.SelectedItem().(listItem); ok {
+			title = i.title
+			// title = i.task.Title
 		} else {
 			return nil
 		}
@@ -126,7 +130,7 @@ func newDelegateKeyMap() *delegateKeyMap {
 	}
 }
 
-func HandleKeyMsg(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func handleKeyMsg(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "q", "esc", "ctrl+c":
 		return m, tea.Quit
@@ -135,7 +139,7 @@ func HandleKeyMsg(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func CreateKeyBindings(listKeys *listKeyMap) []key.Binding {
+func createKeyBindings(listKeys *listKeyMap) []key.Binding {
 	return []key.Binding{
 		listKeys.toggleSpinner,
 		listKeys.insertItem,

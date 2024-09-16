@@ -6,6 +6,7 @@ import (
 	"lazytask/domain"
 	"lazytask/ui/cli"
 	"log"
+	"os"
 )
 
 type Cli struct{}
@@ -17,5 +18,6 @@ func (ui Cli) Show(tasks []domain.Task) {
 
 	if _, err := process.Run(); err != nil {
 		log.Fatal(err)
+		os.Exit(1)
 	}
 }

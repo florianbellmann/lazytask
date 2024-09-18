@@ -3,17 +3,17 @@ package domain
 type TaskController interface {
 	// Lists
 	GetLists() []List
-	GetListById(id string) List
+	GetListById(listId string) List
 
 	// Tasks
-	GetTaskById(id string) Task
+	GetTaskById(taskId string) Task
 	GetTasksByList(listId string) []Task
 
-	AddTask(task Task)
-	MoveTaskToList(task Task, list List)
+	AddTask(task Task) error
+	MoveTaskToList(taskId string, targetListId string) error
 
-	CompleteTask(task Task)
-	UncompleteTask(task Task)
+	CompleteTask(taskId string) error
+	UncompleteTask(taskId string) error
 }
 type UI interface {
 	Show(tasks []Task)

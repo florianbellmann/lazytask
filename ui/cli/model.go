@@ -33,8 +33,7 @@ func NewModel(tasks []domain.Task) model {
 	items := make([]list.Item, len(tasks))
 	for i := 0; i < len(tasks); i++ {
 		log.Printf("Task: %v", tasks[i].Title)
-		items[i] = listItem{title: tasks[i].Title, desc: tasks[i].Notes}
-		// items[i] = list.Item{title: tasks[i].Title}
+		items[i] = listItem{title: tasks[i].Title + " | " + tasks[i].DueDate.String() + " | " + tasks[i].List, desc: tasks[i].Notes}
 	}
 
 	// log.Printf("Items: %v", items)
@@ -42,7 +41,6 @@ func NewModel(tasks []domain.Task) model {
 	// Setup list
 	delegate := newItemDelegate(delegateKeys)
 	myList := list.New(items, delegate, 0, 0)
-	// myList := list.New(items, list.NewDefaultDelegate(), 0, 0)
 	myList.Title = "My List"
 	myList.Styles.Title = titleStyle
 	myList.AdditionalFullHelpKeys = func() []key.Binding {

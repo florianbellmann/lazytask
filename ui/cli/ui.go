@@ -18,7 +18,6 @@ var (
 )
 
 // TODO:
-// fancy list
 // text input
 // text area
 // exec

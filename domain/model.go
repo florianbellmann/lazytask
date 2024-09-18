@@ -4,16 +4,17 @@ import (
 	"time"
 )
 
-type List = string
+type List struct {
+	Id string
+}
 
 type Task struct {
-	CreationDate time.Time `json:"creationDate"`
-	DueDate      time.Time `json:"dueDate"`
-	ExternalID   string    `json:"externalId"`
-	IsCompleted  bool      `json:"isCompleted"`
-	LastModified time.Time `json:"lastModified"`
-	List         string    `json:"list"`
-	Notes        string    `json:"notes"`
-	Priority     int       `json:"priority"`
-	Title        string    `json:"title"`
+	DueDate     time.Time
+	Id          string
+	IsCompleted bool
+	ListId      string
+	Notes       string
+	Priority    int
+	Title       string
+	Index       int
 }

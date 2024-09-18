@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"lazytask/domain"
+
 	key "github.com/charmbracelet/bubbles/key"
 	list "github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -131,10 +133,48 @@ func newDelegateKeyMap() *delegateKeyMap {
 }
 
 func handleKeyMsg(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "q", "esc", "ctrl+c":
-		return m, tea.Quit
+
+	switch {
+	case key.Matches(msg, m.keys.toggleSpinner):
+		cmd := m.list.ToggleSpinner()
+		return m, cmd
+
+	case key.Matches(msg, m.keys.toggleTitleBar):
+		v := !m.list.ShowTitle()
+		m.list.SetShowTitle(v)
+		m.list.SetShowFilter(v)
+		m.list.SetFilteringEnabled(v)
+		return m, nil
+
+	case key.Matches(msg, m.keys.toggleStatusBar):
+		m.list.SetShowStatusBar(!m.list.ShowStatusBar())
+		return m, nil
+
+	case key.Matches(msg, m.keys.togglePagination):
+		m.list.SetShowPagination(!m.list.ShowPagination())
+		return m, nil
+
+	case key.Matches(msg, m.keys.toggleHelpMenu):
+		m.list.SetShowHelp(!m.list.ShowHelp())
+		return m, nil
+
+	case key.Matches(msg, m.keys.insertItem):
+		m.delegateKeys.remove.SetEnabled(true)
+		// newItem := m.itemGenerator.next()
+		newItem := listItem{title: "New Item from lazytask", desc: "This is a new item."}
+
+		// TODO:
+		// if _, err = domain.LazyTask.AddTask(newItem); err != nil {
+		insCmd := m.list.InsertItem(0, newItem)
+		statusCmd := m.list.NewStatusMessage(statusMessageStyle("Added " + newItem.Title()))
+		return m, tea.Batch(insCmd, statusCmd)
+		// }
 	}
+
+	// switch msg.String() {
+	// case "q", "esc", "ctrl+c":
+	// 	return m, tea.Quit
+	// }
 
 	return m, nil
 }

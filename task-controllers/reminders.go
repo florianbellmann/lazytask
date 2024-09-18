@@ -4,63 +4,76 @@ import (
 	"encoding/json"
 	"fmt"
 	do "lazytask/domain"
+	re "lazytask/task-controllers/reminders"
 	"log"
 	"os/exec"
+	"slices"
 )
 
 type Reminders struct{}
 
 // Lists
+
 func (rem Reminders) GetLists() []do.List {
-	return execCommand[[]do.List]([]string{"show-lists"})
+	remLists := execCommand[[]re.ReminderList]([]string{"show-lists"})
+	if remLists != nil {
+		var lists []do.List
+		for _, rl := range remLists {
+			lists = slices.Insert(lists, len(lists), re.ReminderListToList(rl))
+		}
+
+		return lists
+	}
+
+	return []do.List{}
 }
 func (rem Reminders) GetListById(id string) do.List {
-	return execCommand[do.List]([]string{"show", id})
+	remList := execCommand[re.ReminderList]([]string{"show", id})
+	if remList != nil {
+		return re.ReminderListToList(remList)
+	}
+
+	return nil
 }
 
 // Tasks
 
-// func (rem Reminders) GetTaskById(listId, string, id string) do.Task {
-func (rem Reminders) GetTaskById(id string) do.Task {
-	// listTasks := rem.GetTasksByList(listId)
-	// return listTasks.CompleteTaskn
-	return execCommand[do.Task]([]string{"show", id}) // TODO: This is broken
+func GetTaskById(taskId string) do.Task {
+
+	return execCommand[do.Task]([]string{"show", taskId}) // TODO: This is broken
+
 }
-func (rem Reminders) GetTasksByList(listId string) []do.Task {
+func GetTasksByList(listId string) []do.Task {
 	return execCommand[[]do.Task]([]string{"show", "" + listId + ""})
 	// TODO: reminders-cli can't handle lists with multiple workds yet
 	// return execCommand[[]do.Task]([]string{"show", "'" + listId + "'"})
+
 }
 
-func (rem Reminders) AddTask(task do.Task) {
+func AddTask(task do.Task) error {
 	execCommand[do.Task]([]string{"add", "task", task.Title})
+	return nil
 }
-func (rem Reminders) MoveTaskToList(task do.Task, list do.List) {
-	// TBD set comand
+func MoveTaskToList(taskId string, targetListId string) error {
+
+	return nil
 }
 
-func (rem Reminders) CompleteTask(task do.Task) {
-	// TBD set comand
+func CompleteTask(taskId string) error {
+
+	return nil
 }
-func (rem Reminders) UncompleteTask(task do.Task) {
-	// TBD set comand
+func UncompleteTask(taskId string) error {
+
+	return nil
 }
 
-// Private functions
-// cwd, err := os.Getwd()
-//
-//	if err != nil {
-//	  fmt.Println(err)
-//	} else {
-//
-//	  fmt.Println("Current working directory:", cwd)
-//	}
-//
 // TODO: this needs to be absolute?
 // What if we move the executable to /usr/bin/local?
+// use os.Getwd()
 const EXECUTABLE_PATH = "adapters/reminders-cli/reminders"
 
-func execCommand[T any](commandArgs []string) T {
+func execCommand[T any](commandArgs []string) (T, error) {
 	commandArgs = append(commandArgs, "--format", "json")
 
 	// Run the command
@@ -78,9 +91,8 @@ func execCommand[T any](commandArgs []string) T {
 	err = json.Unmarshal(output, &result)
 	if err != nil {
 		log.Fatalf("Failed to parse JSON: %s", err)
+		return nil
 	}
 
-	// Print the parsed struct
-	// fmt.Printf("Parsed struct: %+v\n", tasks)
 	return result
 }

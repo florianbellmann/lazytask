@@ -8,6 +8,7 @@ import (
 	"log"
 	"os/exec"
 	"slices"
+	"strconv"
 	"time"
 )
 
@@ -183,8 +184,6 @@ func (r ReminderTaskController) AddTask(t domain.Task) error {
 		commandString = append(commandString, "--priority", prioString)
 	}
 
-	// log.Printf("Adding task", commandString)
-
 	_, err := execCommand[Reminder](commandString)
 	if err != nil {
 		return fmt.Errorf("failed to add task: %w", err)
@@ -210,7 +209,7 @@ func (r ReminderTaskController) CompleteTask(taskId string) error {
 
 	reminderToCompleteList := reminders[reminderToCompleteIndex].List
 
-	_, err = execCommand[Reminder]([]string{"complete", "\"" + reminderToCompleteList + "\"", string(reminderToCompleteIndex)})
+	_, err = execCommand[Reminder]([]string{"complete", "\"" + reminderToCompleteList + "\"", strconv.Itoa(reminderToCompleteIndex)})
 
 	if err != nil {
 		return fmt.Errorf("failed to complete task: %w", err)
@@ -236,7 +235,7 @@ func (r ReminderTaskController) UncompleteTask(taskId string) error {
 
 	reminderToUncompleteList := reminders[reminderToUncompleteIndex].List
 
-	_, err = execCommand[any]([]string{"uncomplete", "\"" + reminderToUncompleteList + "\"", string(reminderToUncompleteIndex)})
+	_, err = execCommand[any]([]string{"uncomplete", "\"" + reminderToUncompleteList + "\"", strconv.Itoa(reminderToUncompleteIndex)})
 
 	if err != nil {
 		return fmt.Errorf("failed to uncomplete task: %w", err)
@@ -248,7 +247,7 @@ func (r ReminderTaskController) UncompleteTask(taskId string) error {
 // Update a task
 func (r ReminderTaskController) UpdateTask(task domain.Task) error {
 	return errors.New("Not implemented")
-	//
+	// TODO:
 	// reminderIndex := slices.IndexFunc(r.GetTasksByList(task.ListId), func(t domain.Task) bool {
 	// 	return t.Id == task.Id
 	// })
@@ -271,6 +270,7 @@ func (r ReminderTaskController) UpdateTask(task domain.Task) error {
 // MoveTaskToList moves a task to a different list
 func (r ReminderTaskController) MoveTaskToList(taskId string, targetListId string) error {
 	return errors.New("Not implemented")
+	// TODO:
 	// _, err := execCommand[any]([]string{"move-task", "--task-id", taskId, "--list-id", targetListId})
 	// if err != nil {
 	// 	return fmt.Errorf("failed to move task: %w", err)

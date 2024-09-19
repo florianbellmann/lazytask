@@ -2,19 +2,25 @@ package infrastructure
 
 import (
 	"encoding/json"
+	"log"
 	"testing"
 )
 
 // Test parsing of ReminderLists to domain.Lists
 func TestListParsing(t *testing.T) {
 	mockResponse := `[
-	"FirstList", 
+	"FirstList",
 	"Second list",
-	"Third list", 
+	"Third list"
 	]` // Even with trailing comma, it should parse correctly
 
 	var reminderLists []ReminderList
-	json.Unmarshal([]byte(mockResponse), &reminderLists)
+	err := json.Unmarshal([]byte(mockResponse), &reminderLists)
+	if err != nil {
+		log.Fatalf("Failed to parse JSON: %s", err)
+	}
+
+	log.Printf("Reminder lists: %v", reminderLists)
 
 	lists := parseLists(reminderLists)
 	if lists[0].Id != "FirstList" ||

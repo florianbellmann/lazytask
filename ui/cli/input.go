@@ -1,14 +1,22 @@
-package ui
+package cli
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"lazytask/application"
 )
 
-func HandleKeyPress(m Model, msg tea.KeyMsg) (Model, tea.Cmd) {
+type CompleteTaskMsg struct {
+	taskID string
+}
+
+type ErrorMsg struct {
+	err error
+}
+
+func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 	switch msg.String() {
 	case "enter":
-		if selectedTask, ok := m.listModel.SelectedItem().(taskItem); ok {
+		if selectedTask, ok := m.listModel.SelectedItem().(listItem); ok {
 			taskID := selectedTask.task.Id
 			return m, completeTask(m.taskService, taskID)
 		}

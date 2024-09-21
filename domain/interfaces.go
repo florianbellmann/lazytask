@@ -18,6 +18,6 @@ type TaskController interface {
 	UpdateTask(task Task) error
 }
 
-type TaskRepository interface {
-	Save(task Task) error
+type Ui interface {
+	Init() error
 }

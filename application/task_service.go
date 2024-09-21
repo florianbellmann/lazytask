@@ -27,11 +27,6 @@ func (s *TaskService) UncompleteTask(taskId string) error {
 	return s.taskCtrl.UncompleteTask(taskId)
 }
 
-// Move a task to another list
-func (s *TaskService) MoveTaskToList(taskId, listId string) error {
-	return s.taskCtrl.MoveTaskToList(taskId, listId)
-}
-
 // Get tasks by a specific list ID
 func (s *TaskService) GetTasksByList(listId string) []domain.Task {
 	return s.taskCtrl.GetTasksByList(listId)

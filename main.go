@@ -14,8 +14,11 @@ func main() {
 	// Create the application service
 	taskService := application.NewTaskService(reminderCtrl)
 
-	// Run the UI using Bubble Tea
-	if err := ui.RunBubbleTeaApp(taskService); err != nil {
-		log.Fatalf("Error running Bubble Tea: %v", err)
+	// Initialize the UI
+	ui := ui.NewCli(*taskService)
+
+	// Run the UI
+	if err := ui.Run(); err != nil {
+		log.Fatalf("Error running UI: %v", err)
 	}
 }

@@ -24,19 +24,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	// case CompleteTaskMsg:
-	// 	h, v := appStyle.GetFrameSize()
-	// 	m.listModel.SetSize(msg.Width-h, msg.Height-v)
-	//
-	// 	// Update the completed task in the Fancy List
-	// 	for i, task := range m.tasks {
-	// 		if task.Id == msg.taskID {
-	// 			m.tasks[i].IsCompleted = true
-	// 		}
-	// 	}
-	//
-	// 	m.LoadTasks(m.tasks) // Reload tasks into the list
-	//
+	case CompleteTaskMsg:
+		// h, v := appStyle.GetFrameSize()
+		// m.listModel.SetSize(msg.Width-h, msg.Height-v)
+
+		// Update the completed task in the Fancy List
+		for i, task := range m.tasks {
+			if task.Id == msg.taskID {
+				m.tasks[i].IsCompleted = true
+			}
+		}
+
+		m.LoadTasks(m.tasks) // Reload tasks into the list
+
 	case tea.WindowSizeMsg:
 		h, v := appStyle.GetFrameSize()
 		m.listModel.SetSize(msg.Width-h, msg.Height-v)

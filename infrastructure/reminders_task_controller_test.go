@@ -20,7 +20,7 @@ func TestListParsing(t *testing.T) {
 		log.Fatalf("Failed to parse JSON: %s", err)
 	}
 
-	log.Printf("Reminder lists: %v", reminderLists)
+	// log.Printf("Reminder lists: %v", reminderLists)
 
 	lists := parseLists(reminderLists)
 	if lists[0].Id != "FirstList" ||
@@ -41,5 +41,17 @@ func TestParseEmptyList(t *testing.T) {
 	lists := parseLists(reminderLists)
 	if len(lists) != 0 {
 		t.Errorf("Failed to parse empty list")
+	}
+}
+
+func TestGetListIndex(t *testing.T) {
+	taskId := "810AE4D8-82FC-45BF-A0D2-C25E6205B178"
+	listName, listIndex, err := getListAndIndexForCompletion(taskId)
+	if err != nil {
+		log.Fatalf("Failed to get index and list for: %s", taskId)
+	}
+
+	if listName != "develop" || listIndex != 2 {
+		t.Errorf("Failed to get the correct listName or listIndex")
 	}
 }

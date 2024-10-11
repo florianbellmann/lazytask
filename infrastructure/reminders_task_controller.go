@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"lazytask/domain"
 	"log"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"time"
@@ -64,17 +66,52 @@ func ListToReminderList(l domain.List) ReminderList {
 	return ReminderList(l.Id)
 }
 
-// TODO: this needs to be absolute?
-// What if we move the executable to /usr/bin/local?
-// use os.Getwd()
-const EXECUTABLE_PATH = "adapters/reminders-cli/reminders"
+// This function tries to find the project root by looking for go.mod or .git
+func findProjectRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir, nil
+		}
+
+		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
+			return dir, nil
+		}
+
+		parentDir := filepath.Dir(dir)
+		if parentDir == dir {
+			break // We've reached the root directory
+		}
+		dir = parentDir
+	}
+
+	return "", fmt.Errorf("project root not found")
+}
+
+func getExecutablePath() (string, error) {
+	root, err := findProjectRoot()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(root, "adapters/reminders-cli/reminders"), nil
+}
 
 // execCommand runs an external command and parses the JSON result
 func execCommand[T any](commandArgs []string) (T, error) {
+	EXEC_PATH, execErr := getExecutablePath()
+	if execErr != nil {
+		fmt.Println("Executable path resolving failed:", execErr)
+		return *new(T), execErr
+	}
+
 	commandArgs = append(commandArgs, "--format", "json")
 
 	// Run the command
-	cmd := exec.Command(EXECUTABLE_PATH, commandArgs...)
+	cmd := exec.Command(EXEC_PATH, commandArgs...)
 	output, err := cmd.Output()
 
 	if err != nil {
@@ -192,24 +229,46 @@ func (r ReminderTaskController) AddTask(t domain.Task) error {
 	return nil
 }
 
-// CompleteTask marks a task as completed
-func (r ReminderTaskController) CompleteTask(taskId string) error {
-	reminders, err := execCommand[[]Reminder]([]string{"show-all"})
+func getListAndIndexForCompletion(taskId string) (ReminderList, int, error) {
+	allReminders, err := execCommand[[]Reminder]([]string{"show-all"})
 	if err != nil {
 		log.Fatalf("Failed to get tasks: %s", err)
 	}
 
-	reminderToCompleteIndex := slices.IndexFunc(reminders, func(r Reminder) bool {
+	allRemindersCompletionIndex := slices.IndexFunc(allReminders, func(r Reminder) bool {
 		return r.ExternalID == taskId
 	})
 
-	if reminderToCompleteIndex == -1 {
-		return errors.New("Task not found")
+	if allRemindersCompletionIndex == -1 {
+		return "Not found", -1, errors.New("Task not found")
 	}
 
-	reminderToCompleteList := reminders[reminderToCompleteIndex].List
+	listToCompleteOn := allReminders[allRemindersCompletionIndex].List
 
-	_, err = execCommand[Reminder]([]string{"complete", "\"" + reminderToCompleteList + "\"", strconv.Itoa(reminderToCompleteIndex)})
+	listReminders, listErr := execCommand[[]Reminder]([]string{"show", listToCompleteOn})
+	if listErr != nil {
+		log.Fatalf("Failed to get tasks of list %s: %s", listToCompleteOn, listErr)
+	}
+
+	reminderToCompleteListIndex := slices.IndexFunc(listReminders, func(r Reminder) bool {
+		return r.ExternalID == taskId
+	})
+
+	if reminderToCompleteListIndex == -1 {
+		return "Not found.", -1, errors.New("Task not found on specific list.")
+	}
+
+	return listToCompleteOn, reminderToCompleteListIndex, nil
+}
+
+// CompleteTask marks a task as completed
+func (r ReminderTaskController) CompleteTask(taskId string) error {
+	listName, reminderIndex, err := getListAndIndexForCompletion(taskId)
+	if err != nil {
+		log.Fatalf("Failed to get list and index for completion: %s", err)
+	}
+
+	_, err = execCommand[Reminder]([]string{"complete", "\"" + listName + "\"", strconv.Itoa(reminderIndex)})
 
 	if err != nil {
 		return fmt.Errorf("failed to complete task: %w", err)

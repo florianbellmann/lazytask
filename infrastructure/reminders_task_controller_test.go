@@ -51,7 +51,7 @@ func TestGetListIndex(t *testing.T) {
 		log.Fatalf("Failed to get index and list for: %s", taskId)
 	}
 
-	if listName != "develop" || listIndex != 2 {
+	if listName != "develop" || listIndex != 1 {
 		t.Errorf("Failed to get the correct listName or listIndex")
 	}
 }

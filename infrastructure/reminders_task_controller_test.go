@@ -50,6 +50,8 @@ func TestGetListIndex(t *testing.T) {
 	listName, listIndex, err := getListAndIndexForCompletion(taskId)
 
 	if err != nil {
+		log.Printf("Error: %s", err)
+		log.Printf("Error contains: %s", strings.Contains(err.Error(), "lazytask/adapters/reminders-cli/reminders"))
 		if strings.Contains(err.Error(), "lazytask/adapters/reminders-cli/reminders") && !strings.Contains(err.Error(), "florian") { // means it failed on the workflow
 			log.Printf("Failed to get index and list for: %s", taskId)
 		} else {

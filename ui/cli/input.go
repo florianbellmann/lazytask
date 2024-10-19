@@ -3,6 +3,8 @@ package cli
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"lazytask/application"
+	"lazytask/domain"
+	"time"
 )
 
 type CompleteTaskMsg struct {
@@ -20,7 +22,20 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 			taskID := selectedTask.task.Id
 			return m, completeTask(m.taskService, taskID)
 		}
+	case "a":
+		newTask := domain.Task{
+			Title:       "Newtask",
+			IsCompleted: false,
+			ListId:      "develop",
+			Priority:    0, // no prio
+			Description: "New task description",
+			DueDate:     time.Time{}, // no date
+			Index:       -1,          // not on the list yet
+		}
+		m.taskService.AddTask(newTask)
 	}
+
+	// case "a":
 
 	// Handle navigation within the Fancy List
 	var cmd tea.Cmd

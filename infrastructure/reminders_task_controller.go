@@ -100,15 +100,36 @@ func getExecutablePath() (string, error) {
 	return filepath.Join(root, "adapters/reminders-cli/reminders"), nil
 }
 
+// execCommandWithoutOutput runs an external command and discards the output
+func execCommandWithoutOutput(commandArgs []string) error {
+	EXEC_PATH, execErr := getExecutablePath()
+	if execErr != nil {
+		fmt.Println("Executable path resolving failed:", execErr)
+		return execErr
+	}
+
+	// Run the command
+	cmd := exec.Command(EXEC_PATH, commandArgs...)
+	output, err := cmd.Output()
+
+	if err != nil {
+		log.Printf("Running command: %s", cmd)
+		fmt.Printf("Raw output: %s\n", string(output))
+		return fmt.Errorf("failed to run command: %w", err)
+	}
+
+	return nil
+}
+
 // execCommand runs an external command and parses the JSON result
 func execCommand[T any](commandArgs []string) (T, error) {
+	commandArgs = append(commandArgs, "--format", "json")
+
 	EXEC_PATH, execErr := getExecutablePath()
 	if execErr != nil {
 		fmt.Println("Executable path resolving failed:", execErr)
 		return *new(T), execErr
 	}
-
-	commandArgs = append(commandArgs, "--format", "json")
 
 	// Run the command
 	cmd := exec.Command(EXEC_PATH, commandArgs...)
@@ -200,7 +221,7 @@ func parseTasks(reminders []Reminder) []domain.Task {
 func (r ReminderTaskController) AddTask(t domain.Task) error {
 	reminder := ReminderFromTask(t)
 
-	commandString := []string{"add", "\"" + reminder.List + "\"", "\"" + reminder.Title + "\""}
+	commandString := []string{"add", reminder.List, "\"" + reminder.Title + "\""}
 
 	if reminder.Notes != "" {
 		commandString = append(commandString, "--notes", "\""+reminder.Notes+"\"")
@@ -268,9 +289,10 @@ func (r ReminderTaskController) CompleteTask(taskId string) error {
 		log.Fatalf("Failed to get list and index for completion: %s", err)
 	}
 
-	_, err = execCommand[Reminder]([]string{"complete", "\"" + listName + "\"", strconv.Itoa(reminderIndex)})
+	err = execCommandWithoutOutput([]string{"complete", listName, strconv.Itoa(reminderIndex)})
 
 	if err != nil {
+		log.Printf("Failed to complete task: %s", err)
 		return fmt.Errorf("failed to complete task: %w", err)
 	}
 

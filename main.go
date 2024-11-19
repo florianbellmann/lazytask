@@ -14,6 +14,7 @@ func main() {
 	// Create the application service
 	taskService := application.NewTaskService(reminderCtrl)
 
+	log.Printf("Starting LazyTask...")
 	// Initialize the UI
 	ui := ui.NewCli(*taskService)
 

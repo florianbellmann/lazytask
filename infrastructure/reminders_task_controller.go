@@ -197,6 +197,18 @@ func (r ReminderTaskController) GetTaskById(taskId string) (domain.Task, error) 
 
 // GetTasksByList retrieves all tasks for a specific list
 func (r ReminderTaskController) GetTasksByList(listId string) []domain.Task {
+
+	// task := domain.Task{
+	// 	Id:          "1",
+	// 	Priority:    1,
+	// 	Title:       "Test",
+	// 	Index:       0,
+	// 	ListId:      "1",
+	// 	IsCompleted: false,
+	// 	Description: "Test item",
+	// }
+	// return []domain.Task{task}
+
 	// TODO: reminders-cli can't handle lists with multiple workds yet
 	// return execCommand[[]do.Task]([]string{"show", "'" + listId + "'"})
 	// reminders, err := execCommand[[]Reminder]([]string{"show", "\"" + listId + "\""})
@@ -221,7 +233,9 @@ func parseTasks(reminders []Reminder) []domain.Task {
 func (r ReminderTaskController) AddTask(t domain.Task) error {
 	reminder := ReminderFromTask(t)
 
-	commandString := []string{"add", reminder.List, "\"" + reminder.Title + "\""}
+	// commandString := []string{"add", reminder.List, "\"" + reminder.Title + "\""}
+	// TODO: unclear if it can handle multiple words
+	commandString := []string{"add", reminder.List, "" + reminder.Title + ""}
 
 	if reminder.Notes != "" {
 		commandString = append(commandString, "--notes", "\""+reminder.Notes+"\"")

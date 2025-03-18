@@ -36,3 +36,8 @@ func (s *TaskService) GetTasksByList(listId string) []domain.Task {
 func (s *TaskService) GetLists() []domain.List {
 	return s.taskCtrl.GetLists()
 }
+
+// Update a task
+func (s *TaskService) UpdateTask(task domain.Task) error {
+	return s.taskCtrl.UpdateTask(task)
+}

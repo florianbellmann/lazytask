@@ -2,6 +2,9 @@ package cli
 
 import (
 	"lazytask/application"
+	"lazytask/domain"
+	"log"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -74,9 +77,43 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 
 	// return { key: selectedKey, type: ActionType.DoToday }
 	case "L":
-	// TODO: implement
-
-	// return { key: selectedKey, type: ActionType.DoTomorrow }
+		log.Printf("KeyPress 'L': Moving task to tomorrow")
+		if selectedTask, ok := m.listModel.SelectedItem().(listItem); ok {
+			task := selectedTask.task
+			log.Printf("KeyPress 'L': Selected task ID: %s, Title: %s", task.Id, task.Title)
+			
+			// Set the due date to tomorrow
+			tomorrow := time.Now().AddDate(0, 0, 1)
+			
+			// Update only the date part, keep the time if it exists
+			if !task.DueDate.IsZero() {
+				log.Printf("KeyPress 'L': Original due date: %v", task.DueDate)
+				tomorrow = time.Date(
+					tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 
+					task.DueDate.Hour(), task.DueDate.Minute(), task.DueDate.Second(), 0,
+					task.DueDate.Location(),
+				)
+			}
+			
+			task.DueDate = tomorrow
+			log.Printf("KeyPress 'L': Setting due date to: %v", tomorrow)
+			
+			// Update the task
+			log.Printf("KeyPress 'L': Calling UpdateTask")
+			err := m.taskService.UpdateTask(task)
+			if err != nil {
+				log.Printf("KeyPress 'L': ERROR updating task: %v", err)
+			} else {
+				log.Printf("KeyPress 'L': Task successfully updated")
+			}
+			
+			// Refresh the list view
+			log.Printf("KeyPress 'L': Refreshing list view for list: %s", m.activeList)
+			m.LoadTasks(m.taskService.GetTasksByList(m.activeList))
+		} else {
+			log.Printf("KeyPress 'L': No task selected or invalid selection")
+		}
+		return m, nil
 	case "t":
 	// TODO: implement
 
@@ -134,4 +171,9 @@ func completeTask(service *application.TaskService, taskId string) {
 	// }
 	// return CompleteTaskMsg{taskID: taskId}
 	// }
+}
+
+// Helper function for updating a task
+func updateTask(service *application.TaskService, task domain.Task) {
+	service.UpdateTask(task)
 }

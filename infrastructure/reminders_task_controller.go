@@ -104,50 +104,78 @@ func getExecutablePath() (string, error) {
 func execCommandWithoutOutput(commandArgs []string) error {
 	EXEC_PATH, execErr := getExecutablePath()
 	if execErr != nil {
-		fmt.Println("Executable path resolving failed:", execErr)
-		return execErr
+		log.Printf("Executable path resolving failed: %v", execErr)
+		return fmt.Errorf("executable path resolving failed: %w", execErr)
 	}
+
+	// Log the command being executed
+	log.Printf("Executing command: %s %v", EXEC_PATH, commandArgs)
 
 	// Run the command
 	cmd := exec.Command(EXEC_PATH, commandArgs...)
-	output, err := cmd.Output()
+	
+	// Capture both stdout and stderr
+	output, err := cmd.CombinedOutput()
 
-	if err != nil {
-		log.Printf("Running command: %s", cmd)
-		fmt.Printf("Raw output: %s\n", string(output))
-		return fmt.Errorf("failed to run command: %w", err)
+	// Always log the output for debugging
+	if len(output) > 0 {
+		log.Printf("Command output: %s", string(output))
 	}
 
+	if err != nil {
+		log.Printf("Command failed: %s %v - Error: %v", EXEC_PATH, commandArgs, err)
+		return fmt.Errorf("failed to run command: %s - %w", string(output), err)
+	}
+
+	log.Printf("Command executed successfully")
 	return nil
 }
 
 // execCommand runs an external command and parses the JSON result
 func execCommand[T any](commandArgs []string) (T, error) {
+	// Add JSON format flag
 	commandArgs = append(commandArgs, "--format", "json")
 
 	EXEC_PATH, execErr := getExecutablePath()
 	if execErr != nil {
-		fmt.Println("Executable path resolving failed:", execErr)
-		return *new(T), execErr
+		log.Printf("Executable path resolving failed: %v", execErr)
+		return *new(T), fmt.Errorf("executable path resolving failed: %w", execErr)
 	}
+
+	// Log the command being executed
+	log.Printf("Executing JSON command: %s %v", EXEC_PATH, commandArgs)
 
 	// Run the command
 	cmd := exec.Command(EXEC_PATH, commandArgs...)
-	output, err := cmd.Output()
+	
+	// Capture both stdout and stderr
+	output, err := cmd.CombinedOutput()
 
-	if err != nil {
-		log.Printf("Running command: %s", cmd)
-		fmt.Printf("Raw output: %s\n", string(output))
-		return *new(T), fmt.Errorf("failed to run command: %w", err)
+	// Always log some output info for debugging
+	if len(output) > 0 {
+		// For JSON responses, only log the first 500 chars to avoid huge logs
+		outputToLog := string(output)
+		if len(outputToLog) > 500 {
+			outputToLog = outputToLog[:500] + "... [truncated]"
+		}
+		log.Printf("JSON command output: %s", outputToLog)
 	}
 
+	if err != nil {
+		log.Printf("JSON command failed: %s %v - Error: %v", EXEC_PATH, commandArgs, err)
+		return *new(T), fmt.Errorf("failed to run command: %s - %w", string(output), err)
+	}
+
+	// Try to parse the JSON
 	var result T
 	err = json.Unmarshal(output, &result)
 	if err != nil {
-		log.Fatalf("Failed to parse JSON: %s", err)
-		return *new(T), err
+		log.Printf("Failed to parse JSON: %v", err)
+		log.Printf("Invalid JSON: %s", string(output))
+		return *new(T), fmt.Errorf("failed to parse JSON response: %w", err)
 	}
 
+	log.Printf("JSON command executed successfully and parsed")
 	return result, nil
 }
 
@@ -341,25 +369,118 @@ func (r ReminderTaskController) UncompleteTask(taskId string) error {
 
 // Update a task
 func (r ReminderTaskController) UpdateTask(task domain.Task) error {
-	return errors.New("Not implemented")
-	// TODO:
-	// reminderIndex := slices.IndexFunc(r.GetTasksByList(task.ListId), func(t domain.Task) bool {
-	// 	return t.Id == task.Id
-	// })
-	//
-	// if reminderIndex == -1 {
-	// 	return errors.New("Task to update not found")
-	// }
-	//
-	// reminder := ReminderFromTask(task)
-	//
-	// _, err := execCommand[Reminder]([]string{"edit", "\"" + reminder.List + "\"", string(reminderIndex)})
-	//
-	// if err != nil {
-	// 	return fmt.Errorf("Failed to update task: %w", err)
-	// }
-	//
-	// return nil
+	log.Printf("UpdateTask: Starting update for task ID: %s", task.Id)
+	log.Printf("UpdateTask: Task details - Title: %s, DueDate: %s", task.Title, task.DueDate)
+	
+	// Find the correct list and index for the task
+	listName, reminderIndex, err := getListAndIndexForCompletion(task.Id)
+	if err != nil {
+		log.Printf("UpdateTask: Failed to find task for update: %s", err)
+		return fmt.Errorf("failed to find task for update: %w", err)
+	}
+	
+	log.Printf("UpdateTask: Found task at list: %s, index: %d", listName, reminderIndex)
+
+	// Convert domain task to Reminder
+	reminder := ReminderFromTask(task)
+	log.Printf("UpdateTask: Converted to reminder with due date: %v", reminder.DueDate)
+
+	// Using a simpler approach - delete and recreate instead of trying to edit
+	// This is more reliable given the CLI.swift limitations
+	
+	// First, get the current task to preserve all properties
+	log.Printf("UpdateTask: Fetching current task to preserve properties")
+	currentTasks := r.GetTasksByList(listName)
+	var currentTask domain.Task
+	found := false
+	
+	for _, t := range currentTasks {
+		if t.Id == task.Id {
+			currentTask = t
+			found = true
+			log.Printf("UpdateTask: Found current task: %+v", currentTask)
+			break
+		}
+	}
+	
+	if !found {
+		log.Printf("UpdateTask: ERROR - Task not found in current tasks")
+		return fmt.Errorf("task not found for update")
+	}
+	
+	// Delete the current task
+	log.Printf("UpdateTask: Deleting task at index %d from list %s", reminderIndex, listName)
+	deleteArgs := []string{"delete", listName, strconv.Itoa(reminderIndex)}
+	log.Printf("UpdateTask: Delete command: %v", deleteArgs)
+	
+	err = execCommandWithoutOutput(deleteArgs)
+	if err != nil {
+		log.Printf("UpdateTask: Failed to delete task: %s", err)
+		return fmt.Errorf("failed to delete task for update: %w", err)
+	}
+	
+	// Create a new task with the updated properties
+	// Start with title from the current task, but use updated properties where provided
+	title := currentTask.Title
+	if task.Title != "" {
+		title = task.Title
+	}
+	
+	// Create the add command
+	addArgs := []string{"add", listName, title}
+	log.Printf("UpdateTask: Creating new task with title: %s", title)
+	
+	// Add notes
+	description := currentTask.Description
+	if task.Description != "" {
+		description = task.Description
+	}
+	if description != "" {
+		addArgs = append(addArgs, "--notes", description)
+		log.Printf("UpdateTask: Adding notes: %s", description)
+	}
+	
+	// Add the due date (either the new one or preserve the old one)
+	dueDate := currentTask.DueDate
+	if !task.DueDate.IsZero() {
+		dueDate = task.DueDate
+	}
+	if !dueDate.IsZero() {
+		dateString := dueDate.Format("2006-01-02")
+		addArgs = append(addArgs, "--due-date", dateString)
+		log.Printf("UpdateTask: Setting due date: %s", dateString)
+	}
+	
+	// Add priority
+	priority := currentTask.Priority
+	if task.Priority != 0 {
+		priority = task.Priority
+	}
+	if priority != 0 {
+		prioString := "none"
+		if priority == 1 {
+			prioString = "high"
+		} else if priority > 1 {
+			prioString = "medium"
+		} else if priority > 5 {
+			prioString = "low"
+		}
+		addArgs = append(addArgs, "--priority", prioString)
+		log.Printf("UpdateTask: Setting priority: %s", prioString)
+	}
+	
+	// Log the full command we're about to execute
+	log.Printf("UpdateTask: Running add command: %v", addArgs)
+	
+	// Execute the add command to recreate the task
+	_, err = execCommand[Reminder](addArgs)
+	if err != nil {
+		log.Printf("UpdateTask: Failed to recreate task: %s", err)
+		return fmt.Errorf("failed to recreate task: %w", err)
+	}
+	
+	log.Printf("UpdateTask: Task successfully updated")
+	return nil
 }
 
 // MoveTaskToList moves a task to a different list

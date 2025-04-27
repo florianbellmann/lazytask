@@ -132,13 +132,22 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.listModel, cmd = m.listModel.Update(msg)
 		return m, cmd
-	case "u":
+	case "u": // undo
 		// TODO: implement
 
 		// return { key: selectedKey, type: ActionType.Unarchive }
 
 	case "0":
-		// TODO: implement all lists view
+		// Show all tasks view
+		m.activeList = "All"
+		allTasks := []domain.Task{}
+		lists := m.taskService.GetLists()
+		for _, list := range lists {
+			listTasks := m.taskService.GetTasksByList(list.Id)
+			allTasks = append(allTasks, listTasks...)
+		}
+		m.LoadTasks(allTasks)
+		m.listModel.Title = "All Tasks"
 		return m, nil
 	case "1":
 		m.activeList = "Priv"

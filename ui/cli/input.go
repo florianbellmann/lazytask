@@ -20,7 +20,7 @@ type ErrorMsg struct {
 
 func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 	switch msg.String() {
-	case "c":
+	case "c": // Mark task as completed
 		if selectedTask, ok := m.listModel.SelectedItem().(listItem); ok {
 			taskID := selectedTask.task.Id
 			// m.listModel.Paginator.
@@ -29,7 +29,7 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 			// return m, completeTask(m.taskService, taskID)
 			completeTask(m.taskService, taskID)
 		}
-	case "a":
+	case "a": // add task
 
 		m.inputText = textinput.New()
 		m.inputText.Placeholder = "Card title"
@@ -54,7 +54,7 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 		// insCmd := m.listModel.InsertItem(-1, listItem{task: newTask})
 		// return m, inced
 
-	case "d":
+	case "d": // set or change date
 
 		placeholder := m.listModel.SelectedItem().(listItem).task.DueDate
 
@@ -72,32 +72,32 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 
 	// return { key: selectedKey, type: ActionType.ChangeDate }
 
-	case "H":
+	// case "H":
 	// TODO: implement
 
 	// return { key: selectedKey, type: ActionType.DoToday }
-	case "L":
+	case "L": // Move to tomorrow
 		log.Printf("KeyPress 'L': Moving task to tomorrow")
 		if selectedTask, ok := m.listModel.SelectedItem().(listItem); ok {
 			task := selectedTask.task
 			log.Printf("KeyPress 'L': Selected task ID: %s, Title: %s", task.Id, task.Title)
-			
+
 			// Set the due date to tomorrow
 			tomorrow := time.Now().AddDate(0, 0, 1)
-			
+
 			// Update only the date part, keep the time if it exists
 			if !task.DueDate.IsZero() {
 				log.Printf("KeyPress 'L': Original due date: %v", task.DueDate)
 				tomorrow = time.Date(
-					tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 
+					tomorrow.Year(), tomorrow.Month(), tomorrow.Day(),
 					task.DueDate.Hour(), task.DueDate.Minute(), task.DueDate.Second(), 0,
 					task.DueDate.Location(),
 				)
 			}
-			
+
 			task.DueDate = tomorrow
 			log.Printf("KeyPress 'L': Setting due date to: %v", tomorrow)
-			
+
 			// Update the task
 			log.Printf("KeyPress 'L': Calling UpdateTask")
 			err := m.taskService.UpdateTask(task)
@@ -106,7 +106,7 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 			} else {
 				log.Printf("KeyPress 'L': Task successfully updated")
 			}
-			
+
 			// Refresh the list view
 			log.Printf("KeyPress 'L': Refreshing list view for list: %s", m.activeList)
 			m.LoadTasks(m.taskService.GetTasksByList(m.activeList))
@@ -114,21 +114,21 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 			log.Printf("KeyPress 'L': No task selected or invalid selection")
 		}
 		return m, nil
-	case "t":
+	// case "t": // change title
+	// TODO: is this redundant?
 	// TODO: implement
 
 	// return { key: selectedKey, type: ActionType.ChangeTitle }
-	case "e":
+	case "e": // change description
 	// TODO: implement
 
 	// return { key: selectedKey, type: ActionType.ChangeDescription }
-	case "o":
-		// TODO: implement
+	case "w": //change list
+	// TODO: implement
 
-		// return { key: selectedKey, type: ActionType.AddLabel } or tag
+	// return { key: selectedKey, type: ActionType.AddLabel } or tag
 
-	case "r":
-		// TODO: is this redundant?
+	case "r": // rename or change title
 		var cmd tea.Cmd
 		m.listModel, cmd = m.listModel.Update(msg)
 		return m, cmd
@@ -137,6 +137,9 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 
 		// return { key: selectedKey, type: ActionType.Unarchive }
 
+	case "0":
+		// TODO: implement all lists view
+		return m, nil
 	case "1":
 		m.activeList = "Priv"
 		m.LoadTasks(m.taskService.GetTasksByList("Priv"))

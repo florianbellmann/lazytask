@@ -30,6 +30,7 @@ Because of time constraints this project is in a prototype state for now.
 - [ ] restructure app
 - [ ] Implement app logging
 - [ ] use message types for commands
+- [ ] hot reloading https://github.com/charmbracelet/bubbletea/issues/150
 
 - [ ] Implement commands
   - [ ] Edit dates
@@ -43,8 +44,10 @@ Because of time constraints this project is in a prototype state for now.
 - [ ] Handling of all tasks, not only overdue
 
 - [ ] Building a basic ui
+      https://leg100.github.io/en/posts/building-bubbletea-programs/
       https://github.com/dlvhdr/gh-dash
       https://github.com/bensadeh/circumflex
+      Date picking: https://www.reddit.com/r/commandline/comments/1hrlrck/tui_datepicker/
 - [ ] Async task handling with busy spinners, maybe add command queue
 - [ ] Fix help pages initial app functionalities of fancy list etc
 - [ ] Display of further infos: Tags, recurring, flags, prios, ...
@@ -53,6 +56,8 @@ Because of time constraints this project is in a prototype state for now.
 - [ ] Refactor functions to be testable and add proper testing
 - [ ] Input hardening
 - [ ] Debugging from inside nvim
+
+- [ ] Build an nvim plugin for opening lazytask inside floating term
 
 ## 🧑🏻‍💻 Usage
 

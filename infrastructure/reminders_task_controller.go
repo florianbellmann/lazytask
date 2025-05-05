@@ -167,8 +167,16 @@ func execCommand[T any](commandArgs []string) (T, error) {
 	}
 
 	// Try to parse the JSON
+	result, err := parseJson[T](output)
+	if err != nil {
+		return *new(T), fmt.Errorf("failed to parse command output: %w", err)
+	}
+	return result, nil
+}
+
+func parseJson[T any](output []byte) (T, error) {
 	var result T
-	err = json.Unmarshal(output, &result)
+	err := json.Unmarshal(output, &result)
 	if err != nil {
 		log.Printf("Failed to parse JSON: %v", err)
 		log.Printf("Invalid JSON: %s", string(output))
@@ -176,7 +184,7 @@ func execCommand[T any](commandArgs []string) (T, error) {
 	}
 
 	log.Printf("JSON command executed successfully and parsed")
-	return result, nil
+	return result, err
 }
 
 // --------------------------------------------------------------------

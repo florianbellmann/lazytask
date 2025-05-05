@@ -66,6 +66,19 @@ Because of time constraints this project is in a prototype state for now.
 .build/./lazytask
 ```
 
+## ⚙️ Configuration
+
+LazyTask can be configured using environment variables:
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `LISTS` | Comma-separated list of reminder lists to use | `develop` |
+
+Example:
+```sh
+LISTS=work,personal,shopping .build/lazytask
+```
+
 ## ➤ License
 
 Distributed under the MIT License. See [LICENSE](LICENSE) for more information.

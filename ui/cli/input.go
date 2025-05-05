@@ -1,10 +1,7 @@
 package cli
 
 import (
-	"lazytask/application"
 	"lazytask/domain"
-	"log"
-	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -22,15 +19,14 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 	switch msg.String() {
 	case "c": // Mark task as completed
 		if selectedTask, ok := m.listModel.SelectedItem().(listItem); ok {
-			taskID := selectedTask.task.Id
-			// m.listModel.Paginator.
+			// TODO: check if this worked and then update the ui
+			m.taskService.CompleteTask(selectedTask.task.Id)
+
 			curr := m.listModel.Index()
 			m.listModel.RemoveItem(curr)
-			// return m, completeTask(m.taskService, taskID)
-			completeTask(m.taskService, taskID)
 		}
 	case "a": // add task
-
+		// TODO: add dialog
 		m.inputText = textinput.New()
 		m.inputText.Placeholder = "Card title"
 		m.inputText.Focus()
@@ -55,7 +51,6 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 		// return m, inced
 
 	case "d": // set or change date
-
 		placeholder := m.listModel.SelectedItem().(listItem).task.DueDate
 
 		m.inputText = textinput.New()
@@ -76,59 +71,83 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 	// TODO: implement
 
 	// return { key: selectedKey, type: ActionType.DoToday }
-	case "L": // Move to tomorrow
-		log.Printf("KeyPress 'L': Moving task to tomorrow")
-		if selectedTask, ok := m.listModel.SelectedItem().(listItem); ok {
-			task := selectedTask.task
-			log.Printf("KeyPress 'L': Selected task ID: %s, Title: %s", task.Id, task.Title)
+	// case "L": // Move to tomorrow
+	// log.Printf("KeyPress 'L': Moving task to tomorrow")
+	// if selectedTask, ok := m.listModel.SelectedItem().(listItem); ok {
+	// 	task := selectedTask.task
+	// 	log.Printf("KeyPress 'L': Selected task ID: %s, Title: %s", task.Id, task.Title)
+	//
+	// 	// Set the due date to tomorrow
+	// 	tomorrow := time.Now().AddDate(0, 0, 1)
+	//
+	// 	// Update only the date part, keep the time if it exists
+	// 	if !task.DueDate.IsZero() {
+	// 		log.Printf("KeyPress 'L': Original due date: %v", task.DueDate)
+	// 		tomorrow = time.Date(
+	// 			tomorrow.Year(), tomorrow.Month(), tomorrow.Day(),
+	// 			task.DueDate.Hour(), task.DueDate.Minute(), task.DueDate.Second(), 0,
+	// 			task.DueDate.Location(),
+	// 		)
+	// 	}
+	//
+	// 	task.DueDate = tomorrow
+	// 	log.Printf("KeyPress 'L': Setting due date to: %v", tomorrow)
+	//
+	// 	// Update the task
+	// 	log.Printf("KeyPress 'L': Calling UpdateTask")
+	// 	err := m.taskService.UpdateTask(task)
+	// 	if err != nil {
+	// 		log.Printf("KeyPress 'L': ERROR updating task: %v", err)
+	// 	} else {
+	// 		log.Printf("KeyPress 'L': Task successfully updated")
+	// 	}
+	//
+	// 	// Refresh the list view
+	// 	log.Printf("KeyPress 'L': Refreshing list view for list: %s", m.activeList)
+	// 	m.LoadTasks(m.taskService.GetTasksByList(m.activeList))
+	// } else {
+	// 	log.Printf("KeyPress 'L': No task selected or invalid selection")
+	// }
+	// return m, nil
 
-			// Set the due date to tomorrow
-			tomorrow := time.Now().AddDate(0, 0, 1)
-
-			// Update only the date part, keep the time if it exists
-			if !task.DueDate.IsZero() {
-				log.Printf("KeyPress 'L': Original due date: %v", task.DueDate)
-				tomorrow = time.Date(
-					tomorrow.Year(), tomorrow.Month(), tomorrow.Day(),
-					task.DueDate.Hour(), task.DueDate.Minute(), task.DueDate.Second(), 0,
-					task.DueDate.Location(),
-				)
-			}
-
-			task.DueDate = tomorrow
-			log.Printf("KeyPress 'L': Setting due date to: %v", tomorrow)
-
-			// Update the task
-			log.Printf("KeyPress 'L': Calling UpdateTask")
-			err := m.taskService.UpdateTask(task)
-			if err != nil {
-				log.Printf("KeyPress 'L': ERROR updating task: %v", err)
-			} else {
-				log.Printf("KeyPress 'L': Task successfully updated")
-			}
-
-			// Refresh the list view
-			log.Printf("KeyPress 'L': Refreshing list view for list: %s", m.activeList)
-			m.LoadTasks(m.taskService.GetTasksByList(m.activeList))
-		} else {
-			log.Printf("KeyPress 'L': No task selected or invalid selection")
-		}
-		return m, nil
-	// case "t": // change title
-	// TODO: is this redundant?
-	// TODO: implement
-
-	// return { key: selectedKey, type: ActionType.ChangeTitle }
 	case "e": // change description
-	// TODO: implement
+		// TODO: implement
+		return m, nil
 
 	// return { key: selectedKey, type: ActionType.ChangeDescription }
-	case "w": //change list
-	// TODO: implement
+	case "w": // change list
+		if selectedTask, ok := m.listModel.SelectedItem().(listItem); ok {
+			task := selectedTask.task
 
-	// return { key: selectedKey, type: ActionType.AddLabel } or tag
+			// Get all available lists for options
+			lists := m.taskService.GetLists()
+			availableListsText := ""
+			for i, list := range lists {
+				if i > 0 {
+					availableListsText += ", "
+				}
+				availableListsText += list.Id
+			}
+
+			// Create input for list selection
+			m.inputText = textinput.New()
+			m.inputText.Placeholder = "Available: " + availableListsText
+			m.inputText.Focus()
+			m.inputText.CharLimit = 156
+			m.inputText.Width = 30
+
+			// Store metadata in the model for the update function
+			// We're using special input mode to signal this is a list change operation
+			m.mode = listChangeMode
+
+			// Keep reference to the task we're updating
+			m.pendingTask = task
+
+			return m, textinput.Blink
+		}
 
 	case "r": // rename or change title
+		// TODO: implement
 		var cmd tea.Cmd
 		m.listModel, cmd = m.listModel.Update(msg)
 		return m, cmd
@@ -171,21 +190,4 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.listModel, cmd = m.listModel.Update(msg)
 	return m, cmd
-}
-
-// func completeTask(service *application.TaskService, taskId string) tea.Cmd {
-func completeTask(service *application.TaskService, taskId string) {
-	// return func() tea.Msg {
-	// err := service.CompleteTask(taskId)
-	service.CompleteTask(taskId)
-	// if err != nil {
-	// return ErrorMsg{err: err}
-	// }
-	// return CompleteTaskMsg{taskID: taskId}
-	// }
-}
-
-// Helper function for updating a task
-func updateTask(service *application.TaskService, task domain.Task) {
-	service.UpdateTask(task)
 }

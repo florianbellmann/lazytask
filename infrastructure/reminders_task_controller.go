@@ -113,7 +113,7 @@ func execCommandWithoutOutput(commandArgs []string) error {
 
 	// Run the command
 	cmd := exec.Command(EXEC_PATH, commandArgs...)
-	
+
 	// Capture both stdout and stderr
 	output, err := cmd.CombinedOutput()
 
@@ -147,7 +147,7 @@ func execCommand[T any](commandArgs []string) (T, error) {
 
 	// Run the command
 	cmd := exec.Command(EXEC_PATH, commandArgs...)
-	
+
 	// Capture both stdout and stderr
 	output, err := cmd.CombinedOutput()
 
@@ -225,17 +225,6 @@ func (r ReminderTaskController) GetTaskById(taskId string) (domain.Task, error) 
 
 // GetTasksByList retrieves all tasks for a specific list
 func (r ReminderTaskController) GetTasksByList(listId string) []domain.Task {
-
-	// task := domain.Task{
-	// 	Id:          "1",
-	// 	Priority:    1,
-	// 	Title:       "Test",
-	// 	Index:       0,
-	// 	ListId:      "1",
-	// 	IsCompleted: false,
-	// 	Description: "Test item",
-	// }
-	// return []domain.Task{task}
 
 	// TODO: reminders-cli can't handle lists with multiple workds yet
 	// return execCommand[[]do.Task]([]string{"show", "'" + listId + "'"})
@@ -371,14 +360,14 @@ func (r ReminderTaskController) UncompleteTask(taskId string) error {
 func (r ReminderTaskController) UpdateTask(task domain.Task) error {
 	log.Printf("UpdateTask: Starting update for task ID: %s", task.Id)
 	log.Printf("UpdateTask: Task details - Title: %s, DueDate: %s", task.Title, task.DueDate)
-	
+
 	// Find the correct list and index for the task
 	listName, reminderIndex, err := getListAndIndexForCompletion(task.Id)
 	if err != nil {
 		log.Printf("UpdateTask: Failed to find task for update: %s", err)
 		return fmt.Errorf("failed to find task for update: %w", err)
 	}
-	
+
 	log.Printf("UpdateTask: Found task at list: %s, index: %d", listName, reminderIndex)
 
 	// Convert domain task to Reminder
@@ -387,13 +376,13 @@ func (r ReminderTaskController) UpdateTask(task domain.Task) error {
 
 	// Using a simpler approach - delete and recreate instead of trying to edit
 	// This is more reliable given the CLI.swift limitations
-	
+
 	// First, get the current task to preserve all properties
 	log.Printf("UpdateTask: Fetching current task to preserve properties")
 	currentTasks := r.GetTasksByList(listName)
 	var currentTask domain.Task
 	found := false
-	
+
 	for _, t := range currentTasks {
 		if t.Id == task.Id {
 			currentTask = t
@@ -402,34 +391,34 @@ func (r ReminderTaskController) UpdateTask(task domain.Task) error {
 			break
 		}
 	}
-	
+
 	if !found {
 		log.Printf("UpdateTask: ERROR - Task not found in current tasks")
 		return fmt.Errorf("task not found for update")
 	}
-	
+
 	// Delete the current task
 	log.Printf("UpdateTask: Deleting task at index %d from list %s", reminderIndex, listName)
 	deleteArgs := []string{"delete", listName, strconv.Itoa(reminderIndex)}
 	log.Printf("UpdateTask: Delete command: %v", deleteArgs)
-	
+
 	err = execCommandWithoutOutput(deleteArgs)
 	if err != nil {
 		log.Printf("UpdateTask: Failed to delete task: %s", err)
 		return fmt.Errorf("failed to delete task for update: %w", err)
 	}
-	
+
 	// Create a new task with the updated properties
 	// Start with title from the current task, but use updated properties where provided
 	title := currentTask.Title
 	if task.Title != "" {
 		title = task.Title
 	}
-	
+
 	// Create the add command
 	addArgs := []string{"add", listName, title}
 	log.Printf("UpdateTask: Creating new task with title: %s", title)
-	
+
 	// Add notes
 	description := currentTask.Description
 	if task.Description != "" {
@@ -439,7 +428,7 @@ func (r ReminderTaskController) UpdateTask(task domain.Task) error {
 		addArgs = append(addArgs, "--notes", description)
 		log.Printf("UpdateTask: Adding notes: %s", description)
 	}
-	
+
 	// Add the due date (either the new one or preserve the old one)
 	dueDate := currentTask.DueDate
 	if !task.DueDate.IsZero() {
@@ -450,7 +439,7 @@ func (r ReminderTaskController) UpdateTask(task domain.Task) error {
 		addArgs = append(addArgs, "--due-date", dateString)
 		log.Printf("UpdateTask: Setting due date: %s", dateString)
 	}
-	
+
 	// Add priority
 	priority := currentTask.Priority
 	if task.Priority != 0 {
@@ -468,17 +457,17 @@ func (r ReminderTaskController) UpdateTask(task domain.Task) error {
 		addArgs = append(addArgs, "--priority", prioString)
 		log.Printf("UpdateTask: Setting priority: %s", prioString)
 	}
-	
+
 	// Log the full command we're about to execute
 	log.Printf("UpdateTask: Running add command: %v", addArgs)
-	
+
 	// Execute the add command to recreate the task
 	_, err = execCommand[Reminder](addArgs)
 	if err != nil {
 		log.Printf("UpdateTask: Failed to recreate task: %s", err)
 		return fmt.Errorf("failed to recreate task: %w", err)
 	}
-	
+
 	log.Printf("UpdateTask: Task successfully updated")
 	return nil
 }

@@ -22,7 +22,7 @@ func setupLogging() (*os.File, error) {
 	// Create a new log file with timestamp
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
 	logFileName := filepath.Join(logsDir, "lazytask_"+timestamp+".log")
-	
+
 	logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open log file: %w", err)
@@ -31,14 +31,14 @@ func setupLogging() (*os.File, error) {
 	// Set the logger output to the file
 	log.SetOutput(logFile)
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	
+
 	// Create a symbolic link to the most recent log file for easy access
 	latestLogLink := filepath.Join(logsDir, "latest.log")
 	_ = os.Remove(latestLogLink) // Remove existing symlink if it exists
 	_ = os.Symlink(logFileName, latestLogLink)
-	
+
 	log.Printf("Logging initialized - writing to %s", logFileName)
-	
+
 	return logFile, nil
 }
 
@@ -51,9 +51,9 @@ func main() {
 	} else {
 		defer logFile.Close()
 	}
-	
+
 	log.Printf("=== LazyTask Starting ===")
-	
+
 	// Set up the reminder task controller
 	reminderCtrl := infrastructure.NewReminderTaskController()
 	log.Printf("Reminder controller initialized")
@@ -65,6 +65,9 @@ func main() {
 	// Initialize the UI
 	ui := ui.NewCli(*taskService)
 	log.Printf("UI initialized, starting application...")
+	if err := ui.Init(); err != nil {
+		log.Fatalf("Error initializing the app through the UI: %v", err)
+	}
 
 	// Run the UI
 	if err := ui.Run(); err != nil {

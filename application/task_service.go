@@ -41,3 +41,8 @@ func (s *TaskService) GetLists() []domain.List {
 func (s *TaskService) UpdateTask(task domain.Task) error {
 	return s.taskCtrl.UpdateTask(task)
 }
+
+// Move task to another list
+func (s *TaskService) MoveTaskToList(taskId string, targetListId string) error {
+	return s.taskCtrl.MoveTaskToList(taskId, targetListId)
+}

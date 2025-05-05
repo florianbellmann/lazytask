@@ -18,6 +18,7 @@ const (
 	listMode viewMode = iota // initial value 0
 	textInputMode
 	dateInputMode
+	listChangeMode   // Mode for changing task list
 )
 
 type listItem struct {
@@ -49,6 +50,9 @@ type model struct {
 
 	tasks       []domain.Task
 	taskService *application.TaskService
+
+	// Temporary storage for operations like changing list
+	pendingTask domain.Task
 
 	// Input
 

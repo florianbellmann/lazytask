@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"lazytask/config"
 	"lazytask/domain"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -40,7 +41,7 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 		// newTask := domain.Task{
 		// 	Title:       "Newtask",
 		// 	IsCompleted: false,
-		// 	ListId:      "develop",
+		// 	ListId:      config.getConfig().lists[0]
 		// 	Priority:    0, // no prio
 		// 	Description: "New task description",
 		// 	DueDate:     time.Time{}, // no date
@@ -169,21 +170,30 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 		m.listModel.Title = "All Tasks"
 		return m, nil
 	case "1":
-		m.activeList = "Priv"
-		m.LoadTasks(m.taskService.GetTasksByList("Priv"))
-		m.listModel.Title = "Priv"
+		newActiveList := config.GetConfig().Lists[0]
+		m.activeList = newActiveList
+		m.LoadTasks(m.taskService.GetTasksByList(newActiveList))
+		m.listModel.Title = newActiveList
 		return m, nil
 	case "2":
-		m.activeList = "Work"
-		m.LoadTasks(m.taskService.GetTasksByList("Work"))
-		m.listModel.Title = "Work"
+		newActiveList := config.GetConfig().Lists[1]
+		m.activeList = newActiveList
+		m.LoadTasks(m.taskService.GetTasksByList(newActiveList))
+		m.listModel.Title = newActiveList
 		return m, nil
 	case "3":
-		m.activeList = "Flisa"
-		m.LoadTasks(m.taskService.GetTasksByList("Flisa"))
-		m.listModel.Title = "Flisa"
+		newActiveList := config.GetConfig().Lists[2]
+		m.activeList = newActiveList
+		m.LoadTasks(m.taskService.GetTasksByList(newActiveList))
+		m.listModel.Title = newActiveList
 		return m, nil
-
+	case "4":
+		// TODO: add failsafe if not that many lists are present
+		newActiveList := config.GetConfig().Lists[3]
+		m.activeList = newActiveList
+		m.LoadTasks(m.taskService.GetTasksByList(newActiveList))
+		m.listModel.Title = newActiveList
+		return m, nil
 	}
 
 	// Handle navigation within the Fancy List
@@ -191,3 +201,4 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 	m.listModel, cmd = m.listModel.Update(msg)
 	return m, cmd
 }
+

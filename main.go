@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"lazytask/application"
+	"lazytask/config"
 	"lazytask/infrastructure"
 	"lazytask/ui"
 	"log"
@@ -53,6 +54,10 @@ func main() {
 	}
 
 	log.Printf("=== LazyTask Starting ===")
+
+	// Load configuration
+	appConfig := config.GetConfig()
+	log.Printf("Configuration loaded - Ignored lists: %v", appConfig.Lists)
 
 	// Set up the reminder task controller
 	reminderCtrl := infrastructure.NewReminderTaskController()

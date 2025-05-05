@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"lazytask/application"
+	"lazytask/config"
 	"lazytask/domain"
 	"log"
 	"os"
@@ -102,7 +103,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					Title:       value,
 					IsCompleted: false,
 					DueDate:     time.Now(),
-					ListId:      "develop",
+					ListId:      config.GetConfig().Lists[0],
 					Priority:    0, // no prio
 					// Description: "New task description",
 					// DueDate: time.Time{}, // no date
@@ -144,7 +145,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// newTask := domain.Task{
 				// 	Title:       value,
 				// 	IsCompleted: false,
-				// 	ListId:      "develop",
+				// 	ListId:      config.GetConfig().lists[0],
 				// 	Priority:    0, // no prio
 				// 	// Description: "New task description",
 				// 	// DueDate: time.Time{}, // no date
@@ -200,7 +201,7 @@ func (m model) View() string {
 
 func (b BubbleTeaApp) Run() error {
 	model := NewModel(&b.taskService)
-	model.LoadTasks(b.taskService.GetTasksByList("develop"))
+	model.LoadTasks(b.taskService.GetTasksByList(config.GetConfig().Lists[0]))
 	process := tea.NewProgram(model, tea.WithAltScreen())
 
 	if _, err := process.Run(); err != nil {

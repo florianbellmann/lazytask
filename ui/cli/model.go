@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"lazytask/application"
+	"lazytask/config"
 	"lazytask/domain"
 )
 
@@ -18,7 +19,7 @@ const (
 	listMode viewMode = iota // initial value 0
 	textInputMode
 	dateInputMode
-	listChangeMode   // Mode for changing task list
+	listChangeMode // Mode for changing task list
 )
 
 type listItem struct {
@@ -77,8 +78,8 @@ func NewModel(taskService *application.TaskService) model {
 
 	uiList := bubbleTeaList.New([]bubbleTeaList.Item{}, bubbleTeaList.NewDefaultDelegate(), 0, 0)
 	// delegate := newItemDelegate(delegateKeys)
-	// myList := list.New(items, delegate, 0, 0)
-	uiList.Title = "develop"
+	// my List := list.New(items, delegate, 0, 0)
+	uiList.Title = config.GetConfig().Lists[0]
 
 	uiList.Styles.Title = titleStyle
 	// myList.AdditionalFullHelpKeys = func() []key.Binding {
@@ -88,7 +89,7 @@ func NewModel(taskService *application.TaskService) model {
 	return model{
 		mode:        listMode,
 		lists:       []domain.List{},
-		activeList:  "develop",
+		activeList:  config.GetConfig().Lists[0],
 		tasks:       []domain.Task{},
 		taskService: taskService,
 		listModel:   uiList,

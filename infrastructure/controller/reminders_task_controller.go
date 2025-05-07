@@ -206,6 +206,7 @@ func (r ReminderTaskController) GetLists() []entities.List {
 		reminderLists = []ReminderList{}
 	}
 
+	// TODO: return empty list instead of error
 	return parseLists(reminderLists)
 }
 

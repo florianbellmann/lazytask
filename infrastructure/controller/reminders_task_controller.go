@@ -1,10 +1,12 @@
 package infrastructure
 
+//TODO: hardening https://chatgpt.com/c/6818a8ec-47e4-800c-8c06-33b4672f7467
+
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"lazytask/domain"
+	"lazytask/entities"
 	"log"
 	"os"
 	"os/exec"
@@ -27,8 +29,8 @@ type Reminder struct {
 	Title    string       `json:"title"`
 }
 
-func (r Reminder) ToTask() domain.Task {
-	return domain.Task{
+func (r Reminder) ToTask() entities.Task {
+	return entities.Task{
 		DueDate:     r.DueDate,
 		Id:          r.ExternalID,
 		IsCompleted: r.IsCompleted,
@@ -39,7 +41,7 @@ func (r Reminder) ToTask() domain.Task {
 	}
 }
 
-func ReminderFromTask(t domain.Task) Reminder {
+func ReminderFromTask(t entities.Task) Reminder {
 	return Reminder{
 		DueDate:     t.DueDate,
 		ExternalID:  t.Id,
@@ -53,16 +55,16 @@ func ReminderFromTask(t domain.Task) Reminder {
 
 type ReminderList = string
 
-func ReminderListToList(r ReminderList) domain.List {
-	return domain.List{
+func ReminderListToList(r ReminderList) entities.List {
+	return entities.List{
 		Id: string(r),
-		// Since the reminder list is just a string, the domain.List will have the same
+		// Since the reminder list is just a string, the entities.List will have the same
 		// values for id and title. We are using the name as an ID for now.
 		Title: string(r),
 	}
 }
 
-func ListToReminderList(l domain.List) ReminderList {
+func ListToReminderList(l entities.List) ReminderList {
 	return ReminderList(l.Id)
 }
 
@@ -192,11 +194,12 @@ func parseJson[T any](output []byte) (T, error) {
 type ReminderTaskController struct{}
 
 func NewReminderTaskController() *ReminderTaskController {
+	log.Printf("Reminder controller initialized")
 	return &ReminderTaskController{}
 }
 
 // GetLists retrieves all task lists
-func (r ReminderTaskController) GetLists() []domain.List {
+func (r ReminderTaskController) GetLists() []entities.List {
 	reminderLists, err := execCommand[[]ReminderList]([]string{"show-lists"})
 	if err != nil {
 		log.Fatalf("Failed to get lists: %s", err)
@@ -206,8 +209,8 @@ func (r ReminderTaskController) GetLists() []domain.List {
 	return parseLists(reminderLists)
 }
 
-func parseLists(rl []ReminderList) []domain.List {
-	lists := []domain.List{}
+func parseLists(rl []ReminderList) []entities.List {
+	lists := []entities.List{}
 	for _, reminderList := range rl {
 		lists = append(lists, ReminderListToList(reminderList))
 	}
@@ -215,26 +218,26 @@ func parseLists(rl []ReminderList) []domain.List {
 	return lists
 }
 
-func (r ReminderTaskController) GetListById(listId string) (domain.List, error) {
+func (r ReminderTaskController) GetListById(listId string) (entities.List, error) {
 	lists := r.GetLists()
 
-	listIndex := slices.IndexFunc(lists, func(rl domain.List) bool {
+	listIndex := slices.IndexFunc(lists, func(rl entities.List) bool {
 		return rl.Id == listId
 	})
 
 	if listIndex == -1 {
-		return domain.List{}, errors.New("List not found")
+		return entities.List{}, errors.New("List not found")
 	}
 
 	return lists[listIndex], nil
 }
 
-func (r ReminderTaskController) GetTaskById(taskId string) (domain.Task, error) {
-	return domain.Task{}, errors.New("Not implemented")
+func (r ReminderTaskController) GetTaskById(taskId string) (entities.Task, error) {
+	return entities.Task{}, errors.New("Not implemented")
 }
 
 // GetTasksByList retrieves all tasks for a specific list
-func (r ReminderTaskController) GetTasksByList(listId string) []domain.Task {
+func (r ReminderTaskController) GetTasksByList(listId string) []entities.Task {
 
 	// TODO: reminders-cli can't handle lists with multiple workds yet
 	// return execCommand[[]do.Task]([]string{"show", "'" + listId + "'"})
@@ -247,8 +250,8 @@ func (r ReminderTaskController) GetTasksByList(listId string) []domain.Task {
 	return parseTasks(reminders)
 }
 
-func parseTasks(reminders []Reminder) []domain.Task {
-	tasks := []domain.Task{}
+func parseTasks(reminders []Reminder) []entities.Task {
+	tasks := []entities.Task{}
 	for _, reminder := range reminders {
 		tasks = append(tasks, reminder.ToTask())
 	}
@@ -257,7 +260,7 @@ func parseTasks(reminders []Reminder) []domain.Task {
 }
 
 // AddTask adds a new task
-func (r ReminderTaskController) AddTask(t domain.Task) error {
+func (r ReminderTaskController) AddTask(t entities.Task) error {
 	reminder := ReminderFromTask(t)
 
 	// commandString := []string{"add", reminder.List, "\"" + reminder.Title + "\""}
@@ -367,7 +370,7 @@ func (r ReminderTaskController) UncompleteTask(taskId string) error {
 }
 
 // Update a task
-func (r ReminderTaskController) UpdateTask(task domain.Task) error {
+func (r ReminderTaskController) UpdateTask(task entities.Task) error {
 	log.Printf("UpdateTask: Starting update for task ID: %s", task.Id)
 	log.Printf("UpdateTask: Task details - Title: %s, DueDate: %s", task.Title, task.DueDate)
 
@@ -390,7 +393,7 @@ func (r ReminderTaskController) UpdateTask(task domain.Task) error {
 	// First, get the current task to preserve all properties
 	log.Printf("UpdateTask: Fetching current task to preserve properties")
 	currentTasks := r.GetTasksByList(listName)
-	var currentTask domain.Task
+	var currentTask entities.Task
 	found := false
 
 	for _, t := range currentTasks {

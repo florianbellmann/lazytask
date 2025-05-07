@@ -8,8 +8,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"lazytask/application"
-	"lazytask/config"
-	"lazytask/domain"
+	"lazytask/entities"
+	"lazytask/utils"
 )
 
 // Define view modes
@@ -23,7 +23,7 @@ const (
 )
 
 type listItem struct {
-	task domain.Task
+	task entities.Task
 }
 
 func (l listItem) Title() string {
@@ -45,15 +45,15 @@ type model struct {
 	mode viewMode
 
 	// Data parts
-	lists []domain.List
+	lists []entities.List
 
 	activeList string
 
-	tasks       []domain.Task
-	taskService *application.TaskService
+	tasks      []entities.Task
+	appService application.AppService
 
 	// Temporary storage for operations like changing list
-	pendingTask domain.Task
+	pendingTask entities.Task
 
 	// Input
 
@@ -70,7 +70,7 @@ func TextInputInit() tea.Cmd {
 	return textinput.Blink
 }
 
-func NewModel(taskService *application.TaskService) model {
+func NewModel(appService application.AppService) model {
 	// var (
 	// 	delegateKeys = newDelegateKeyMap()
 	// 	listKeys     = newListKeyMap()
@@ -79,7 +79,7 @@ func NewModel(taskService *application.TaskService) model {
 	uiList := bubbleTeaList.New([]bubbleTeaList.Item{}, bubbleTeaList.NewDefaultDelegate(), 0, 0)
 	// delegate := newItemDelegate(delegateKeys)
 	// my List := list.New(items, delegate, 0, 0)
-	uiList.Title = config.GetConfig().Lists[0]
+	uiList.Title = utils.GetConfig().Lists[0]
 
 	uiList.Styles.Title = titleStyle
 	// myList.AdditionalFullHelpKeys = func() []key.Binding {
@@ -87,19 +87,19 @@ func NewModel(taskService *application.TaskService) model {
 	// }
 
 	return model{
-		mode:        listMode,
-		lists:       []domain.List{},
-		activeList:  config.GetConfig().Lists[0],
-		tasks:       []domain.Task{},
-		taskService: taskService,
-		listModel:   uiList,
+		mode:       listMode,
+		lists:      []entities.List{},
+		activeList: utils.GetConfig().Lists[0],
+		tasks:      []entities.Task{},
+		appService: appService,
+		listModel:  uiList,
 
 		// delegateKeys: delegateKeys,
 	}
 }
 
 // Load tasks into the Fancy List
-func (m *model) LoadTasks(tasks []domain.Task) {
+func (m *model) LoadTasks(tasks []entities.Task) {
 	// items := make([]list.Item, len(tasks))
 	// for i := 0; i < len(tasks); i++ {
 	// 	log.Printf("Task: %v", tasks[i].Title)

@@ -1,26 +1,13 @@
-package domain
+package entities
 
-type TaskController interface {
-	// Lists
+type Controller interface {
+	// Get all task lists
 	GetLists() []List
+	// Get a specific task list by its ID
 	GetListById(listId string) (List, error)
 
 	// Tasks
 	GetTaskById(taskId string) (Task, error)
-	GetTasksByList(listId string) []Task
-
-	AddTask(task Task) error
-
-	CompleteTask(taskId string) error
-	UncompleteTask(taskId string) error
-
-	UpdateTask(task Task) error
-	MoveTaskToList(taskId string, targetListId string) error
-}
-
-type TaskService interface {
-	// Get all task lists
-	GetLists() []List
 	// Get tasks by a specific list ID
 	GetTasksByList(listId string) []Task
 
@@ -36,6 +23,10 @@ type TaskService interface {
 	// Move task to another list
 	MoveTaskToList(taskId string, targetListId string) error
 }
+
+// Interface for application state. Replicated the interface
+// from the controller to avoid mismatching functionality.
+type Repository = Controller
 
 type Ui interface {
 	Init() error

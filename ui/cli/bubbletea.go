@@ -3,8 +3,8 @@ package cli
 import (
 	"fmt"
 	"lazytask/application"
-	"lazytask/config"
-	"lazytask/domain"
+	"lazytask/entities"
+	"lazytask/utils"
 	"log"
 	"os"
 	"time"
@@ -18,11 +18,11 @@ type (
 )
 
 type BubbleTeaApp struct {
-	taskService application.TaskService
+	appService application.AppService
 }
 
-func NewBubbleTeaApp(ts application.TaskService) *BubbleTeaApp {
-	return &BubbleTeaApp{taskService: ts}
+func NewBubbleTeaApp(ts application.AppService) *BubbleTeaApp {
+	return &BubbleTeaApp{appService: ts}
 
 }
 
@@ -99,17 +99,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.inputText.Reset()
 				m.mode = listMode
 
-				newTask := domain.Task{
+				newTask := entities.Task{
 					Title:       value,
 					IsCompleted: false,
 					DueDate:     time.Now(),
-					ListId:      config.GetConfig().Lists[0],
+					ListId:      utils.GetConfig().Lists[0],
 					Priority:    0, // no prio
 					// Description: "New task description",
 					// DueDate: time.Time{}, // no date
 					Index: -1, // not on the list yet
 				}
-				m.taskService.AddTask(newTask)
+				m.appService.AddTask(newTask)
 				insCmd := m.listModel.InsertItem(-1, listItem{task: newTask})
 
 				return m, insCmd
@@ -142,7 +142,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.mode = listMode
 
 				// TODO: implementation of card editing missing in reminders-cli
-				// newTask := domain.Task{
+				// newTask := entities.Task{
 				// 	Title:       value,
 				// 	IsCompleted: false,
 				// 	ListId:      config.GetConfig().lists[0],
@@ -151,7 +151,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// 	// DueDate: time.Time{}, // no date
 				// 	Index: -1, // not on the list yet
 				// }
-				// m.taskService.AddTask(newTask)
+				// m.appService.AddTask(newTask)
 				// insCmd := m.listModel.InsertItem(-1, listItem{task: newTask})
 
 				// return m, insCmd
@@ -200,8 +200,9 @@ func (m model) View() string {
 }
 
 func (b BubbleTeaApp) Run() error {
-	model := NewModel(&b.taskService)
-	model.LoadTasks(b.taskService.GetTasksByList(config.GetConfig().Lists[0]))
+	model := NewModel(b.appService)
+	model.LoadTasks(b.appService.GetTasksByList(utils.GetConfig().Lists[0]))
+
 	process := tea.NewProgram(model, tea.WithAltScreen())
 
 	if _, err := process.Run(); err != nil {

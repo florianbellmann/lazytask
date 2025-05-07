@@ -2,7 +2,7 @@ package cli
 
 //
 // import (
-// 	"lazytask/domain"
+// 	"lazytask/entities"
 //
 // 	key "github.com/charmbracelet/bubbles/key"
 // 	list "github.com/charmbracelet/bubbles/list"
@@ -165,7 +165,7 @@ package cli
 // 		newItem := listItem{title: "New Item from lazytask", desc: "This is a new item."}
 //
 // 		// TODO:
-// 		// if _, err = domain.LazyTask.AddTask(newItem); err != nil {
+// 		// if _, err = entities.LazyTask.AddTask(newItem); err != nil {
 // 		insCmd := m.list.InsertItem(0, newItem)
 // 		statusCmd := m.list.NewStatusMessage(statusMessageStyle("Added " + newItem.Title()))
 // 		return m, tea.Batch(insCmd, statusCmd)

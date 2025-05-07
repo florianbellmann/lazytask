@@ -3,7 +3,7 @@ package infrastructure
 import (
 	"encoding/json"
 	"errors"
-	"lazytask/domain"
+	"lazytask/entities"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// Test parsing of ReminderLists to domain.Lists
+// Test parsing of ReminderLists to entities.Lists
 func TestListParsing(t *testing.T) {
 	t.Skip("Skipping as it wasn't relevant right now")
 	// TODO: implement
@@ -84,7 +84,7 @@ func TestReminderToTask(t *testing.T) {
 
 func TestTaskToReminder(t *testing.T) {
 	dueDate := time.Now()
-	task := domain.Task{
+	task := entities.Task{
 		DueDate:     dueDate,
 		Id:          "test-id",
 		IsCompleted: true,
@@ -132,7 +132,7 @@ func TestReminderListToList(t *testing.T) {
 }
 
 func TestListToReminderList(t *testing.T) {
-	list := domain.List{
+	list := entities.List{
 		Id:    "TestList",
 		Title: "Test List Title",
 	}
@@ -185,17 +185,17 @@ func TestParseTasks(t *testing.T) {
 
 // Mock controller implementation for testing
 type MockReminderTaskController struct {
-	lists []domain.List
-	tasks map[string][]domain.Task
+	lists []entities.List
+	tasks map[string][]entities.Task
 }
 
 func NewMockReminderTaskController() *MockReminderTaskController {
 	return &MockReminderTaskController{
-		lists: []domain.List{
+		lists: []entities.List{
 			{Id: "List1", Title: "List 1"},
 			{Id: "List2", Title: "List 2"},
 		},
-		tasks: map[string][]domain.Task{
+		tasks: map[string][]entities.Task{
 			"List1": {
 				{Id: "task1", Title: "Task 1", ListId: "List1"},
 				{Id: "task2", Title: "Task 2", ListId: "List1"},
@@ -207,24 +207,24 @@ func NewMockReminderTaskController() *MockReminderTaskController {
 	}
 }
 
-func (m *MockReminderTaskController) GetLists() []domain.List {
+func (m *MockReminderTaskController) GetLists() []entities.List {
 	return m.lists
 }
 
-func (m *MockReminderTaskController) GetListById(listId string) (domain.List, error) {
+func (m *MockReminderTaskController) GetListById(listId string) (entities.List, error) {
 	for _, list := range m.lists {
 		if list.Id == listId {
 			return list, nil
 		}
 	}
-	return domain.List{}, errors.New("List not found")
+	return entities.List{}, errors.New("List not found")
 }
 
-func (m *MockReminderTaskController) GetTasksByList(listId string) []domain.Task {
+func (m *MockReminderTaskController) GetTasksByList(listId string) []entities.Task {
 	return m.tasks[listId]
 }
 
-func (m *MockReminderTaskController) GetTaskById(taskId string) (domain.Task, error) {
+func (m *MockReminderTaskController) GetTaskById(taskId string) (entities.Task, error) {
 	for _, tasks := range m.tasks {
 		for _, task := range tasks {
 			if task.Id == taskId {
@@ -232,12 +232,12 @@ func (m *MockReminderTaskController) GetTaskById(taskId string) (domain.Task, er
 			}
 		}
 	}
-	return domain.Task{}, errors.New("Task not found")
+	return entities.Task{}, errors.New("Task not found")
 }
 
-func (m *MockReminderTaskController) AddTask(task domain.Task) error {
+func (m *MockReminderTaskController) AddTask(task entities.Task) error {
 	if _, ok := m.tasks[task.ListId]; !ok {
-		m.tasks[task.ListId] = []domain.Task{}
+		m.tasks[task.ListId] = []entities.Task{}
 	}
 	m.tasks[task.ListId] = append(m.tasks[task.ListId], task)
 	return nil
@@ -267,7 +267,7 @@ func (m *MockReminderTaskController) UncompleteTask(taskId string) error {
 	return errors.New("Task not found")
 }
 
-func (m *MockReminderTaskController) UpdateTask(task domain.Task) error {
+func (m *MockReminderTaskController) UpdateTask(task entities.Task) error {
 	for listId, tasks := range m.tasks {
 		for i, t := range tasks {
 			if t.Id == task.Id {
@@ -280,7 +280,7 @@ func (m *MockReminderTaskController) UpdateTask(task domain.Task) error {
 }
 
 func (m *MockReminderTaskController) MoveTaskToList(taskId string, targetListId string) error {
-	var taskToMove domain.Task
+	var taskToMove entities.Task
 	var sourceListId string
 	var taskIndex int
 
@@ -375,7 +375,7 @@ func TestMockControllerAddTask(t *testing.T) {
 	controller := NewMockReminderTaskController()
 
 	// Add task to existing list
-	newTask := domain.Task{
+	newTask := entities.Task{
 		Id:     "task4",
 		Title:  "Task 4",
 		ListId: "List1",
@@ -392,7 +392,7 @@ func TestMockControllerAddTask(t *testing.T) {
 	}
 
 	// Add task to new list
-	newTask2 := domain.Task{
+	newTask2 := entities.Task{
 		Id:     "task5",
 		Title:  "Task 5",
 		ListId: "List3",
@@ -456,7 +456,7 @@ func TestMockControllerUpdateTask(t *testing.T) {
 	controller := NewMockReminderTaskController()
 
 	// Update task
-	updatedTask := domain.Task{
+	updatedTask := entities.Task{
 		Id:          "task1",
 		Title:       "Updated Task 1",
 		Description: "Updated description",
@@ -488,7 +488,7 @@ func TestMockControllerUpdateTask(t *testing.T) {
 	}
 
 	// Try to update non-existent task
-	nonExistentTask := domain.Task{
+	nonExistentTask := entities.Task{
 		Id:    "nonexistent",
 		Title: "Non-existent Task",
 	}

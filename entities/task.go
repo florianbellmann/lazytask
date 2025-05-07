@@ -1,8 +1,8 @@
-package domain
+package entities
 
 import "time"
 
-// Task represents the core domain task
+// Task represents the core entities task
 type Task struct {
 	DueDate     time.Time
 	Id          string

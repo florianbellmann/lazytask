@@ -1,8 +1,8 @@
 package cli
 
 import (
-	"lazytask/config"
-	"lazytask/domain"
+	"lazytask/entities"
+	"lazytask/utils"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -21,7 +21,7 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 	case "c": // Mark task as completed
 		if selectedTask, ok := m.listModel.SelectedItem().(listItem); ok {
 			// TODO: check if this worked and then update the ui
-			m.taskService.CompleteTask(selectedTask.task.Id)
+			m.appService.CompleteTask(selectedTask.task.Id)
 
 			curr := m.listModel.Index()
 			m.listModel.RemoveItem(curr)
@@ -38,7 +38,7 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 		return m, textinput.Blink
 
 		// this is a working first example
-		// newTask := domain.Task{
+		// newTask := entities.Task{
 		// 	Title:       "Newtask",
 		// 	IsCompleted: false,
 		// 	ListId:      config.getConfig().lists[0]
@@ -47,7 +47,7 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 		// 	DueDate:     time.Time{}, // no date
 		// 	Index:       -1,          // not on the list yet
 		// }
-		// m.taskService.AddTask(newTask)
+		// m.appService.AddTask(newTask)
 		// insCmd := m.listModel.InsertItem(-1, listItem{task: newTask})
 		// return m, inced
 
@@ -96,7 +96,7 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 	//
 	// 	// Update the task
 	// 	log.Printf("KeyPress 'L': Calling UpdateTask")
-	// 	err := m.taskService.UpdateTask(task)
+	// 	err := m.appService.UpdateTask(task)
 	// 	if err != nil {
 	// 		log.Printf("KeyPress 'L': ERROR updating task: %v", err)
 	// 	} else {
@@ -105,7 +105,7 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 	//
 	// 	// Refresh the list view
 	// 	log.Printf("KeyPress 'L': Refreshing list view for list: %s", m.activeList)
-	// 	m.LoadTasks(m.taskService.GetTasksByList(m.activeList))
+	// 	m.LoadTasks(m.appService.GetTasksByList(m.activeList))
 	// } else {
 	// 	log.Printf("KeyPress 'L': No task selected or invalid selection")
 	// }
@@ -121,7 +121,7 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 			task := selectedTask.task
 
 			// Get all available lists for options
-			lists := m.taskService.GetLists()
+			lists := m.appService.GetLists()
 			availableListsText := ""
 			for i, list := range lists {
 				if i > 0 {
@@ -160,38 +160,38 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 	case "0":
 		// Show all tasks view
 		m.activeList = "All"
-		allTasks := []domain.Task{}
-		lists := m.taskService.GetLists()
+		allTasks := []entities.Task{}
+		lists := m.appService.GetLists()
 		for _, list := range lists {
-			listTasks := m.taskService.GetTasksByList(list.Id)
+			listTasks := m.appService.GetTasksByList(list.Id)
 			allTasks = append(allTasks, listTasks...)
 		}
 		m.LoadTasks(allTasks)
 		m.listModel.Title = "All Tasks"
 		return m, nil
 	case "1":
-		newActiveList := config.GetConfig().Lists[0]
+		newActiveList := utils.GetConfig().Lists[0]
 		m.activeList = newActiveList
-		m.LoadTasks(m.taskService.GetTasksByList(newActiveList))
+		m.LoadTasks(m.appService.GetTasksByList(newActiveList))
 		m.listModel.Title = newActiveList
 		return m, nil
 	case "2":
-		newActiveList := config.GetConfig().Lists[1]
+		newActiveList := utils.GetConfig().Lists[1]
 		m.activeList = newActiveList
-		m.LoadTasks(m.taskService.GetTasksByList(newActiveList))
+		m.LoadTasks(m.appService.GetTasksByList(newActiveList))
 		m.listModel.Title = newActiveList
 		return m, nil
 	case "3":
-		newActiveList := config.GetConfig().Lists[2]
+		newActiveList := utils.GetConfig().Lists[2]
 		m.activeList = newActiveList
-		m.LoadTasks(m.taskService.GetTasksByList(newActiveList))
+		m.LoadTasks(m.appService.GetTasksByList(newActiveList))
 		m.listModel.Title = newActiveList
 		return m, nil
 	case "4":
 		// TODO: add failsafe if not that many lists are present
-		newActiveList := config.GetConfig().Lists[3]
+		newActiveList := utils.GetConfig().Lists[3]
 		m.activeList = newActiveList
-		m.LoadTasks(m.taskService.GetTasksByList(newActiveList))
+		m.LoadTasks(m.appService.GetTasksByList(newActiveList))
 		m.listModel.Title = newActiveList
 		return m, nil
 	}
@@ -201,4 +201,3 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 	m.listModel, cmd = m.listModel.Update(msg)
 	return m, cmd
 }
-

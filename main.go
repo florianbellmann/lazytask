@@ -23,7 +23,7 @@ func main() {
 	appService := application.NewAppService(reminderCtrl, inMemoryRepository)
 
 	// Run the UI
-	ui := ui.NewCli(*appService)
+	ui := ui.NewUi(*appService)
 	if err := ui.Run(); err != nil {
 		log.Fatalf("Error running UI: %v", err)
 	}

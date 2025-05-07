@@ -12,7 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// TODO: is this used?
+// TODO: check usage
 type (
 	errMsg error
 )
@@ -27,17 +27,26 @@ func NewBubbleTeaApp(ts application.AppService) *BubbleTeaApp {
 }
 
 func (m model) Init() tea.Cmd {
-	// switch m.mode {
-	// case listMode:
-	// 	return nil
-	// case textInputMode:
-	// 	return TextInputInit()
-	// }
+	return nil
+}
+
+// Run the whole UI CLI application
+func (b BubbleTeaApp) Run() error {
+	model := NewUIModel(b.appService)
+	model.LoadTasks(b.appService.GetTasksByList(utils.GetConfig().Lists[0]))
+
+	process := tea.NewProgram(model, tea.WithAltScreen())
+
+	if _, err := process.Run(); err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+
 	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch m.mode {
+	switch m.viewMode {
 	case listMode:
 		var cmds []tea.Cmd
 
@@ -91,13 +100,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.Type {
 			case tea.KeyCtrlC, tea.KeyEsc:
 				m.inputText.Reset()
-				m.mode = listMode
+				m.viewMode = listMode
 				return m, nil
 
 			case tea.KeyEnter:
 				value := m.inputText.Value()
 				m.inputText.Reset()
-				m.mode = listMode
+				m.viewMode = listMode
 
 				newTask := entities.Task{
 					Title:       value,
@@ -133,13 +142,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.Type {
 			case tea.KeyCtrlC, tea.KeyEsc:
 				m.inputText.Reset()
-				m.mode = listMode
+				m.viewMode = listMode
 				return m, nil
 
 			case tea.KeyEnter:
 				// value := m.inputText.Value()
 				m.inputText.Reset()
-				m.mode = listMode
+				m.viewMode = listMode
 
 				// TODO: implementation of card editing missing in reminders-cli
 				// newTask := entities.Task{
@@ -169,15 +178,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	}
+
 	return m, nil
 }
 
+// Main function of a bubble tea app, determining what to show
 func (m model) View() string {
 	if m.err != nil {
+		log.Fatalf("Error: %v", m.err)
 		return "Error: " + m.err.Error()
 	}
 
-	switch m.mode {
+	switch m.viewMode {
 	case listMode:
 		// return m.listView.View()
 		return appStyle.Render(m.listModel.View())
@@ -197,18 +209,4 @@ func (m model) View() string {
 		) + "\n"
 	}
 	return ""
-}
-
-func (b BubbleTeaApp) Run() error {
-	model := NewModel(b.appService)
-	model.LoadTasks(b.appService.GetTasksByList(utils.GetConfig().Lists[0]))
-
-	process := tea.NewProgram(model, tea.WithAltScreen())
-
-	if _, err := process.Run(); err != nil {
-		log.Fatal(err)
-		os.Exit(1)
-	}
-
-	return nil
 }

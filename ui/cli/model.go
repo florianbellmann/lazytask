@@ -42,7 +42,9 @@ type model struct {
 	// Cli content
 	inputText textinput.Model // TODO: rename me
 
-	mode viewMode
+	// Viewmode determining what to show in the UI
+	// TODO: figure out which modes I need when building a real UI
+	viewMode viewMode
 
 	// Data parts
 	lists []entities.List
@@ -70,7 +72,7 @@ func TextInputInit() tea.Cmd {
 	return textinput.Blink
 }
 
-func NewModel(appService application.AppService) model {
+func NewUIModel(appService application.AppService) model {
 	// var (
 	// 	delegateKeys = newDelegateKeyMap()
 	// 	listKeys     = newListKeyMap()
@@ -87,7 +89,7 @@ func NewModel(appService application.AppService) model {
 	// }
 
 	return model{
-		mode:       listMode,
+		viewMode:   listMode,
 		lists:      []entities.List{},
 		activeList: utils.GetConfig().Lists[0],
 		tasks:      []entities.Task{},
@@ -100,21 +102,13 @@ func NewModel(appService application.AppService) model {
 
 // Load tasks into the Fancy List
 func (m *model) LoadTasks(tasks []entities.Task) {
-	// items := make([]list.Item, len(tasks))
-	// for i := 0; i < len(tasks); i++ {
-	// 	log.Printf("Task: %v", tasks[i].Title)
-	// 	items[i] = listItem{title: tasks[i].Title + " | " + tasks[i].DueDate.String() + " | " + tasks[i].List, desc: tasks[i].Description}
-	// }
-
-	// log.Printf("Items: %v", items)
-
-	// TODO: load only overdue tasks. how does this work with the indexes?
-
 	items := []bubbleTeaList.Item{}
 	for _, task := range tasks {
 		// build a time.Time object of today 23:59
 		now := time.Now()
 		endOfToday := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, now.Location())
+
+		// Filter out tasks that are not due today
 		if !task.DueDate.IsZero() && task.DueDate.Before(endOfToday) {
 			items = append(items, listItem{task: task})
 		}

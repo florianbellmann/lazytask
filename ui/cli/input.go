@@ -34,7 +34,7 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 		m.inputText.CharLimit = 156
 		m.inputText.Width = 20
 
-		m.mode = textInputMode
+		m.viewMode = textInputMode
 		return m, textinput.Blink
 
 		// this is a working first example
@@ -61,7 +61,7 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 		m.inputText.CharLimit = 156
 		m.inputText.Width = 20
 
-		m.mode = textInputMode
+		m.viewMode = textInputMode
 		return m, textinput.Blink
 	// TODO: implement
 	// https://github.com/EthanEFung/bubble-datepicker
@@ -139,7 +139,7 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 
 			// Store metadata in the model for the update function
 			// We're using special input mode to signal this is a list change operation
-			m.mode = listChangeMode
+			m.viewMode = listChangeMode
 
 			// Keep reference to the task we're updating
 			m.pendingTask = task

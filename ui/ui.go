@@ -11,9 +11,14 @@ type Ui struct {
 	cli *cli.BubbleTeaApp
 }
 
-func NewCli(as application.AppService) *cli.BubbleTeaApp {
+func NewUi(as application.AppService) *Ui {
 	log.Printf("Initializing UI...")
-	return cli.NewBubbleTeaApp(as)
+
+	ui := &Ui{
+		cli: cli.NewBubbleTeaApp(as),
+	}
+
+	return ui
 }
 
 func (u *Ui) Run() error {

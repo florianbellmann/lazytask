@@ -6,6 +6,7 @@ import (
 	"lazytask/entities"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -311,7 +312,7 @@ func (m *MockReminderTaskController) MoveTaskToList(taskId string, targetListId 
 	}
 
 	// Remove task from source list
-	m.tasks[sourceListId] = append(m.tasks[sourceListId][:taskIndex], m.tasks[sourceListId][taskIndex+1:]...)
+	m.tasks[sourceListId] = slices.Delete(m.tasks[sourceListId], taskIndex, taskIndex+1)
 
 	// Update task with new list ID
 	taskToMove.ListId = targetListId

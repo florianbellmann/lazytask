@@ -1,0 +1,13 @@
+# ./.tmuxinator.yml
+
+name: lazytask
+root: ./
+
+windows:
+  - editor:
+      layout: main-vertical
+      panes:
+        - nvim
+        - ls
+        - ls
+        - fd --extension go . | entr hotreload

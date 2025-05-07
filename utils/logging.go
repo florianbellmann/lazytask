@@ -28,9 +28,10 @@ func setupLogFiles() (*os.File, error) {
 
 	// Create a new log file with timestamp
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	logFileName := filepath.Join(logsDir, "lazytask_"+timestamp+".log")
+	logFileName := "lazytask_" + timestamp + ".log"
+	logFileNameInclPath := filepath.Join(logsDir, logFileName)
 
-	logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	logFile, err := os.OpenFile(logFileNameInclPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open log file: %w", err)
 	}
@@ -44,7 +45,7 @@ func setupLogFiles() (*os.File, error) {
 	_ = os.Remove(latestLogLink) // Remove existing symlink if it exists
 	_ = os.Symlink(logFileName, latestLogLink)
 
-	log.Printf("Logging initialized - writing to %s", logFileName)
+	log.Printf("Logging initialized - writing to %s", logFileNameInclPath)
 
 	return logFile, nil
 }

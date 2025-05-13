@@ -24,3 +24,16 @@ require("overseer").register_template({
 		}
 	end,
 })
+require("overseer").register_template({
+	name = "Lint lazytask",
+	params = {},
+	condition = {
+		dir = vim.fn.getcwd(),
+	},
+	builder = function()
+		return {
+			cmd = { "golangci-lint" },
+			args = { "run" },
+		}
+	end,
+})

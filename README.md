@@ -22,19 +22,17 @@ Because of time constraints this project is in a prototype state for now.
   - [x] Completing a task
 - [x] Basic debugging with attach to process (vscode only)
 - [x] Testing with recurring tasks
-- [x] Switching between lists 
+- [x] Switching between lists
 
 ### Further development
 
 - [x] Testing and stability v0.1
 - [x] Restructure app
 - [x] hot reloading https://github.com/charmbracelet/bubbletea/issues/150
-- [ ] Restructure CLI part
 - [ ] Implement app logging
 - [ ] use message types for commands
-      how to do comms with UI? 
-	  https://chatgpt.com/c/681913f8-6bf4-800c-8f34-4bc08d042362
-- [ ] User testing & feedback
+      how to do comms with UI?
+      https://chatgpt.com/c/681913f8-6bf4-800c-8f34-4bc08d042362
 
 - [ ] Implement commands
   - [ ] Edit dates
@@ -45,13 +43,16 @@ Because of time constraints this project is in a prototype state for now.
   - [ ] Edit prios
   - [ ] Edit flags
   - [ ] Refresh
-- [ ] Handling of all tasks, not only overdue
+- [ ] User testing & feedback
 
 - [ ] Building a basic ui
       https://leg100.github.io/en/posts/building-bubbletea-programs/
       https://github.com/dlvhdr/gh-dash
       https://github.com/bensadeh/circumflex
       Date picking: https://www.reddit.com/r/commandline/comments/1hrlrck/tui_datepicker/
+- [ ] Restructure CLI part
+
+- [ ] Handling of all tasks, not only overdue
 - [ ] Async task handling with busy spinners, maybe add command queue
 - [ ] Fix help pages initial app functionalities of fancy list etc
 - [ ] Display of further infos: Tags, recurring, flags, prios, ...
@@ -74,11 +75,12 @@ Because of time constraints this project is in a prototype state for now.
 
 LazyTask can be configured using environment variables:
 
-| Variable | Description | Default |
-| --- | --- | --- |
-| `LISTS` | Comma-separated list of reminder lists to use | `develop` |
+| Variable | Description                                   | Default   |
+| -------- | --------------------------------------------- | --------- |
+| `LISTS`  | Comma-separated list of reminder lists to use | `develop` |
 
 Example:
+
 ```sh
 LISTS=work,personal,shopping .build/lazytask
 ```

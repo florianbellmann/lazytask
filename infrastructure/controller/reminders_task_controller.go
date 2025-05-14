@@ -125,7 +125,7 @@ func execCommandWithoutOutput(commandArgs []string) error {
 	}
 
 	if err != nil {
-		log.Printf("Command failed: %s %v - Error: %v", EXEC_PATH, commandArgs, err)
+		log.Fatalf("Command failed: %s %v - Error: %v", EXEC_PATH, commandArgs, err)
 		return fmt.Errorf("failed to run command: %s - %w", string(output), err)
 	}
 
@@ -140,7 +140,7 @@ func execCommand[T any](commandArgs []string) (T, error) {
 
 	EXEC_PATH, execErr := getExecutablePath()
 	if execErr != nil {
-		log.Printf("Executable path resolving failed: %v", execErr)
+		log.Fatalf("Executable path resolving failed: %v", execErr)
 		return *new(T), fmt.Errorf("executable path resolving failed: %w", execErr)
 	}
 
@@ -164,7 +164,7 @@ func execCommand[T any](commandArgs []string) (T, error) {
 	}
 
 	if err != nil {
-		log.Printf("JSON command failed: %s %v - Error: %v", EXEC_PATH, commandArgs, err)
+		log.Fatalf("JSON command failed: %s %v - Error: %v", EXEC_PATH, commandArgs, err)
 		return *new(T), fmt.Errorf("failed to run command: %s - %w", string(output), err)
 	}
 
@@ -180,8 +180,8 @@ func parseJson[T any](output []byte) (T, error) {
 	var result T
 	err := json.Unmarshal(output, &result)
 	if err != nil {
-		log.Printf("Failed to parse JSON: %v", err)
-		log.Printf("Invalid JSON: %s", string(output))
+		log.Fatalf("Failed to parse JSON: %v", err)
+		log.Fatalf("Invalid JSON: %s", string(output))
 		return *new(T), fmt.Errorf("failed to parse JSON response: %w", err)
 	}
 
@@ -337,7 +337,7 @@ func (r ReminderTaskController) CompleteTask(taskId string) error {
 	err = execCommandWithoutOutput([]string{"complete", listName, strconv.Itoa(reminderIndex)})
 
 	if err != nil {
-		log.Printf("Failed to complete task: %s", err)
+		log.Fatalf("Failed to complete task: %s", err)
 		return fmt.Errorf("failed to complete task: %w", err)
 	}
 
@@ -372,21 +372,21 @@ func (r ReminderTaskController) UncompleteTask(taskId string) error {
 
 // Update a task
 func (r ReminderTaskController) UpdateTask(task entities.Task) error {
-	log.Printf("UpdateTask: Starting update for task ID: %s", task.Id)
-	log.Printf("UpdateTask: Task details - Title: %s, DueDate: %s", task.Title, task.DueDate)
+	// log.Printf("UpdateTask: Starting update for task ID: %s", task.Id)
+	// log.Printf("UpdateTask: Task details - Title: %s, DueDate: %s", task.Title, task.DueDate)
 
 	// Find the correct list and index for the task
 	listName, reminderIndex, err := getListAndIndexForCompletion(task.Id)
 	if err != nil {
-		log.Printf("UpdateTask: Failed to find task for update: %s", err)
+		log.Fatalf("UpdateTask: Failed to find task for update: %s", err)
 		return fmt.Errorf("failed to find task for update: %w", err)
 	}
 
-	log.Printf("UpdateTask: Found task at list: %s, index: %d", listName, reminderIndex)
+	// log.Printf("UpdateTask: Found task at list: %s, index: %d", listName, reminderIndex)
 
 	// Convert domain task to Reminder
 	reminder := ReminderFromTask(task)
-	log.Printf("UpdateTask: Converted to reminder with due date: %v", reminder.DueDate)
+	// log.Printf("UpdateTask: Converted to reminder with due date: %v", reminder.DueDate)
 
 	// Using a simpler approach - delete and recreate instead of trying to edit
 	// This is more reliable given the CLI.swift limitations
@@ -401,24 +401,24 @@ func (r ReminderTaskController) UpdateTask(task entities.Task) error {
 		if t.Id == task.Id {
 			currentTask = t
 			found = true
-			log.Printf("UpdateTask: Found current task: %+v", currentTask)
+			// log.Printf("UpdateTask: Found current task: %+v", currentTask)
 			break
 		}
 	}
 
 	if !found {
-		log.Printf("UpdateTask: ERROR - Task not found in current tasks")
+		log.Fatalf("UpdateTask: ERROR - Task not found in current tasks")
 		return fmt.Errorf("task not found for update")
 	}
 
 	// Delete the current task
-	log.Printf("UpdateTask: Deleting task at index %d from list %s", reminderIndex, listName)
+	// log.Printf("UpdateTask: Deleting task at index %d from list %s", reminderIndex, listName)
 	deleteArgs := []string{"delete", listName, strconv.Itoa(reminderIndex)}
-	log.Printf("UpdateTask: Delete command: %v", deleteArgs)
+	// log.Printf("UpdateTask: Delete command: %v", deleteArgs)
 
 	err = execCommandWithoutOutput(deleteArgs)
 	if err != nil {
-		log.Printf("UpdateTask: Failed to delete task: %s", err)
+		log.Fatalf("UpdateTask: Failed to delete task: %s", err)
 		return fmt.Errorf("failed to delete task for update: %w", err)
 	}
 
@@ -431,7 +431,7 @@ func (r ReminderTaskController) UpdateTask(task entities.Task) error {
 
 	// Create the add command
 	addArgs := []string{"add", listName, title}
-	log.Printf("UpdateTask: Creating new task with title: %s", title)
+	// log.Printf("UpdateTask: Creating new task with title: %s", title)
 
 	// Add notes
 	description := currentTask.Description
@@ -440,7 +440,7 @@ func (r ReminderTaskController) UpdateTask(task entities.Task) error {
 	}
 	if description != "" {
 		addArgs = append(addArgs, "--notes", description)
-		log.Printf("UpdateTask: Adding notes: %s", description)
+		// log.Printf("UpdateTask: Adding notes: %s", description)
 	}
 
 	// Add the due date (either the new one or preserve the old one)
@@ -451,7 +451,7 @@ func (r ReminderTaskController) UpdateTask(task entities.Task) error {
 	if !dueDate.IsZero() {
 		dateString := dueDate.Format("2006-01-02")
 		addArgs = append(addArgs, "--due-date", dateString)
-		log.Printf("UpdateTask: Setting due date: %s", dateString)
+		// log.Printf("UpdateTask: Setting due date: %s", dateString)
 	}
 
 	// Add priority
@@ -469,20 +469,20 @@ func (r ReminderTaskController) UpdateTask(task entities.Task) error {
 			prioString = "low"
 		}
 		addArgs = append(addArgs, "--priority", prioString)
-		log.Printf("UpdateTask: Setting priority: %s", prioString)
+		// log.Printf("UpdateTask: Setting priority: %s", prioString)
 	}
 
 	// Log the full command we're about to execute
-	log.Printf("UpdateTask: Running add command: %v", addArgs)
+	// log.Printf("UpdateTask: Running add command: %v", addArgs)
 
 	// Execute the add command to recreate the task
 	_, err = execCommand[Reminder](addArgs)
 	if err != nil {
-		log.Printf("UpdateTask: Failed to recreate task: %s", err)
+		log.Fatalf("UpdateTask: Failed to recreate task: %s", err)
 		return fmt.Errorf("failed to recreate task: %w", err)
 	}
 
-	log.Printf("UpdateTask: Task successfully updated")
+	// log.Printf("UpdateTask: Task successfully updated")
 	return nil
 }
 

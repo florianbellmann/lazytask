@@ -9,13 +9,12 @@ import (
 )
 
 func InitLogging() {
-	logFile, err := setupLogFiles()
+	_, err := setupLogFiles()
 	if err != nil {
 		fmt.Printf("Error setting up logging: %v\n", err)
 		// Continue with console logging
-	} else {
-		defer logFile.Close()
 	}
+	// We don't store or close the file pointer to keep logging active
 }
 
 // setupLogFiles configures logging to write to a file

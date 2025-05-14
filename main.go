@@ -10,12 +10,13 @@ import (
 )
 
 func main() {
-	// Read configs
-	appConfig := utils.GetConfig()
-	log.Printf("Configuration loaded - Lists: %v", appConfig.Lists)
 	// Set up logging
 	utils.InitLogging()
 	log.Printf("=== LazyTask Starting ===")
+
+	// Read configs
+	appConfig := utils.GetConfig()
+	log.Printf("Configuration loaded - Lists: %v", appConfig.Lists)
 
 	// Set up the application with DI
 	reminderCtrl := ctrl.NewReminderTaskController()

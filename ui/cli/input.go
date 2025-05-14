@@ -8,48 +8,60 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// TODO: check usage
 type CompleteTaskMsg struct {
 	taskID string
 }
 
+// TODO: check usage
 type ErrorMsg struct {
 	err error
+}
+
+// TODO: does this need an error return type?
+func handleArchiveTask(m *model, msg tea.Msg) {
+	if selectedTask, ok := m.listModel.SelectedItem().(listItem); ok {
+		// TODO: check if this worked and then update the ui
+		m.appService.CompleteTask(selectedTask.task.Id)
+
+		curr := m.listModel.Index()
+		m.listModel.RemoveItem(curr)
+	}
+}
+
+// TODO: does this need an error return type?
+func handleAddTask(m *model, msg tea.Msg) {
+	// TODO: add dialog
+	m.inputText = textinput.New()
+	m.inputText.Placeholder = "Card title"
+	m.inputText.Focus()
+	m.inputText.CharLimit = 156
+	m.inputText.Width = 20
+
+	m.viewMode = textInputMode
+
+	// this is a working first example
+	// newTask := entities.Task{
+	// 	Title:       "Newtask",
+	// 	IsCompleted: false,
+	// 	ListId:      config.getConfig().lists[0]
+	// 	Priority:    0, // no prio
+	// 	Description: "New task description",
+	// 	DueDate:     time.Time{}, // no date
+	// 	Index:       -1,          // not on the list yet
+	// }
+	// m.appService.AddTask(newTask)
+	// insCmd := m.listModel.InsertItem(-1, listItem{task: newTask})
+	// return m, inced
 }
 
 func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 	switch msg.String() {
 	case "c": // Mark task as completed
-		if selectedTask, ok := m.listModel.SelectedItem().(listItem); ok {
-			// TODO: check if this worked and then update the ui
-			m.appService.CompleteTask(selectedTask.task.Id)
-
-			curr := m.listModel.Index()
-			m.listModel.RemoveItem(curr)
-		}
+		handleArchiveTask(&m, msg)
 	case "a": // add task
-		// TODO: add dialog
-		m.inputText = textinput.New()
-		m.inputText.Placeholder = "Card title"
-		m.inputText.Focus()
-		m.inputText.CharLimit = 156
-		m.inputText.Width = 20
-
-		m.viewMode = textInputMode
+		handleAddTask(&m, msg)
 		return m, textinput.Blink
-
-		// this is a working first example
-		// newTask := entities.Task{
-		// 	Title:       "Newtask",
-		// 	IsCompleted: false,
-		// 	ListId:      config.getConfig().lists[0]
-		// 	Priority:    0, // no prio
-		// 	Description: "New task description",
-		// 	DueDate:     time.Time{}, // no date
-		// 	Index:       -1,          // not on the list yet
-		// }
-		// m.appService.AddTask(newTask)
-		// insCmd := m.listModel.InsertItem(-1, listItem{task: newTask})
-		// return m, inced
 
 	case "d": // set or change date
 		placeholder := m.listModel.SelectedItem().(listItem).task.DueDate

@@ -24,7 +24,7 @@ func TestParseEmptyList(t *testing.T) {
 	var reminderLists []ReminderList
 	json.Unmarshal([]byte(mockResponse), &reminderLists)
 
-	lists := parseLists(reminderLists)
+	lists := convertLists(reminderLists)
 	if len(lists) != 0 {
 		t.Errorf("Failed to parse empty list")
 	}
@@ -35,7 +35,7 @@ func TestParseEmpty(t *testing.T) {
 	var reminderLists []ReminderList
 	json.Unmarshal([]byte(mockResponse), &reminderLists)
 
-	lists := parseLists(reminderLists)
+	lists := convertLists(reminderLists)
 	if len(lists) != 0 {
 		t.Errorf("Failed to parse empty list")
 	}

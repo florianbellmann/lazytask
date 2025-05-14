@@ -122,7 +122,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				insCmd := m.listModel.InsertItem(-1, listItem{task: newTask})
 
 				return m, insCmd
-
 			}
 
 		// We handle errors just like any other message

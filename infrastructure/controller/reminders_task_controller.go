@@ -206,11 +206,10 @@ func (r ReminderTaskController) GetLists() []entities.List {
 		reminderLists = []ReminderList{}
 	}
 
-	// TODO: return empty list instead of error
-	return parseLists(reminderLists)
+	return convertLists(reminderLists)
 }
 
-func parseLists(rl []ReminderList) []entities.List {
+func convertLists(rl []ReminderList) []entities.List {
 	lists := []entities.List{}
 	for _, reminderList := range rl {
 		lists = append(lists, ReminderListToList(reminderList))
@@ -385,8 +384,7 @@ func (r ReminderTaskController) UpdateTask(task entities.Task) error {
 	// log.Printf("UpdateTask: Found task at list: %s, index: %d", listName, reminderIndex)
 
 	// Convert domain task to Reminder
-	reminder := ReminderFromTask(task)
-	// log.Printf("UpdateTask: Converted to reminder with due date: %v", reminder.DueDate)
+	// reminder := ReminderFromTask(task)
 
 	// Using a simpler approach - delete and recreate instead of trying to edit
 	// This is more reliable given the CLI.swift limitations

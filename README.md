@@ -30,6 +30,7 @@ Because of time constraints this project is in a prototype state for now.
 - [x] Restructure app
 - [x] hot reloading https://github.com/charmbracelet/bubbletea/issues/150
 - [x] Implement app logging
+- [ ] Tests for app service and controller
 - [ ] use message types for commands
       how to do comms with UI?
       https://chatgpt.com/c/681913f8-6bf4-800c-8f34-4bc08d042362

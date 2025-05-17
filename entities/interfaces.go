@@ -2,14 +2,14 @@ package entities
 
 type Controller interface {
 	// Get all task lists
-	GetLists() []List
+	GetLists() ([]List, error)
 	// Get a specific task list by its ID
 	GetListById(listId string) (List, error)
 
 	// Tasks
 	GetTaskById(taskId string) (Task, error)
 	// Get tasks by a specific list ID
-	GetTasksByList(listId string) []Task
+	GetTasksByList(listId string) ([]Task, error)
 
 	// Add a new task
 	AddTask(task Task) error
@@ -19,7 +19,7 @@ type Controller interface {
 	UncompleteTask(taskId string) error
 
 	// Update a task
-	UpdateTask(task Task) error
+	UpdateTask(task Task) (Task, error)
 	// Move task to another list
 	MoveTaskToList(taskId string, targetListId string) error
 }

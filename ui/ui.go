@@ -4,6 +4,7 @@ import (
 	"lazytask/application"
 	"lazytask/ui/cli"
 	"log"
+	"runtime/debug"
 )
 
 type Ui struct {
@@ -12,7 +13,7 @@ type Ui struct {
 }
 
 func NewUi(as application.AppService) *Ui {
-	log.Printf("Initializing UI...")
+	log.Printf("UI initialized.")
 
 	ui := &Ui{
 		cli: cli.NewBubbleTeaApp(as),
@@ -23,7 +24,7 @@ func NewUi(as application.AppService) *Ui {
 
 func (u *Ui) Run() error {
 	if err := u.cli.Run(); err != nil {
-		log.Fatalf("Error running CLI: %v", err)
+		log.Fatalf("Error running CLI: %v", err, debug.Stack())
 	}
 
 	return nil

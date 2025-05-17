@@ -184,7 +184,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // Main function of a bubble tea app, determining what to show
 func (m model) View() string {
 	if m.err != nil {
-		log.Fatalf("Error: %v", m.err)
+		// TODO: return error isntead
+		log.Printf("Error: %v", m.err)
 		return "Error: " + m.err.Error()
 	}
 

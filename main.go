@@ -7,6 +7,7 @@ import (
 	"lazytask/ui"
 	"lazytask/utils"
 	"log"
+	"runtime/debug"
 )
 
 func main() {
@@ -26,6 +27,6 @@ func main() {
 	// Run the UI
 	ui := ui.NewUi(*appService)
 	if err := ui.Run(); err != nil {
-		log.Fatalf("Error running UI: %v", err)
+		log.Fatalf("Error running UI: %v", err, debug.Stack())
 	}
 }

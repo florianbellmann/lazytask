@@ -11,7 +11,7 @@ type AppService struct {
 }
 
 func NewAppService(repo entities.Repository, controller entities.Controller) *AppService {
-	log.Printf("App service initialized")
+	log.Printf("App service initialized.")
 	return &AppService{
 		repo:       repo,
 		controller: controller,

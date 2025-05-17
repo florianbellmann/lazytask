@@ -13,7 +13,7 @@ type InMemoryRepo struct {
 }
 
 func NewInMemoryRepo() *InMemoryRepo {
-	log.Printf("In-memory repository initialized")
+	log.Printf("In-memory repository initialized.")
 	return &InMemoryRepo{
 		tasks: make(map[string]entities.Task),
 		lists: make(map[string]entities.List),
@@ -21,7 +21,7 @@ func NewInMemoryRepo() *InMemoryRepo {
 }
 
 func NewInMemoryRepoWithData(tasks []entities.Task, lists []entities.List) *InMemoryRepo {
-	log.Printf("In-memory repository initialized")
+	log.Printf("In-memory repository initialized with data.")
 	repo := NewInMemoryRepo()
 	for _, task := range tasks {
 		repo.tasks[task.Id] = task

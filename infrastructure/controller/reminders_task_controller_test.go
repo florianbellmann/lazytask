@@ -95,7 +95,7 @@ func TestTaskToReminder(t *testing.T) {
 		Title:       "Test task",
 	}
 
-	reminder := ReminderFromTask(task)
+	reminder := ToReminder(task)
 
 	if reminder.DueDate != dueDate {
 		t.Errorf("Expected DueDate to be %v, got %v", dueDate, reminder.DueDate)
@@ -122,7 +122,7 @@ func TestTaskToReminder(t *testing.T) {
 
 func TestReminderListToList(t *testing.T) {
 	reminderList := ReminderList("TestList")
-	list := ReminderListToList(reminderList)
+	list := ToList(reminderList)
 
 	if list.Id != "TestList" {
 		t.Errorf("Expected Id to be TestList, got %s", list.Id)
@@ -137,7 +137,7 @@ func TestListToReminderList(t *testing.T) {
 		Id:    "TestList",
 		Title: "Test List Title",
 	}
-	reminderList := ListToReminderList(list)
+	reminderList := ToReminderList(list)
 
 	if reminderList != "TestList" {
 		t.Errorf("Expected ReminderList to be TestList, got %s", reminderList)

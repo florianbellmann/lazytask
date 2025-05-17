@@ -16,6 +16,10 @@ import (
 	"time"
 )
 
+// Types from reminders-cli -------------------------------------------------------------
+
+type ReminderList = string
+
 type Reminder struct {
 	CreationDate time.Time `json:"creationDate"`
 	DueDate      time.Time `json:"dueDate"`
@@ -29,6 +33,8 @@ type Reminder struct {
 	Title    string       `json:"title"`
 }
 
+// Conversion methods ------------------------------------------------------------------
+
 func (r Reminder) ToTask() entities.Task {
 	return entities.Task{
 		DueDate:     r.DueDate,
@@ -41,7 +47,16 @@ func (r Reminder) ToTask() entities.Task {
 	}
 }
 
-func ReminderFromTask(t entities.Task) Reminder {
+func (reminders []Reminder) ToTasks() []entities.Task {
+	tasks := []entities.Task{}
+	for _, reminder := range reminders {
+		tasks = append(tasks, reminder.ToTask())
+	}
+
+	return tasks
+}
+
+func (t entities.Task) ToReminder() Reminder {
 	return Reminder{
 		DueDate:     t.DueDate,
 		ExternalID:  t.Id,
@@ -53,9 +68,7 @@ func ReminderFromTask(t entities.Task) Reminder {
 	}
 }
 
-type ReminderList = string
-
-func ReminderListToList(r ReminderList) entities.List {
+func (r ReminderList) ToList() entities.List {
 	return entities.List{
 		Id: string(r),
 		// Since the reminder list is just a string, the entities.List will have the same
@@ -64,9 +77,20 @@ func ReminderListToList(r ReminderList) entities.List {
 	}
 }
 
-func ListToReminderList(l entities.List) ReminderList {
+func (rl []ReminderList) ToLists() []entities.List {
+	lists := []entities.List{}
+	for _, reminderList := range rl {
+		lists = append(lists, reminderList.ToList())
+	}
+
+	return lists
+}
+
+func ToReminderList(l entities.List) ReminderList {
 	return ReminderList(l.Id)
 }
+
+// Functions ----------------------------------------------------------------------
 
 // This function tries to find the project root by looking for go.mod or .git
 func findProjectRoot() (string, error) {
@@ -91,9 +115,10 @@ func findProjectRoot() (string, error) {
 		dir = parentDir
 	}
 
-	return "", fmt.Errorf("project root not found")
+	return "", fmt.Errorf("Project root not found")
 }
 
+// returns the path to the reminders executable
 func getExecutablePath() (string, error) {
 	root, err := findProjectRoot()
 	if err != nil {
@@ -102,129 +127,112 @@ func getExecutablePath() (string, error) {
 	return filepath.Join(root, "adapters/reminders-cli/reminders"), nil
 }
 
-// execCommandWithoutOutput runs an external command and discards the output
-func execCommandWithoutOutput(commandArgs []string) error {
-	EXEC_PATH, execErr := getExecutablePath()
-	if execErr != nil {
-		// log.printf("Executable path resolving failed: %v", execErr)
-		return fmt.Errorf("executable path resolving failed: %w", execErr)
+func parseJson[T any](output []byte) (T, error) {
+	var result T
+	err := json.Unmarshal(output, &result)
+	if err != nil {
+		return *new(T), fmt.Errorf("Failed to parse JSON: %w", err)
 	}
 
-	// Log the command being executed
-	// log.printf("Executing command: %s %v", EXEC_PATH, commandArgs)
+	return result, err
+}
+
+// Runs an external command and discards the output
+func execCommandWithoutOutput(commandArgs []string) error {
+	execPath, execPathErr := getExecutablePath()
+	if execPathErr != nil {
+		return execPathErr
+	}
 
 	// Run the command
-	cmd := exec.Command(EXEC_PATH, commandArgs...)
+	log.Printf("Executing command: %s %v", execPath, commandArgs)
+	cmd := exec.Command(execPath, commandArgs...)
 
 	// Capture both stdout and stderr
 	output, err := cmd.CombinedOutput()
 
-	// Always log the output for debugging
-	if len(output) > 0 {
-		// log.printf("Command output: %s", string(output))
-	}
+	// Log output for debugging
+	// if len(output) > 0 {
+	// 	// log.printf("Command output: %s", string(output))
+	// }
 
 	if err != nil {
-		return fmt.Errorf("Command failed: %s %v - Error: %v", EXEC_PATH, commandArgs, string(output), err)
+		return fmt.Errorf("Command failed: %s - Error: %v", string(output), err)
 	}
 
-	// log.printf("Command executed successfully")
 	return nil
 }
 
 // execCommand runs an external command and parses the JSON result
 func execCommand[T any](commandArgs []string) (T, error) {
-	// Add JSON format flag
+	// Add JSON format flag for response
 	commandArgs = append(commandArgs, "--format", "json")
 
-	EXEC_PATH, execErr := getExecutablePath()
-	if execErr != nil {
-		return *new(T), fmt.Errorf("executable path resolving failed: %w", execErr)
+	execPath, execPathErr := getExecutablePath()
+	if execPathErr != nil {
+		return *new(T), execPathErr
 	}
 
-	// Log the command being executed
-	// log.printf("Executing JSON command: %s %v", EXEC_PATH, commandArgs)
-
 	// Run the command
-	cmd := exec.Command(EXEC_PATH, commandArgs...)
+	log.Printf("Executing JSON command: %s %v", execPath, commandArgs)
+	cmd := exec.Command(execPath, commandArgs...)
 
 	// Capture both stdout and stderr
 	output, err := cmd.CombinedOutput()
 
-	// Always log some output info for debugging
-	if len(output) > 0 {
-		// For JSON responses, only log the first 500 chars to avoid huge logs
-		outputToLog := string(output)
-		if len(outputToLog) > 500 {
-			outputToLog = outputToLog[:500] + "... [truncated]"
-		}
-		// log.printf("JSON command output: %s", outputToLog)
-	}
+	// // Log output for debugging
+	// if len(output) > 0 {
+	// 	// For JSON responses, only log the first 500 chars to avoid huge logs
+	// 	outputToLog := string(output)
+	// 	if len(outputToLog) > 500 {
+	// 		outputToLog = outputToLog[:500] + "... [truncated]"
+	// 	}
+	// 	// log.printf("JSON command output: %s", outputToLog)
+	// }
 
 	if err != nil {
-		return *new(T), fmt.Errorf("JSON command failed: %s %v %u - Error: %v", EXEC_PATH, commandArgs, string(output), err)
-		// return *new(T), fmt.Errorf("failed to run command: %s - %w", string(output), err)
+		return *new(T), fmt.Errorf("JSON command failed: %s - Error: %v", string(output), err)
 	}
 
 	// Try to parse the JSON
 	result, err := parseJson[T](output)
 	if err != nil {
-		return *new(T), fmt.Errorf("failed to parse command output: %w", err)
+		return *new(T), err
 	}
 	return result, nil
 }
 
-func parseJson[T any](output []byte) (T, error) {
-	var result T
-	err := json.Unmarshal(output, &result)
-	if err != nil {
-		// LogError("Failed to parse JSON: %v", err)
-		// LogError("Invalid JSON: %s", string(output))
-		return *new(T), fmt.Errorf("failed to parse JSON response: %w", err)
-	}
-
-	// log.printf("JSON command executed successfully and parsed")
-	return result, err
-}
-
-// --------------------------------------------------------------------
+// Controller --------------------------------------------------------------------
 
 type ReminderTaskController struct{}
 
 func NewReminderTaskController() *ReminderTaskController {
-	// log.printf("Reminder controller initialized")
+	log.Printf("Apple Reminders controller initialized.")
 	return &ReminderTaskController{}
 }
 
 // GetLists retrieves all task lists
-func (r ReminderTaskController) GetLists() []entities.List {
+func (r ReminderTaskController) GetLists() ([]entities.List, error) {
 	reminderLists, err := execCommand[[]ReminderList]([]string{"show-lists"})
 	if err != nil {
-		// LogError("Failed to get lists: %s", err)
-		reminderLists = []ReminderList{}
+		return []entities.List{}, err
 	}
 
-	return convertLists(reminderLists)
-}
-
-func convertLists(rl []ReminderList) []entities.List {
-	lists := []entities.List{}
-	for _, reminderList := range rl {
-		lists = append(lists, ReminderListToList(reminderList))
-	}
-
-	return lists
+	return reminderLists.ToLists(), nil
 }
 
 func (r ReminderTaskController) GetListById(listId string) (entities.List, error) {
-	lists := r.GetLists()
+	lists, err := r.GetLists()
+	if err != nil {
+		return entities.List{}, err
+	}
 
 	listIndex := slices.IndexFunc(lists, func(rl entities.List) bool {
 		return rl.Id == listId
 	})
 
 	if listIndex == -1 {
-		return entities.List{}, errors.New("List not found")
+		return entities.List{}, errors.New("List not found through controller.")
 	}
 
 	return lists[listIndex], nil
@@ -236,32 +244,23 @@ func (r ReminderTaskController) GetTaskById(taskId string) (entities.Task, error
 	return entities.Task{}, errors.New("Not implemented")
 }
 
-// GetTasksByList retrieves all tasks for a specific list
-func (r ReminderTaskController) GetTasksByList(listId string) []entities.Task {
-
+func (r ReminderTaskController) GetTasksByList(listId string) ([]entities.Task, error) {
 	// TODO: reminders-cli can't handle lists with multiple workds yet
 	// return execCommand[[]do.Task]([]string{"show", "'" + listId + "'"})
 	// reminders, err := execCommand[[]Reminder]([]string{"show", "\"" + listId + "\""})
 	reminders, err := execCommand[[]Reminder]([]string{"show", listId})
-	if err != nil {
-		// LogError("Failed to get tasks for list: %s", err)
-	}
+	// if err != nil
+	// 	// LogError("Failed to get tasks for list: %s", err)
+	// }
 
-	return parseTasks(reminders)
+	return reminders.ToTasks(), nil
 }
 
-func parseTasks(reminders []Reminder) []entities.Task {
-	tasks := []entities.Task{}
-	for _, reminder := range reminders {
-		tasks = append(tasks, reminder.ToTask())
-	}
-
-	return tasks
-}
+HERE AM I 
 
 // AddTask adds a new task
 func (r ReminderTaskController) AddTask(t entities.Task) error {
-	reminder := ReminderFromTask(t)
+	reminder := ToReminder(t)
 
 	// commandString := []string{"add", reminder.List, "\"" + reminder.Title + "\""}
 	// TODO: unclear if it can handle multiple words

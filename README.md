@@ -32,7 +32,7 @@ Because of time constraints this project is in a prototype state for now.
 - [x] Implement app logging
 - [x] Tests for repo
 - [x] Mocks with builder pattern, then dev-mock list
-- [ ] Tests for controller
+- [ ] Implement and test controller
 - [ ] Tests for app service
 
 - [ ] Building a basic ui

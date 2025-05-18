@@ -37,7 +37,7 @@ type Reminders []Reminder
 
 // Conversion methods ------------------------------------------------------------------
 
-func (r Reminder) ToTask() entities.Task {
+func (r Reminder) toTask() entities.Task {
 	return entities.Task{
 		DueDate:     r.DueDate,
 		Id:          r.ExternalID,
@@ -49,16 +49,16 @@ func (r Reminder) ToTask() entities.Task {
 	}
 }
 
-func (reminders Reminders) ToTasks() []entities.Task {
+func (reminders Reminders) toTasks() []entities.Task {
 	tasks := []entities.Task{}
 	for _, reminder := range reminders {
-		tasks = append(tasks, reminder.ToTask())
+		tasks = append(tasks, reminder.toTask())
 	}
 
 	return tasks
 }
 
-func ToReminder(t entities.Task) Reminder {
+func toReminder(t entities.Task) Reminder {
 	return Reminder{
 		DueDate:     t.DueDate,
 		ExternalID:  t.Id,
@@ -70,7 +70,7 @@ func ToReminder(t entities.Task) Reminder {
 	}
 }
 
-func ToList(r ReminderList) entities.List {
+func toList(r ReminderList) entities.List {
 	return entities.List{
 		Id: string(r),
 		// Since the reminder list is just a string, the entities.List will have the same
@@ -79,16 +79,16 @@ func ToList(r ReminderList) entities.List {
 	}
 }
 
-func ToLists(rl []ReminderList) []entities.List {
+func toLists(rl []ReminderList) []entities.List {
 	lists := []entities.List{}
 	for _, reminderList := range rl {
-		lists = append(lists, ToList(reminderList))
+		lists = append(lists, toList(reminderList))
 	}
 
 	return lists
 }
 
-func ToReminderList(l entities.List) ReminderList {
+func toReminderList(l entities.List) ReminderList {
 	return ReminderList(l.Id)
 }
 
@@ -252,7 +252,7 @@ func (r ReminderTaskController) GetLists() ([]entities.List, error) {
 		return []entities.List{}, err
 	}
 
-	return ToLists(reminderLists), nil
+	return toLists(reminderLists), nil
 }
 
 func (r ReminderTaskController) GetListById(listId string) (entities.List, error) {
@@ -288,12 +288,12 @@ func (r ReminderTaskController) GetTasksByList(listId string) ([]entities.Task, 
 		return []entities.Task{}, fmt.Errorf("failed to get tasks for list: %w", err)
 	}
 
-	return reminders.ToTasks(), nil
+	return reminders.toTasks(), nil
 }
 
 // AddTask adds a new task
 func (r ReminderTaskController) AddTask(t entities.Task) error {
-	reminder := ToReminder(t)
+	reminder := toReminder(t)
 
 	// commandString := []string{"add", reminder.List, "\"" + reminder.Title + "\""}
 	// TODO: unclear if it can handle multiple words

@@ -33,6 +33,8 @@ type Reminder struct {
 	Title    string       `json:"title"`
 }
 
+type Reminders []Reminder
+
 // Conversion methods ------------------------------------------------------------------
 
 func (r Reminder) ToTask() entities.Task {
@@ -47,7 +49,7 @@ func (r Reminder) ToTask() entities.Task {
 	}
 }
 
-func (reminders []Reminder) ToTasks() []entities.Task {
+func (reminders Reminders) ToTasks() []entities.Task {
 	tasks := []entities.Task{}
 	for _, reminder := range reminders {
 		tasks = append(tasks, reminder.ToTask())
@@ -56,7 +58,7 @@ func (reminders []Reminder) ToTasks() []entities.Task {
 	return tasks
 }
 
-func (t entities.Task) ToReminder() Reminder {
+func ToReminder(t entities.Task) Reminder {
 	return Reminder{
 		DueDate:     t.DueDate,
 		ExternalID:  t.Id,
@@ -68,7 +70,7 @@ func (t entities.Task) ToReminder() Reminder {
 	}
 }
 
-func (r ReminderList) ToList() entities.List {
+func ToList(r ReminderList) entities.List {
 	return entities.List{
 		Id: string(r),
 		// Since the reminder list is just a string, the entities.List will have the same
@@ -77,10 +79,10 @@ func (r ReminderList) ToList() entities.List {
 	}
 }
 
-func (rl []ReminderList) ToLists() []entities.List {
+func ToLists(rl []ReminderList) []entities.List {
 	lists := []entities.List{}
 	for _, reminderList := range rl {
-		lists = append(lists, reminderList.ToList())
+		lists = append(lists, ToList(reminderList))
 	}
 
 	return lists
@@ -202,6 +204,38 @@ func execCommand[T any](commandArgs []string) (T, error) {
 	return result, nil
 }
 
+func getListAndIndexForCompletion(taskId string) (ReminderList, int, error) {
+	allReminders, err := execCommand[Reminders]([]string{"show-all"})
+	if err != nil {
+		return "Not found", -1, fmt.Errorf("Failed to get all tasks: %w", err)
+	}
+
+	allRemindersCompletionIndex := slices.IndexFunc(allReminders, func(r Reminder) bool {
+		return r.ExternalID == taskId
+	})
+
+	if allRemindersCompletionIndex == -1 {
+		return "Not found", -1, errors.New("Task not found")
+	}
+
+	listToCompleteOn := allReminders[allRemindersCompletionIndex].List
+
+	listReminders, listErr := execCommand[Reminders]([]string{"show", listToCompleteOn})
+	if listErr != nil {
+		return "Not found", -1, fmt.Errorf("Failed to get tasks of list %s: %w", listToCompleteOn, listErr)
+	}
+
+	reminderToCompleteListIndex := slices.IndexFunc(listReminders, func(r Reminder) bool {
+		return r.ExternalID == taskId
+	})
+
+	if reminderToCompleteListIndex == -1 {
+		return "Not found.", -1, errors.New("Task not found on specific list.")
+	}
+
+	return listToCompleteOn, reminderToCompleteListIndex, nil
+}
+
 // Controller --------------------------------------------------------------------
 
 type ReminderTaskController struct{}
@@ -218,7 +252,7 @@ func (r ReminderTaskController) GetLists() ([]entities.List, error) {
 		return []entities.List{}, err
 	}
 
-	return reminderLists.ToLists(), nil
+	return ToLists(reminderLists), nil
 }
 
 func (r ReminderTaskController) GetListById(listId string) (entities.List, error) {
@@ -247,16 +281,15 @@ func (r ReminderTaskController) GetTaskById(taskId string) (entities.Task, error
 func (r ReminderTaskController) GetTasksByList(listId string) ([]entities.Task, error) {
 	// TODO: reminders-cli can't handle lists with multiple workds yet
 	// return execCommand[[]do.Task]([]string{"show", "'" + listId + "'"})
-	// reminders, err := execCommand[[]Reminder]([]string{"show", "\"" + listId + "\""})
-	reminders, err := execCommand[[]Reminder]([]string{"show", listId})
-	// if err != nil
-	// 	// LogError("Failed to get tasks for list: %s", err)
-	// }
+	// reminders, err := execCommand[Reminders]([]string{"show", "\"" + listId + "\""})
+	reminders, err := execCommand[Reminders]([]string{"show", listId})
+	if err != nil {
+		// LogError("Failed to get tasks for list: %s", err)
+		return []entities.Task{}, fmt.Errorf("failed to get tasks for list: %w", err)
+	}
 
 	return reminders.ToTasks(), nil
 }
-
-HERE AM I 
 
 // AddTask adds a new task
 func (r ReminderTaskController) AddTask(t entities.Task) error {
@@ -293,38 +326,6 @@ func (r ReminderTaskController) AddTask(t entities.Task) error {
 	return nil
 }
 
-func getListAndIndexForCompletion(taskId string) (ReminderList, int, error) {
-	allReminders, err := execCommand[[]Reminder]([]string{"show-all"})
-	if err != nil {
-		// LogError("Failed to get tasks: %s", err)
-	}
-
-	allRemindersCompletionIndex := slices.IndexFunc(allReminders, func(r Reminder) bool {
-		return r.ExternalID == taskId
-	})
-
-	if allRemindersCompletionIndex == -1 {
-		return "Not found", -1, errors.New("Task not found")
-	}
-
-	listToCompleteOn := allReminders[allRemindersCompletionIndex].List
-
-	listReminders, listErr := execCommand[[]Reminder]([]string{"show", listToCompleteOn})
-	if listErr != nil {
-		// LogError("Failed to get tasks of list %s: %s", listToCompleteOn, listErr)
-	}
-
-	reminderToCompleteListIndex := slices.IndexFunc(listReminders, func(r Reminder) bool {
-		return r.ExternalID == taskId
-	})
-
-	if reminderToCompleteListIndex == -1 {
-		return "Not found.", -1, errors.New("Task not found on specific list.")
-	}
-
-	return listToCompleteOn, reminderToCompleteListIndex, nil
-}
-
 // CompleteTask marks a task as completed
 func (r ReminderTaskController) CompleteTask(taskId string) error {
 	listName, reminderIndex, err := getListAndIndexForCompletion(taskId)
@@ -344,7 +345,7 @@ func (r ReminderTaskController) CompleteTask(taskId string) error {
 
 // UncompleteTask marks a task as uncompleted
 func (r ReminderTaskController) UncompleteTask(taskId string) error {
-	reminders, err := execCommand[[]Reminder]([]string{"show-all", "--only-completed"})
+	reminders, err := execCommand[Reminders]([]string{"show-all", "--only-completed"})
 	if err != nil {
 		// LogError("Failed to get completed tasks: %s", err)
 	}
@@ -390,7 +391,10 @@ func (r ReminderTaskController) UpdateTask(task entities.Task) error {
 
 	// First, get the current task to preserve all properties
 	// log.printf("UpdateTask: Fetching current task to preserve properties")
-	currentTasks := r.GetTasksByList(listName)
+	currentTasks, tListErr := r.GetTasksByList(listName)
+	if tListErr != nil {
+		return tListErr
+	}
 	var currentTask entities.Task
 	found := false
 

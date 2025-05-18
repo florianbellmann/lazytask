@@ -26,7 +26,12 @@ type Controller interface {
 
 // Interface for application state. Replicated the interface
 // from the controller to avoid mismatching functionality.
-type Repository = Controller
+// drop the alias and declare a new Repository interface
+type Repository interface {
+	Controller
+	// Extra method to update a list for syncing
+	SetList(listId string, tasks []Task) error
+}
 
 type Ui interface {
 	Init() error

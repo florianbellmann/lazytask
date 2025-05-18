@@ -11,33 +11,75 @@ type AppService struct {
 }
 
 func NewAppService(repo entities.Repository, controller entities.Controller) *AppService {
-	log.Printf("App service initialized.")
+	log.Printf("AppService initialized.")
 	return &AppService{
 		repo:       repo,
 		controller: controller,
 	}
 }
 
-repo handling missing in the whole file
-this is what I also will need tests for
-
-
 func (aps *AppService) AddTask(task entities.Task) error {
-	return aps.controller.AddTask(task)
+	// Run controller first
+	if err := aps.controller.AddTask(task); err != nil {
+		return err
+	}
+	// Sync repository
+	if err := aps.repo.AddTask(task); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (aps *AppService) GetTasksByList(listId string) ([]entities.Task, error) {
-	return aps.controller.GetTasksByList(listId)
+func (aps *AppService) GetTasksByList(listID string) ([]entities.Task, error) {
+	// Fetch from controller
+	tasks, err := aps.controller.GetTasksByList(listID)
+	if err != nil {
+		return nil, err
+	}
+	// Sync repository
+	if err := aps.repo.SetList(listID, tasks); err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }
 
 func (aps *AppService) GetLists() ([]entities.List, error) {
-	return aps.controller.GetLists()
+	// Fetch from controller
+	lists, err := aps.controller.GetLists()
+	if err != nil {
+		return nil, err
+	}
+	// Sync repository
+	for _, list := range lists {
+		if err := aps.repo.SetList(list.Id, nil); err != nil {
+			return nil, err
+		}
+	}
+	return lists, nil
 }
 
-func (aps *AppService) CompleteTask(taskId string) error {
-	return aps.controller.CompleteTask(taskId)
+func (aps *AppService) CompleteTask(taskID string) error {
+	// Run controller first
+	if err := aps.controller.CompleteTask(taskID); err != nil {
+		return err
+	}
+	// Sync repository
+	if err := aps.repo.CompleteTask(taskID); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (aps *AppService) UpdateTask(updatedTask entities.Task) (entities.Task, error) {
-	return aps.controller.UpdateTask(updatedTask)
+	// Run controller first
+	task, err := aps.controller.UpdateTask(updatedTask)
+	if err != nil {
+		return entities.Task{}, err
+	}
+	// Sync repository
+	task, err = aps.repo.UpdateTask(task)
+	if err != nil {
+		return entities.Task{}, err
+	}
+	return task, nil
 }

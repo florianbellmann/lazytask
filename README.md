@@ -32,6 +32,15 @@ Because of time constraints this project is in a prototype state for now.
 - [x] Implement app logging
 - [x] Tests for repo
 - [ ] Tests for controller
+- [ ] Mocks with builder pattern, then dev-mock list 
+
+- [ ] Building a basic ui
+      https://leg100.github.io/en/posts/building-bubbletea-programs/
+      https://github.com/dlvhdr/gh-dash
+      https://github.com/bensadeh/circumflex
+      Date picking: https://www.reddit.com/r/commandline/comments/1hrlrck/tui_datepicker/
+- [ ] Restructure CLI part
+
 - [ ] use message types for commands
       how to do comms with UI?
       https://chatgpt.com/c/681913f8-6bf4-800c-8f34-4bc08d042362
@@ -47,14 +56,8 @@ Because of time constraints this project is in a prototype state for now.
   - [ ] Refresh
 - [ ] User testing & feedback
 
-- [ ] Building a basic ui
-      https://leg100.github.io/en/posts/building-bubbletea-programs/
-      https://github.com/dlvhdr/gh-dash
-      https://github.com/bensadeh/circumflex
-      Date picking: https://www.reddit.com/r/commandline/comments/1hrlrck/tui_datepicker/
-- [ ] Restructure CLI part
-
 - [ ] Handling of all tasks, not only overdue
+- [ ] Sorting / filtering
 - [ ] Async task handling with busy spinners, maybe add command queue
 - [ ] Fix help pages initial app functionalities of fancy list etc
 - [ ] Display of further infos: Tags, recurring, flags, prios, ...

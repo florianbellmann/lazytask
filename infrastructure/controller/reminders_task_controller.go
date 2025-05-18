@@ -1,7 +1,5 @@
 package infrastructure
 
-//TODO: hardening https://chatgpt.com/c/6818a8ec-47e4-800c-8c06-33b4672f7467
-
 import (
 	"encoding/json"
 	"errors"
@@ -9,7 +7,6 @@ import (
 	"lazytask/entities"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -129,87 +126,11 @@ func getExecutablePath() (string, error) {
 	return filepath.Join(root, "adapters/reminders-cli/reminders"), nil
 }
 
-func parseJson[T any](output []byte) (T, error) {
-	var result T
-	err := json.Unmarshal(output, &result)
-	if err != nil {
-		return *new(T), fmt.Errorf("Failed to parse JSON: %w", err)
-	}
-
-	return result, err
-}
-
-// Runs an external command and discards the output
-func execCommandWithoutOutput(commandArgs []string) error {
-	execPath, execPathErr := getExecutablePath()
-	if execPathErr != nil {
-		return execPathErr
-	}
-
-	// Run the command
-	log.Printf("Executing command: %s %v", execPath, commandArgs)
-	cmd := exec.Command(execPath, commandArgs...)
-
-	// Capture both stdout and stderr
-	output, err := cmd.CombinedOutput()
-
-	// Log output for debugging
-	// if len(output) > 0 {
-	// 	// log.printf("Command output: %s", string(output))
-	// }
-
-	if err != nil {
-		return fmt.Errorf("Command failed: %s - Error: %v", string(output), err)
-	}
-
-	return nil
-}
-
-// execCommand runs an external command and parses the JSON result
-func execCommand[T any](commandArgs []string) (T, error) {
-	// Add JSON format flag for response
-	commandArgs = append(commandArgs, "--format", "json")
-
-	execPath, execPathErr := getExecutablePath()
-	if execPathErr != nil {
-		return *new(T), execPathErr
-	}
-
-	// Run the command
-	log.Printf("Executing JSON command: %s %v", execPath, commandArgs)
-	cmd := exec.Command(execPath, commandArgs...)
-
-	// Capture both stdout and stderr
-	output, err := cmd.CombinedOutput()
-
-	// // Log output for debugging
-	// if len(output) > 0 {
-	// 	// For JSON responses, only log the first 500 chars to avoid huge logs
-	// 	outputToLog := string(output)
-	// 	if len(outputToLog) > 500 {
-	// 		outputToLog = outputToLog[:500] + "... [truncated]"
-	// 	}
-	// 	// log.printf("JSON command output: %s", outputToLog)
-	// }
-
-	if err != nil {
-		return *new(T), fmt.Errorf("JSON command failed: %s - Error: %v", string(output), err)
-	}
-
-	// Try to parse the JSON
-	result, err := parseJson[T](output)
-	if err != nil {
-		return *new(T), err
-	}
-	return result, nil
-}
-
-func getListAndIndexForCompletion(taskId string) (ReminderList, int, error) {
-	allReminders, err := execCommand[Reminders]([]string{"show-all"})
-	if err != nil {
-		return "Not found", -1, fmt.Errorf("Failed to get all tasks: %w", err)
-	}
-
+// getListAndIndexForCompletion retrieves the list and index of a task to be completed
+// It first finds the task in the list of all reminders, then finds the task in the specific list
+// It returns the list name and the index of the task in that list
+// If the task is not found, it returns an error
+func getListAndIndexForCompletion(allReminders Reminders, taskId string) (ReminderList, int, error) {
 	allRemindersCompletionIndex := slices.IndexFunc(allReminders, func(r Reminder) bool {
 		return r.ExternalID == taskId
 	})
@@ -236,18 +157,37 @@ func getListAndIndexForCompletion(taskId string) (ReminderList, int, error) {
 	return listToCompleteOn, reminderToCompleteListIndex, nil
 }
 
+func parseJson[T any](output []byte) (T, error) {
+	var result T
+	err := json.Unmarshal(output, &result)
+	if err != nil {
+		return *new(T), fmt.Errorf("Failed to parse JSON: %w", err)
+	}
+
+	return result, err
+}
+
 // Controller --------------------------------------------------------------------
 
-type ReminderTaskController struct{}
+type ReminderTaskController struct {
+	cmd Commander
+}
 
-func NewReminderTaskController() *ReminderTaskController {
+func NewReminderTaskController(cmd Commander) *ReminderTaskController {
 	log.Printf("Apple Reminders controller initialized.")
-	return &ReminderTaskController{}
+	return &ReminderTaskController{
+		cmd: cmd,
+	}
 }
 
 // GetLists retrieves all task lists
 func (r ReminderTaskController) GetLists() ([]entities.List, error) {
-	reminderLists, err := execCommand[[]ReminderList]([]string{"show-lists"})
+	stdOut, err := r.cmd.Exec([]string{"show-lists"})
+	if err != nil {
+		return []entities.List{}, err
+	}
+
+	reminderLists, err := parseJson[[]ReminderList](stdOut)
 	if err != nil {
 		return []entities.List{}, err
 	}
@@ -282,10 +222,13 @@ func (r ReminderTaskController) GetTasksByList(listId string) ([]entities.Task, 
 	// TODO: reminders-cli can't handle lists with multiple workds yet
 	// return execCommand[[]do.Task]([]string{"show", "'" + listId + "'"})
 	// reminders, err := execCommand[Reminders]([]string{"show", "\"" + listId + "\""})
-	reminders, err := execCommand[Reminders]([]string{"show", listId})
+	stdOut, err := r.cmd.Exec([]string{"show", listId})
 	if err != nil {
-		// LogError("Failed to get tasks for list: %s", err)
-		return []entities.Task{}, fmt.Errorf("failed to get tasks for list: %w", err)
+		return []entities.Task{}, err
+	}
+	reminders, err := parseJson[Reminders](stdOut)
+	if err != nil {
+		return []entities.Task{}, err
 	}
 
 	return reminders.toTasks(), nil
@@ -318,7 +261,7 @@ func (r ReminderTaskController) AddTask(t entities.Task) error {
 		commandString = append(commandString, "--priority", prioString)
 	}
 
-	_, err := execCommand[Reminder](commandString)
+	_, err := r.cmd.Exec(commandString)
 	if err != nil {
 		return fmt.Errorf("failed to add task: %w", err)
 	}
@@ -328,16 +271,24 @@ func (r ReminderTaskController) AddTask(t entities.Task) error {
 
 // CompleteTask marks a task as completed
 func (r ReminderTaskController) CompleteTask(taskId string) error {
-	listName, reminderIndex, err := getListAndIndexForCompletion(taskId)
+	stdOut, err := r.cmd.Exec([]string{"show-all"}) // TODO: move these magic strings to the commander
 	if err != nil {
-		// LogError("Failed to get list and index for completion: %s", err)
+		return err
+	}
+	allReminders, err := parseJson[Reminders](stdOut)
+	if err != nil {
+		return err
 	}
 
-	err = execCommandWithoutOutput([]string{"complete", listName, strconv.Itoa(reminderIndex)})
+	listName, reminderIndex, err := getListAndIndexForCompletion(allReminders, taskId)
+	if err != nil {
+		return err
+	}
+
+	err = r.cmd.ExecWithoutOutput([]string{"complete", listName, strconv.Itoa(reminderIndex)})
 
 	if err != nil {
-		// LogError("Failed to complete task: %s", err)
-		return fmt.Errorf("failed to complete task: %w", err)
+		return err
 	}
 
 	return nil
@@ -345,9 +296,13 @@ func (r ReminderTaskController) CompleteTask(taskId string) error {
 
 // UncompleteTask marks a task as uncompleted
 func (r ReminderTaskController) UncompleteTask(taskId string) error {
-	reminders, err := execCommand[Reminders]([]string{"show-all", "--only-completed"})
+	stdOut, err := r.cmd.Exec([]string{"show-all", "--only-completed"})
 	if err != nil {
-		// LogError("Failed to get completed tasks: %s", err)
+		return err
+	}
+	reminders, err := parseJson[Reminders](stdOut)
+	if err != nil {
+		return err
 	}
 
 	reminderToUncompleteIndex := slices.IndexFunc(reminders, func(r Reminder) bool {
@@ -360,10 +315,10 @@ func (r ReminderTaskController) UncompleteTask(taskId string) error {
 
 	reminderToUncompleteList := reminders[reminderToUncompleteIndex].List
 
-	_, err = execCommand[any]([]string{"uncomplete", "\"" + reminderToUncompleteList + "\"", strconv.Itoa(reminderToUncompleteIndex)})
+	_, err = r.cmd.Exec([]string{"uncomplete", "\"" + reminderToUncompleteList + "\"", strconv.Itoa(reminderToUncompleteIndex)})
 
 	if err != nil {
-		return fmt.Errorf("failed to uncomplete task: %w", err)
+		return err
 	}
 
 	return nil
@@ -374,11 +329,19 @@ func (r ReminderTaskController) UpdateTask(task entities.Task) error {
 	// // log.printf("UpdateTask: Starting update for task ID: %s", task.Id)
 	// // log.printf("UpdateTask: Task details - Title: %s, DueDate: %s", task.Title, task.DueDate)
 
-	// Find the correct list and index for the task
-	listName, reminderIndex, err := getListAndIndexForCompletion(task.Id)
+	stdOut, err := r.cmd.Exec([]string{"show-all"}) // TODO: move these magic strings to the commander
 	if err != nil {
-		// LogError("UpdateTask: Failed to find task for update: %s", err)
-		return fmt.Errorf("failed to find task for update: %w", err)
+		return err
+	}
+	allReminders, err := parseJson[Reminders](stdOut)
+	if err != nil {
+		return err
+	}
+
+	// Find the correct list and index for the task
+	listName, reminderIndex, err := getListAndIndexForCompletion(allReminders, task.Id)
+	if err != nil {
+		return err
 	}
 
 	// // log.printf("UpdateTask: Found task at list: %s, index: %d", listName, reminderIndex)
@@ -417,7 +380,7 @@ func (r ReminderTaskController) UpdateTask(task entities.Task) error {
 	deleteArgs := []string{"delete", listName, strconv.Itoa(reminderIndex)}
 	// // log.printf("UpdateTask: Delete command: %v", deleteArgs)
 
-	err = execCommandWithoutOutput(deleteArgs)
+	err = r.cmd.ExecWithoutOutput(deleteArgs)
 	if err != nil {
 		// LogError("UpdateTask: Failed to delete task: %s", err)
 		return fmt.Errorf("failed to delete task for update: %w", err)
@@ -477,7 +440,7 @@ func (r ReminderTaskController) UpdateTask(task entities.Task) error {
 	// // log.printf("UpdateTask: Running add command: %v", addArgs)
 
 	// Execute the add command to recreate the task
-	_, err = execCommand[Reminder](addArgs)
+	_, err = r.cmd.Exec(addArgs)
 	if err != nil {
 		// LogError("UpdateTask: Failed to recreate task: %s", err)
 		return fmt.Errorf("failed to recreate task: %w", err)

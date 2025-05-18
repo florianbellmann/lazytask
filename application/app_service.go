@@ -18,6 +18,10 @@ func NewAppService(repo entities.Repository, controller entities.Controller) *Ap
 	}
 }
 
+repo handling missing in the whole file
+this is what I also will need tests for
+
+
 func (aps *AppService) AddTask(task entities.Task) error {
 	return aps.controller.AddTask(task)
 }

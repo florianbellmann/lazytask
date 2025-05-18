@@ -31,8 +31,9 @@ Because of time constraints this project is in a prototype state for now.
 - [x] hot reloading https://github.com/charmbracelet/bubbletea/issues/150
 - [x] Implement app logging
 - [x] Tests for repo
+- [x] Mocks with builder pattern, then dev-mock list
 - [ ] Tests for controller
-- [ ] Mocks with builder pattern, then dev-mock list 
+- [ ] Tests for app service
 
 - [ ] Building a basic ui
       https://leg100.github.io/en/posts/building-bubbletea-programs/
@@ -45,7 +46,9 @@ Because of time constraints this project is in a prototype state for now.
       how to do comms with UI?
       https://chatgpt.com/c/681913f8-6bf4-800c-8f34-4bc08d042362
 
-- [ ] Implement commands
+- [ ] Unit tests for UI and each command
+
+- [ ] Implement commands incl corresponding tests
   - [ ] Edit dates
   - [ ] Move to tomorrow
   - [ ] Edit full card form

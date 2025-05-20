@@ -1,5 +1,6 @@
 package entities
 
+// Controls adapter to foreign task management system.
 type Controller interface {
 	// Get all task lists
 	GetLists() ([]List, error)

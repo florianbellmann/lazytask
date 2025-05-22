@@ -32,8 +32,8 @@ Because of time constraints this project is in a prototype state for now.
 - [x] Implement app logging
 - [x] Tests for repo
 - [x] Mocks with builder pattern, then dev-mock list
-- [ ] Implement and test controller
-- [ ] Tests for app service
+- [x] Implement 1 method and test controller
+- [x] Tests for app service
 
 - [ ] Building a basic ui
       https://leg100.github.io/en/posts/building-bubbletea-programs/

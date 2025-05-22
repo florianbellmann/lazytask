@@ -1,9 +1,9 @@
 package application
 
 import (
+	"errors"
 	"lazytask/entities"
 	"reflect"
-	"errors"
 	"testing"
 )
 

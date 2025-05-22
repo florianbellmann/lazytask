@@ -133,7 +133,10 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 			task := selectedTask.task
 
 			// Get all available lists for options
-			lists := m.appService.GetLists()
+			lists, err := m.appService.GetLists()
+			if err != nil {
+				return m, nil
+			}
 			availableListsText := ""
 			for i, list := range lists {
 				if i > 0 {
@@ -173,37 +176,63 @@ func HandleKeyPress(m model, msg tea.KeyMsg) (model, tea.Cmd) {
 		// Show all tasks view
 		m.activeList = "All"
 		allTasks := []entities.Task{}
-		lists := m.appService.GetLists()
+		lists, err := m.appService.GetLists()
+		if err != nil {
+			return m, nil
+		}
+
 		for _, list := range lists {
-			listTasks := m.appService.GetTasksByList(list.Id)
+			listTasks, err := m.appService.GetTasksByList(list.Id)
+			if err != nil {
+				return m, nil
+			}
 			allTasks = append(allTasks, listTasks...)
 		}
 		m.LoadTasks(allTasks)
 		m.listModel.Title = "All Tasks"
 		return m, nil
 	case "1":
+
+		// TODO: Lazy task lists should come from the app service. Reading lists comes from the controller
+
 		newActiveList := utils.GetConfig().Lists[0]
 		m.activeList = newActiveList
-		m.LoadTasks(m.appService.GetTasksByList(newActiveList))
+		ts, err := m.appService.GetTasksByList(newActiveList)
+		if err != nil {
+			return m, nil
+		}
+		m.LoadTasks(ts)
 		m.listModel.Title = newActiveList
 		return m, nil
 	case "2":
 		newActiveList := utils.GetConfig().Lists[1]
 		m.activeList = newActiveList
-		m.LoadTasks(m.appService.GetTasksByList(newActiveList))
+		ts, err := m.appService.GetTasksByList(newActiveList)
+		if err != nil {
+			return m, nil
+		}
+		m.LoadTasks(ts)
 		m.listModel.Title = newActiveList
 		return m, nil
 	case "3":
 		newActiveList := utils.GetConfig().Lists[2]
 		m.activeList = newActiveList
-		m.LoadTasks(m.appService.GetTasksByList(newActiveList))
+		ts, err := m.appService.GetTasksByList(newActiveList)
+		if err != nil {
+			return m, nil
+		}
+		m.LoadTasks(ts)
 		m.listModel.Title = newActiveList
 		return m, nil
 	case "4":
 		// TODO: add failsafe if not that many lists are present
 		newActiveList := utils.GetConfig().Lists[3]
 		m.activeList = newActiveList
-		m.LoadTasks(m.appService.GetTasksByList(newActiveList))
+		ts, err := m.appService.GetTasksByList(newActiveList)
+		if err != nil {
+			return m, nil
+		}
+		m.LoadTasks(ts)
 		m.listModel.Title = newActiveList
 		return m, nil
 	}

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"lazytask/application"
 	"lazytask/ui/cli"
 	"log"
@@ -24,7 +25,7 @@ func NewUi(as application.AppService) *Ui {
 
 func (u *Ui) Run() error {
 	if err := u.cli.Run(); err != nil {
-		log.Fatalf("Error running CLI: %v", err, debug.Stack())
+		return fmt.Errorf("Error running CLI: %v", err)
 	}
 
 	return nil

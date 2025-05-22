@@ -172,10 +172,10 @@ type ReminderTaskController struct {
 	cmd Commander
 }
 
-func NewReminderTaskController(cmd Commander) *ReminderTaskController {
+func NewReminderTaskController() *ReminderTaskController {
 	log.Printf("Apple Reminders controller initialized.")
 	return &ReminderTaskController{
-		cmd: cmd,
+		cmd: CliCommander{},
 	}
 }
 

@@ -1,7 +1,6 @@
 package infrastructure
 
 import (
-	"errors"
 	"fmt"
 	entities "lazytask/entities"
 	"log"

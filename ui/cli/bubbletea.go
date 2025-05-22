@@ -33,7 +33,12 @@ func (m model) Init() tea.Cmd {
 // Run the whole UI CLI application
 func (b BubbleTeaApp) Run() error {
 	model := NewUIModel(b.appService)
-	model.LoadTasks(b.appService.GetTasksByList(utils.GetConfig().Lists[0]))
+	ts, err := b.appService.GetTasksByList(utils.GetConfig().Lists[0])
+	if err != nil {
+		return fmt.Errorf("error getting tasks: %w", err)
+	}
+
+	model.LoadTasks(ts)
 
 	process := tea.NewProgram(model, tea.WithAltScreen())
 

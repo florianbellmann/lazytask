@@ -28,7 +28,9 @@ func (d *dummyCommander) ExecWithoutOutput(args []string) error {
 func TestGetLists(t *testing.T) {
 	// Test GetLists
 	dummy := &dummyCommander{response: []byte(`["l1","l2"]`)}
-	ctrl := NewReminderTaskController(dummy)
+	ctrl := &ReminderTaskController{
+		cmd: &dummyCommander{},
+	}
 	lists, err := ctrl.GetLists()
 	if err != nil {
 		t.Fatalf("GetLists() error: %v", err)
@@ -42,8 +44,10 @@ func TestGetLists(t *testing.T) {
 }
 
 func TestGetListById(t *testing.T) {
-	dummy := &dummyCommander{response: []byte(`["l1","l2"]`)}
-	ctrl := NewReminderTaskController(dummy)
+	// dummy := &dummyCommander{response: []byte(`["l1","l2"]`)}
+	ctrl := &ReminderTaskController{
+		cmd: &dummyCommander{},
+	}
 
 	// Test GetListById success
 	list, err := ctrl.GetListById("l2")
@@ -889,3 +893,383 @@ func TestParseJson(t *testing.T) {
 		t.Errorf("parseJson() expected error on invalid input, got nil")
 	}
 }
+
+//
+// import (
+// 	"encoding/json"
+// 	"errors"
+// 	"lazytask/entities"
+// 	"os"
+// 	"path/filepath"
+// 	"slices"
+// 	"strings"
+// 	"testing"
+// 	"time"
+// )
+//
+//
+// func (r Reminder) ToTask() entities.Task {}
+// func (reminders Reminders) ToTasks() []entities.Task {}
+// func ToReminder(t entities.Task) Reminder {}
+// func ToList(r ReminderList) entities.List {}
+// func ToLists(rl []ReminderList) []entities.List {}
+// func ToReminderList(l entities.List) ReminderList {}
+// func findProjectRoot() (string, error) {}
+// func getExecutablePath() (string, error) {}
+// func parseJson[T any](output []byte) (T, error) {}
+// func execCommandWithoutOutput(commandArgs []string) error {}
+// func execCommand[T any](commandArgs []string) (T, error) {}
+// func getListAndIndexForCompletion(taskId string) (ReminderList, int, error) {}
+// func NewReminderTaskController() *ReminderTaskController {}
+// func (r ReminderTaskController) GetLists() ([]entities.List, error) {}
+// func (r ReminderTaskController) GetListById(listId string) (entities.List, error) {}
+// func (r ReminderTaskController) GetTaskById(taskId string) (entities.Task, error) {}
+// func (r ReminderTaskController) GetTasksByList(listId string) ([]entities.Task, error) {}
+// func (r ReminderTaskController) AddTask(t entities.Task) error {}
+// func (r ReminderTaskController) CompleteTask(taskId string) error {}
+// func (r ReminderTaskController) UncompleteTask(taskId string) error {}
+// func (r ReminderTaskController) UpdateTask(task entities.Task) error {}
+// func (r ReminderTaskController) MoveTaskToList(taskId string, targetListId string) error {}
+//
+//
+// // Note on controller method testing:
+// // For a real implementation of tests with the current code structure, we would need to:
+// // 1. Use a mocking library that can patch functions (like github.com/agiledragon/gomonkey)
+// // 2. Patch the `execCommand` and `execCommandWithoutOutput` functions
+// // 3. Set up specific expectations for different calls
+// //
+// // A better approach would be to refactor the code to use dependency injection for the command execution.
+// // This would make it possible to inject mock implementations for testing.
+//
+// // ----------------------------------------------------------------------
+//
+// // Mock controller implementation for testing
+// type MockReminderTaskController struct {
+// 	lists []entities.List
+// 	tasks map[string][]entities.Task
+// }
+//
+// func NewMockReminderTaskController() *MockReminderTaskController {
+// 	return &MockReminderTaskController{
+// 		lists: []entities.List{
+// 			{Id: "List1", Title: "List 1"},
+// 			{Id: "List2", Title: "List 2"},
+// 		},
+// 		tasks: map[string][]entities.Task{
+// 			"List1": {
+// 				{Id: "task1", Title: "Task 1", ListId: "List1"},
+// 				{Id: "task2", Title: "Task 2", ListId: "List1"},
+// 			},
+// 			"List2": {
+// 				{Id: "task3", Title: "Task 3", ListId: "List2"},
+// 			},
+// 		},
+// 	}
+// }
+//
+// func (m *MockReminderTaskController) GetLists() []entities.List {
+// 	return m.lists
+// }
+//
+// func (m *MockReminderTaskController) GetListById(listId string) (entities.List, error) {
+// 	for _, list := range m.lists {
+// 		if list.Id == listId {
+// 			return list, nil
+// 		}
+// 	}
+// 	return entities.List{}, errors.New("List not found")
+// }
+//
+// func (m *MockReminderTaskController) GetTasksByList(listId string) []entities.Task {
+// 	return m.tasks[listId]
+// }
+//
+// func (m *MockReminderTaskController) GetTaskById(taskId string) (entities.Task, error) {
+// 	for _, tasks := range m.tasks {
+// 		for _, task := range tasks {
+// 			if task.Id == taskId {
+// 				return task, nil
+// 			}
+// 		}
+// 	}
+// 	return entities.Task{}, errors.New("Task not found")
+// }
+//
+// func (m *MockReminderTaskController) AddTask(task entities.Task) error {
+// 	if _, ok := m.tasks[task.ListId]; !ok {
+// 		m.tasks[task.ListId] = []entities.Task{}
+// 	}
+// 	m.tasks[task.ListId] = append(m.tasks[task.ListId], task)
+// 	return nil
+// }
+//
+// func (m *MockReminderTaskController) CompleteTask(taskId string) error {
+// 	for listId, tasks := range m.tasks {
+// 		for i, task := range tasks {
+// 			if task.Id == taskId {
+// 				m.tasks[listId][i].IsCompleted = true
+// 				return nil
+// 			}
+// 		}
+// 	}
+// 	return errors.New("Task not found")
+// }
+//
+// func (m *MockReminderTaskController) UncompleteTask(taskId string) error {
+// 	for listId, tasks := range m.tasks {
+// 		for i, task := range tasks {
+// 			if task.Id == taskId {
+// 				m.tasks[listId][i].IsCompleted = false
+// 				return nil
+// 			}
+// 		}
+// 	}
+// 	return errors.New("Task not found")
+// }
+//
+// func (m *MockReminderTaskController) UpdateTask(task entities.Task) error {
+// 	for listId, tasks := range m.tasks {
+// 		for i, t := range tasks {
+// 			if t.Id == task.Id {
+// 				m.tasks[listId][i] = task
+// 				return nil
+// 			}
+// 		}
+// 	}
+// 	return errors.New("Task not found")
+// }
+//
+// func (m *MockReminderTaskController) MoveTaskToList(taskId string, targetListId string) error {
+// 	var taskToMove entities.Task
+// 	var sourceListId string
+// 	var taskIndex int
+//
+// 	// Find the task
+// 	found := false
+// 	for listId, tasks := range m.tasks {
+// 		for i, task := range tasks {
+// 			if task.Id == taskId {
+// 				taskToMove = task
+// 				sourceListId = listId
+// 				taskIndex = i
+// 				found = true
+// 				break
+// 			}
+// 		}
+// 		if found {
+// 			break
+// 		}
+// 	}
+//
+// 	if !found {
+// 		return errors.New("Task not found")
+// 	}
+//
+// 	// Check if target list exists
+// 	if _, ok := m.tasks[targetListId]; !ok {
+// 		return errors.New("Target list not found")
+// 	}
+//
+// 	// Remove task from source list
+// 	m.tasks[sourceListId] = slices.Delete(m.tasks[sourceListId], taskIndex, taskIndex+1)
+//
+// 	// Update task with new list ID
+// 	taskToMove.ListId = targetListId
+//
+// 	// Add task to target list
+// 	m.tasks[targetListId] = append(m.tasks[targetListId], taskToMove)
+//
+// 	return nil
+// }
+//
+//
+//
+//
+// import (
+// 	"encoding/json"
+// 	"errors"
+// 	"lazytask/entities"
+// 	"os"
+// 	"path/filepath"
+// 	"slices"
+// 	"strings"
+// 	"testing"
+// 	"time"
+// )
+//
+//
+// func (r Reminder) ToTask() entities.Task {}
+// func (reminders Reminders) ToTasks() []entities.Task {}
+// func ToReminder(t entities.Task) Reminder {}
+// func ToList(r ReminderList) entities.List {}
+// func ToLists(rl []ReminderList) []entities.List {}
+// func ToReminderList(l entities.List) ReminderList {}
+// func findProjectRoot() (string, error) {}
+// func getExecutablePath() (string, error) {}
+// func parseJson[T any](output []byte) (T, error) {}
+// func execCommandWithoutOutput(commandArgs []string) error {}
+// func execCommand[T any](commandArgs []string) (T, error) {}
+// func getListAndIndexForCompletion(taskId string) (ReminderList, int, error) {}
+// func NewReminderTaskController() *ReminderTaskController {}
+// func (r ReminderTaskController) GetLists() ([]entities.List, error) {}
+// func (r ReminderTaskController) GetListById(listId string) (entities.List, error) {}
+// func (r ReminderTaskController) GetTaskById(taskId string) (entities.Task, error) {}
+// func (r ReminderTaskController) GetTasksByList(listId string) ([]entities.Task, error) {}
+// func (r ReminderTaskController) AddTask(t entities.Task) error {}
+// func (r ReminderTaskController) CompleteTask(taskId string) error {}
+// func (r ReminderTaskController) UncompleteTask(taskId string) error {}
+// func (r ReminderTaskController) UpdateTask(task entities.Task) error {}
+// func (r ReminderTaskController) MoveTaskToList(taskId string, targetListId string) error {}
+//
+//
+// // Note on controller method testing:
+// // For a real implementation of tests with the current code structure, we would need to:
+// // 1. Use a mocking library that can patch functions (like github.com/agiledragon/gomonkey)
+// // 2. Patch the `execCommand` and `execCommandWithoutOutput` functions
+// // 3. Set up specific expectations for different calls
+// //
+// // A better approach would be to refactor the code to use dependency injection for the command execution.
+// // This would make it possible to inject mock implementations for testing.
+//
+// // ----------------------------------------------------------------------
+//
+// // Mock controller implementation for testing
+// type MockReminderTaskController struct {
+// 	lists []entities.List
+// 	tasks map[string][]entities.Task
+// }
+//
+// func NewMockReminderTaskController() *MockReminderTaskController {
+// 	return &MockReminderTaskController{
+// 		lists: []entities.List{
+// 			{Id: "List1", Title: "List 1"},
+// 			{Id: "List2", Title: "List 2"},
+// 		},
+// 		tasks: map[string][]entities.Task{
+// 			"List1": {
+// 				{Id: "task1", Title: "Task 1", ListId: "List1"},
+// 				{Id: "task2", Title: "Task 2", ListId: "List1"},
+// 			},
+// 			"List2": {
+// 				{Id: "task3", Title: "Task 3", ListId: "List2"},
+// 			},
+// 		},
+// 	}
+// }
+//
+// func (m *MockReminderTaskController) GetLists() []entities.List {
+// 	return m.lists
+// }
+//
+// func (m *MockReminderTaskController) GetListById(listId string) (entities.List, error) {
+// 	for _, list := range m.lists {
+// 		if list.Id == listId {
+// 			return list, nil
+// 		}
+// 	}
+// 	return entities.List{}, errors.New("List not found")
+// }
+//
+// func (m *MockReminderTaskController) GetTasksByList(listId string) []entities.Task {
+// 	return m.tasks[listId]
+// }
+//
+// func (m *MockReminderTaskController) GetTaskById(taskId string) (entities.Task, error) {
+// 	for _, tasks := range m.tasks {
+// 		for _, task := range tasks {
+// 			if task.Id == taskId {
+// 				return task, nil
+// 			}
+// 		}
+// 	}
+// 	return entities.Task{}, errors.New("Task not found")
+// }
+//
+// func (m *MockReminderTaskController) AddTask(task entities.Task) error {
+// 	if _, ok := m.tasks[task.ListId]; !ok {
+// 		m.tasks[task.ListId] = []entities.Task{}
+// 	}
+// 	m.tasks[task.ListId] = append(m.tasks[task.ListId], task)
+// 	return nil
+// }
+//
+// func (m *MockReminderTaskController) CompleteTask(taskId string) error {
+// 	for listId, tasks := range m.tasks {
+// 		for i, task := range tasks {
+// 			if task.Id == taskId {
+// 				m.tasks[listId][i].IsCompleted = true
+// 				return nil
+// 			}
+// 		}
+// 	}
+// 	return errors.New("Task not found")
+// }
+//
+// func (m *MockReminderTaskController) UncompleteTask(taskId string) error {
+// 	for listId, tasks := range m.tasks {
+// 		for i, task := range tasks {
+// 			if task.Id == taskId {
+// 				m.tasks[listId][i].IsCompleted = false
+// 				return nil
+// 			}
+// 		}
+// 	}
+// 	return errors.New("Task not found")
+// }
+//
+// func (m *MockReminderTaskController) UpdateTask(task entities.Task) error {
+// 	for listId, tasks := range m.tasks {
+// 		for i, t := range tasks {
+// 			if t.Id == task.Id {
+// 				m.tasks[listId][i] = task
+// 				return nil
+// 			}
+// 		}
+// 	}
+// 	return errors.New("Task not found")
+// }
+//
+// func (m *MockReminderTaskController) MoveTaskToList(taskId string, targetListId string) error {
+// 	var taskToMove entities.Task
+// 	var sourceListId string
+// 	var taskIndex int
+//
+// 	// Find the task
+// 	found := false
+// 	for listId, tasks := range m.tasks {
+// 		for i, task := range tasks {
+// 			if task.Id == taskId {
+// 				taskToMove = task
+// 				sourceListId = listId
+// 				taskIndex = i
+// 				found = true
+// 				break
+// 			}
+// 		}
+// 		if found {
+// 			break
+// 		}
+// 	}
+//
+// 	if !found {
+// 		return errors.New("Task not found")
+// 	}
+//
+// 	// Check if target list exists
+// 	if _, ok := m.tasks[targetListId]; !ok {
+// 		return errors.New("Target list not found")
+// 	}
+//
+// 	// Remove task from source list
+// 	m.tasks[sourceListId] = slices.Delete(m.tasks[sourceListId], taskIndex, taskIndex+1)
+//
+// 	// Update task with new list ID
+// 	taskToMove.ListId = targetListId
+//
+// 	// Add task to target list
+// 	m.tasks[targetListId] = append(m.tasks[targetListId], taskToMove)
+//
+// 	return nil
+// }
+//
+//

@@ -20,7 +20,7 @@ func main() {
 	log.Printf("Configuration loaded - Lists: %v", appConfig.Lists)
 
 	// Set up the application with DI
-	reminderCtrl := ctrl.NewReminderTaskController(ctrl.CliCommander{})
+	reminderCtrl := ctrl.NewReminderTaskController()
 	inMemoryRepository := repo.NewInMemoryRepo()
 	appService := application.NewAppService(inMemoryRepository, reminderCtrl)
 

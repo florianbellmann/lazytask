@@ -44,6 +44,8 @@ backend task management and use that always. Never communicate directly with
 the Reminder CLI. Always assume that the list that you're working on is
 called "develop".
 
+Keep a checklist of what you did and what your status is. So next time we can continue where we left of
+
 ### Features that I need
 
 - [ ] Integrate swift adapter to make this app work with apple reminders.

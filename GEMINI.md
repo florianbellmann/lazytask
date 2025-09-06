@@ -50,6 +50,8 @@ Keep a checklist of what you did and what your status is. So next time we can co
 
 - [ ] Integrate swift adapter to make this app work with apple reminders.
       See https://github.com/florianbellmann/reminders-cli.git
+      The adapter will build to a binary executable. the app should be able to talk to that binary
+      Dont try to build the reminders cli. Just read the swift source code to understand how it works
 - [ ] Adding a task by title
 - [ ] Completing a task
 - [ ] Switching between lists

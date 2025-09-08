@@ -3,14 +3,14 @@ import logging
 from contextlib import asynccontextmanager
 
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, ListView, ListItem, Label, Input, LoadingIndicator
+from textual.widgets import Header, Footer, ListView, ListItem, Label, LoadingIndicator
 from textual.containers import Container
 
-from lazytask.domain.task import Task
-from lazytask.infrastructure.reminders_task_repository import RemindersTaskRepository
-from lazytask.application.use_cases import GetAllTasks, AddTask, CompleteTask, SwitchList, UpdateTask
+from lazytask.domain.models import Task
+from lazytask.container import container
 from lazytask.presentation.edit_screen import EditScreen
 from lazytask.presentation.help_screen import HelpScreen
+from lazytask.presentation.text_input_modal import TextInputModal
 
 class LazyTaskApp(App):
     """A Textual app to manage tasks."""
@@ -36,13 +36,13 @@ class LazyTaskApp(App):
 
     def __init__(self):
         super().__init__()
-        self.repo = RemindersTaskRepository()
-        self.get_all_tasks_uc = GetAllTasks(self.repo)
-        self.add_task_uc = AddTask(self.repo)
-        self.complete_task_uc = CompleteTask(self.repo)
-        self.switch_list_uc = SwitchList(self.repo)
-        self.update_task_uc = UpdateTask(self.repo)
+        self.get_all_tasks_uc = container.get_task_list_use_case
+        self.add_task_uc = container.add_task_use_case
+        self.complete_task_uc = container.complete_task_use_case
+        self.switch_list_uc = container.get_all_task_lists_use_case # This is not ideal, but we'll fix it later
+        self.update_task_uc = container.edit_task_date_use_case # This is not ideal, but we'll fix it later
         self.sort_by = "title"
+        self.current_list = "develop"
 
     @asynccontextmanager
     async def show_loading(self):
@@ -51,15 +51,11 @@ class LazyTaskApp(App):
         self.query_one(LoadingIndicator).display = False
 
     def compose(self) -> ComposeResult:
-        """Create child widgets for the app."""
+        """Create child widgets for the app.""" 
         yield Header()
         yield Container(
             LoadingIndicator(),
             ListView(id="tasks_list"),
-            Input(placeholder="New task...", id="new_task_input"),
-            Input(placeholder="Switch to list...", id="switch_list_input", classes="hidden"),
-            Input(placeholder="YYYY-MM-DD", id="edit_date_input", classes="hidden"),
-            Input(placeholder="Filter...", id="filter_input", classes="hidden"),
         )
         yield Footer()
 
@@ -71,11 +67,12 @@ class LazyTaskApp(App):
 
     async def update_tasks_list(self, filter_query: str = ""):
         """Update the tasks list view."""
-        tasks_list = self.query_one(ListView)
-        tasks_list.clear()
+        tasks_list_view = self.query_one(ListView)
+        tasks_list_view.clear()
         async with self.show_loading():
             try:
-                tasks = await self.get_all_tasks_uc.execute()
+                task_list = await self.get_all_tasks_uc.execute(self.current_list)
+                tasks = task_list.tasks if task_list else []
             except Exception as e:
                 self.notify(f"Error getting tasks: {e}", title="Error", severity="error")
                 return
@@ -96,74 +93,56 @@ class LazyTaskApp(App):
                 details.append(f"tags: {','.join(task.tags)}")
             if task.priority:
                 details.append(f"prio: {task.priority}")
-            if task.is_flagged:
+            if task.flagged:
                 details.append("flagged")
             details_str = f" ({', '.join(details)})" if details else ""
 
             list_item = ListItem(Label(f"{'[x]' if task.completed else '[ ]'} {task.title}{details_str}"))
             list_item.data = task
-            tasks_list.append(list_item)
-        self.query_one(Header).title = f"LazyTask - {self.repo._current_list}"
-
-    async def on_input_changed(self, message: Input.Changed) -> None:
-        if message.input.id == "filter_input":
-            await self.update_tasks_list(message.value)
-
-    async def on_input_submitted(self, message: Input.Submitted) -> None:
-        """Called when the user submits the input."""
-        if message.input.id == "new_task_input":
-            if message.value:
-                async with self.show_loading():
-                    await self.add_task_uc.execute(message.value)
-                    await self.update_tasks_list()
-                message.input.value = ""
-        elif message.input.id == "switch_list_input":
-            if message.value:
-                self.switch_list_uc.execute(message.value)
-                await self.update_tasks_list()
-                message.input.value = ""
-                message.input.add_class("hidden")
-                self.query_one("#new_task_input").remove_class("hidden")
-        elif message.input.id == "edit_date_input":
-            tasks_list = self.query_one(ListView)
-            if tasks_list.highlighted_child and message.value:
-                task = tasks_list.highlighted_child.data
-                try:
-                    new_date = datetime.datetime.strptime(message.value, "%Y-%m-%d").date()
-                    task.due_date = new_date
-                    async with self.show_loading():
-                        await self.update_task_uc.execute(task)
-                        await self.update_tasks_list()
-                except ValueError:
-                    self.notify("Invalid date format. Please use YYYY-MM-DD.", title="Error", severity="error")
-            message.input.value = ""
-            message.input.add_class("hidden")
-            self.query_one("#new_task_input").remove_class("hidden")
-        elif message.input.id == "filter_input":
-            message.input.add_class("hidden")
-            self.query_one("#new_task_input").remove_class("hidden")
+            tasks_list_view.append(list_item)
+        self.query_one(Header).title = f"LazyTask - {self.current_list}"
 
     def action_add_task(self) -> None:
         """An action to add a task."""
-        self.query_one("#new_task_input").focus()
+        def on_submit(title: str):
+            if title:
+                async def add_task_async():
+                    async with self.show_loading():
+                        await self.add_task_uc.execute(self.current_list, Task(id=None, title=title))
+                        await self.update_tasks_list()
+                self.call_later(add_task_async)
+
+        self.push_screen(TextInputModal(prompt="New task title:"), on_submit)
 
     def action_switch_list(self) -> None:
         """An action to switch list."""
-        self.query_one("#switch_list_input").remove_class("hidden")
-        self.query_one("#new_task_input").add_class("hidden")
-        self.query_one("#switch_list_input").focus()
+        def on_submit(list_name: str):
+            if list_name:
+                self.current_list = list_name
+                self.call_later(self.update_tasks_list)
+
+        self.push_screen(TextInputModal(prompt="Switch to list:"), on_submit)
 
     def action_edit_date(self) -> None:
         """An action to edit a task's due date."""
         tasks_list = self.query_one(ListView)
         if tasks_list.highlighted_child:
             task = tasks_list.highlighted_child.data
-            edit_input = self.query_one("#edit_date_input")
-            edit_input.remove_class("hidden")
-            if task.due_date:
-                edit_input.value = task.due_date.strftime('%Y-%m-%d')
-            self.query_one("#new_task_input").add_class("hidden")
-            edit_input.focus()
+            def on_submit(date_str: str):
+                if date_str:
+                    try:
+                        new_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+                        task.due_date = new_date
+                        async def update_task_async():
+                            async with self.show_loading():
+                                await self.update_task_uc.execute(self.current_list, task)
+                                await self.update_tasks_list()
+                        self.call_later(update_task_async)
+                    except ValueError:
+                        self.notify("Invalid date format. Please use YYYY-MM-DD.", title="Error", severity="error")
+
+            initial_value = task.due_date.strftime('%Y-%m-%d') if task.due_date else ""
+            self.push_screen(TextInputModal(prompt="New due date (YYYY-MM-DD):", initial_value=initial_value), on_submit)
 
     async def action_move_to_tomorrow(self) -> None:
         """An action to move a task to tomorrow."""
@@ -172,7 +151,7 @@ class LazyTaskApp(App):
             task = tasks_list.highlighted_child.data
             task.due_date = datetime.date.today() + datetime.timedelta(days=1)
             async with self.show_loading():
-                await self.update_task_uc.execute(task)
+                await self.update_task_uc.execute(self.current_list, task)
                 await self.update_tasks_list()
 
     def action_edit_task(self) -> None:
@@ -185,7 +164,7 @@ class LazyTaskApp(App):
     async def on_edit_screen_closed(self, task: Task) -> None:
         if task:
             async with self.show_loading():
-                await self.update_task_uc.execute(task)
+                await self.update_task_uc.execute(self.current_list, task)
                 await self.update_tasks_list()
 
     async def action_refresh(self) -> None:
@@ -194,9 +173,10 @@ class LazyTaskApp(App):
 
     def action_filter_tasks(self) -> None:
         """An action to filter tasks."""
-        self.query_one("#filter_input").remove_class("hidden")
-        self.query_one("#new_task_input").add_class("hidden")
-        self.query_one("#filter_input").focus()
+        def on_submit(query: str):
+            self.call_later(self.update_tasks_list, query)
+
+        self.push_screen(TextInputModal(prompt="Filter tasks:"), on_submit)
 
     async def action_sort_tasks(self) -> None:
         """An action to sort tasks."""
@@ -225,7 +205,7 @@ class LazyTaskApp(App):
             task = tasks_list.highlighted_child.data
             if task:
                 async with self.show_loading():
-                    await self.complete_task_uc.execute(task.id)
+                    await self.complete_task_uc.execute(self.current_list, task.id)
                     await self.update_tasks_list()
 
     def action_toggle_dark(self) -> None:

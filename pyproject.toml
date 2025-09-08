@@ -16,5 +16,8 @@ dev = ["ruff", "pytest"]
 [tool.hatch.build.targets.wheel]
 packages = ["lazytask"]
 
+[project.scripts]
+lazytask = "main:main"
+
 [tool.hatch.metadata]
 allow-direct-references = true

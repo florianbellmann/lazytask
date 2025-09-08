@@ -34,3 +34,4 @@ infrastructure/.DS_Store
 .DS_Store
 *.pyc
 tests/__pycache__/test_backend.cpython-311-pytest-8.4.2.pyc
+lazytask.log

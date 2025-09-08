@@ -12,3 +12,4 @@ class Task:
     tags: List[str] = field(default_factory=list)
     priority: Optional[int] = None
     is_flagged: bool = False
+    recurring: Optional[str] = None

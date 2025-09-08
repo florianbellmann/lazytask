@@ -1,5 +1,5 @@
 from typing import List
-from uuid import UUID
+import uuid
 from datetime import datetime, timedelta
 
 from lazytask.domain.backend import Backend
@@ -9,15 +9,17 @@ class MockBackend(Backend):
     def __init__(self):
         self.tasks: List[Task] = [
             Task(
+                id=str(uuid.uuid4()),
                 title="Task 1",
                 description="This is the first task",
                 tags=["work"],
                 priority=1,
                 due_date=datetime.now() + timedelta(days=1),
-                flagged=True,
+                is_flagged=True,
                 recurring="daily",
             ),
             Task(
+                id=str(uuid.uuid4()),
                 title="Task 2",
                 description="This is the second task",
                 tags=["home"],
@@ -25,13 +27,14 @@ class MockBackend(Backend):
                 due_date=datetime.now() + timedelta(days=2),
             ),
             Task(
+                id=str(uuid.uuid4()),
                 title="Task 3",
                 completed=True,
                 description="This is the third task",
                 tags=["work", "urgent"],
                 priority=3,
                 due_date=datetime.now() - timedelta(days=1),
-                flagged=True,
+                is_flagged=True,
             ),
         ]
 
@@ -43,7 +46,7 @@ class MockBackend(Backend):
         self.tasks.append(new_task)
         return new_task
 
-    def complete_task(self, task_id: UUID) -> Task:
+    def complete_task(self, task_id: uuid.UUID) -> Task:
         for task in self.tasks:
             if task.id == task_id:
                 task.completed = True

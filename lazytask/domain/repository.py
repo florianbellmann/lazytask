@@ -6,23 +6,23 @@ from lazytask.domain.task import Task
 class TaskRepository(ABC):
 
     @abstractmethod
-    def add_task(self, title: str) -> Task:
+    async def add_task(self, title: str) -> Task:
         pass
 
     @abstractmethod
-    def get_task_by_id(self, task_id: str) -> Optional[Task]:
+    async def get_task_by_id(self, task_id: str) -> Optional[Task]:
         pass
 
     @abstractmethod
-    def get_all_tasks(self) -> List[Task]:
+    async def get_all_tasks(self) -> List[Task]:
         pass
 
     @abstractmethod
-    def complete_task(self, task_id: str) -> None:
+    async def complete_task(self, task_id: str) -> None:
         pass
 
     @abstractmethod
-    def update_task(self, task: Task) -> None:
+    async def update_task(self, task: Task) -> None:
         pass
 
     @abstractmethod

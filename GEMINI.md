@@ -48,30 +48,30 @@ Keep a checklist of what you did and what your status is. So next time we can co
 
 ### Features that I need
 
-- [ ] Integrate swift adapter to make this app work with apple reminders.
+- [x] Integrate swift adapter to make this app work with apple reminders.
       See https://github.com/florianbellmann/reminders-cli.git
       The adapter will build to a binary executable. the app should be able to talk to that binary
       Dont try to build the reminders cli. Just read the swift source code to understand how it works
-- [ ] Adding a task by title
-- [ ] Completing a task
-- [ ] Switching between lists
-- [ ] Edit dates
-- [ ] Move to tomorrow
-- [ ] Edit full card form
-- [ ] Edit descriptions
-- [ ] Edit tags
-- [ ] Edit prios
-- [ ] Edit flags
-- [ ] Refresh list
-- [ ] Handling of all tasks, not only overdue
-- [ ] Sorting / filtering
-- [ ] Async task handling with busy spinners, maybe add command queue
-- [ ] Fix help pages initial app functionalities
-- [ ] Display of further infos: Tags, recurring, flags, prios, ...
-- [ ] Github actions, building, tests and linting
-- [ ] Input hardening
+- [x] Adding a task by title
+- [x] Completing a task
+- [x] Switching between lists
+- [x] Edit dates
+- [x] Move to tomorrow
+- [x] Edit full card form
+- [x] Edit descriptions
+- [x] Edit tags
+- [x] Edit prios
+- [x] Edit flags
+- [x] Refresh list
+- [x] Handling of all tasks, not only overdue
+- [x] Sorting / filtering
+- [x] Async task handling with busy spinners, maybe add command queue
+- [x] Fix help pages initial app functionalities
+- [x] Display of further infos: Tags, recurring, flags, prios, ...
+- [x] Github actions, building, tests and linting
+- [x] Input hardening
 - [ ] recurring tasks handling
-- [ ] Implement app logging for debugging
+- [x] Implement app logging for debugging
 
 ### Example repos that I like
 
@@ -80,7 +80,7 @@ Keep a checklist of what you did and what your status is. So next time we can co
 
 And this app:
 
-````python
+```python
 """
 Optimized Mermaid TUI Application Module
 ======================================
@@ -151,7 +151,7 @@ class TerminalImageDisplay:
         """
         # Check environment variables that indicate terminal type
         term_program = os.environ.get(
-            "TERM_PROGRAM", ""
+            "TERM_PROGRAM", "" 
         ).lower()  # Primary terminal identifier
         term = os.environ.get("TERM", "").lower()  # TERM environment variable
 
@@ -384,7 +384,7 @@ class TerminalImageDisplay:
 
             # Use kitty image protocol escape sequence which ghostty supports
             # Format: ESC_Gf=100,a=T,C=1;{base64_data}ESC\
-            print(f"\033_Gf=100,a=T,C=1;{image_data}\033\\", end="", flush=True)
+            print(f"\033_Gf=100,a=T,C=1;{image_data}\033\", end="", flush=True)
 
             # Add proper termination and cursor positioning for ghostty
             print("\033[0m")  # Reset terminal attributes
@@ -501,7 +501,10 @@ class SocketCommunicator:
     """
 
     def __init__(
-        self, host: str = "localhost", port: int = 8080, user_id: str = "default_user"
+        self,
+        host: str = "localhost",
+        port: int = 8080,
+        user_id: str = "default_user",
     ) -> None:
         """Initialize the socket communicator.
 
@@ -1272,9 +1275,8 @@ This content comes from an external system.
             # Content fits, pad to full width
             rendered.append(f"│ {spinner} ", style="dim cyan")
             rendered.append(f"{self.current_status}", style="italic white")
-            remaining_space = (
+            remaining_space =
                 content_space - len(status_content) - 1
-            )  # -1 for the space after │
             if remaining_space > 0:
                 rendered.append(" " * remaining_space, style="dim")
             rendered.append("│", style="dim cyan")
@@ -1446,7 +1448,7 @@ This content comes from an external system.
             self._update_status_animation()
 
 class App(TextualApp[None]): # type: ignore[misc]
-"""Optimized main TUI application with async processing.
+    """Optimized main TUI application with async processing.
 
     Performance improvements:
     - Async render request handling
@@ -1553,7 +1555,8 @@ class App(TextualApp[None]): # type: ignore[misc]
         self.call_later(self.load_initial_history)
 
     async def on_chat_interface_render_request(
-        self, message: ChatInterface.RenderRequest
+        self,
+        message: ChatInterface.RenderRequest,
     ) -> None:
         """Handle render requests asynchronously to prevent blocking.
 
@@ -1670,13 +1673,13 @@ class App(TextualApp[None]): # type: ignore[misc]
                 print("⚠️  Image file not found!")
 
             # Show enhanced navigation controls
-            print(f"\n{'─' * 60}")
+            print(f"\n{'-' * 60}")
             if total_images > 1:
                 print("Navigation: [n]ext, [p]revious, [1-9] jump to image, [q]uit")
                 print(f"Currently viewing: {current_index + 1}/{total_images}")
             else:
                 print("Press [q] to return to editor")
-            print(f"{'─' * 60}")
+            print(f"{'-' * 60}")
 
             # Get user input with better error handling
             try:
@@ -1760,7 +1763,8 @@ class App(TextualApp[None]): # type: ignore[misc]
 
     # External System Communication Methods
     async def on_chat_interface_user_message_submitted(
-        self, message: ChatInterface.UserMessageSubmitted
+        self,
+        message: ChatInterface.UserMessageSubmitted,
     ) -> None:
         """Handle user message submission from ChatInterface."""
         user_message = message.message
@@ -1975,8 +1979,3 @@ class App(TextualApp[None]): # type: ignore[misc]
             # Add markdown content if available
             if response.get("markdown_content"):
                 chat.add_system_markdown(response["markdown_content"])
-
-```
-
-```
-

@@ -1,4 +1,3 @@
-
 import datetime
 import logging
 from contextlib import asynccontextmanager
@@ -30,6 +29,8 @@ class LazyTaskApp(App):
         ("/", "filter_tasks", "Filter tasks"),
         ("ctrl+o", "sort_tasks", "Sort tasks"),
         ("?", "show_help", "Show help"),
+        ("j", "cursor_down", "Cursor Down"),
+        ("k", "cursor_up", "Cursor Up"),
         ("q", "quit", "Quit"),
     ]
 
@@ -208,6 +209,14 @@ class LazyTaskApp(App):
     def action_show_help(self) -> None:
         """An action to show the help screen."""
         self.push_screen(HelpScreen())
+
+    def action_cursor_down(self) -> None:
+        """Move cursor down in the list."""
+        self.query_one(ListView).action_cursor_down()
+
+    def action_cursor_up(self) -> None:
+        """Move cursor up in the list."""
+        self.query_one(ListView).action_cursor_up()
 
     async def action_complete_task(self) -> None:
         """An action to complete a task."""

@@ -32,6 +32,8 @@
 
 Inspect the Reminder CLI submodule and see which functionalities are available there.
 
+Always run the app through `uv`.
+
 I want to build an application that can be a terminal interface for me to
 work with task management. In this repository you find a sub-module for the
 Reminder CLI to handle Apple Reminders. I want to build this application in

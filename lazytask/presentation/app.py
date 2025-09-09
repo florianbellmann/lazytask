@@ -36,11 +36,11 @@ class LazyTaskApp(App):
 
     def __init__(self):
         super().__init__()
-        self.get_all_tasks_uc = container.get_task_list_use_case
-        self.add_task_uc = container.add_task_use_case
-        self.complete_task_uc = container.complete_task_use_case
-        self.switch_list_uc = container.get_all_task_lists_use_case # This is not ideal, but we'll fix it later
-        self.update_task_uc = container.edit_task_date_use_case # This is not ideal, but we'll fix it later
+        self.get_all_tasks = container.get_all_tasks
+        self.add_task = container.add_task
+        self.complete_task = container.complete_task
+        self.switch_list = container.switch_list
+        self.update_task = container.update_task
         self.sort_by = "title"
         self.current_list = "develop"
 
@@ -51,7 +51,7 @@ class LazyTaskApp(App):
         self.query_one(LoadingIndicator).display = False
 
     def compose(self) -> ComposeResult:
-        """Create child widgets for the app.""" 
+        """Create child widgets for the app."""
         yield Header()
         yield Container(
             LoadingIndicator(),
@@ -71,8 +71,7 @@ class LazyTaskApp(App):
         tasks_list_view.clear()
         async with self.show_loading():
             try:
-                task_list = await self.get_all_tasks_uc.execute(self.current_list)
-                tasks = task_list.tasks if task_list else []
+                tasks = await self.get_all_tasks.execute(self.current_list)
             except Exception as e:
                 self.notify(f"Error getting tasks: {e}", title="Error", severity="error")
                 return
@@ -108,7 +107,7 @@ class LazyTaskApp(App):
             if title:
                 async def add_task_async():
                     async with self.show_loading():
-                        await self.add_task_uc.execute(self.current_list, Task(id=None, title=title))
+                        await self.add_task.execute(title, self.current_list)
                         await self.update_tasks_list()
                 self.call_later(add_task_async)
 
@@ -119,6 +118,7 @@ class LazyTaskApp(App):
         def on_submit(list_name: str):
             if list_name:
                 self.current_list = list_name
+                self.switch_list.execute(list_name)
                 self.call_later(self.update_tasks_list)
 
         self.push_screen(TextInputModal(prompt="Switch to list:"), on_submit)
@@ -135,7 +135,7 @@ class LazyTaskApp(App):
                         task.due_date = new_date
                         async def update_task_async():
                             async with self.show_loading():
-                                await self.update_task_uc.execute(self.current_list, task)
+                                await self.update_task.execute(task, self.current_list)
                                 await self.update_tasks_list()
                         self.call_later(update_task_async)
                     except ValueError:
@@ -151,7 +151,7 @@ class LazyTaskApp(App):
             task = tasks_list.highlighted_child.data
             task.due_date = datetime.date.today() + datetime.timedelta(days=1)
             async with self.show_loading():
-                await self.update_task_uc.execute(self.current_list, task)
+                await self.update_task.execute(task, self.current_list)
                 await self.update_tasks_list()
 
     def action_edit_task(self) -> None:
@@ -164,7 +164,7 @@ class LazyTaskApp(App):
     async def on_edit_screen_closed(self, task: Task) -> None:
         if task:
             async with self.show_loading():
-                await self.update_task_uc.execute(self.current_list, task)
+                await self.update_task.execute(task, self.current_list)
                 await self.update_tasks_list()
 
     async def action_refresh(self) -> None:
@@ -205,7 +205,7 @@ class LazyTaskApp(App):
             task = tasks_list.highlighted_child.data
             if task:
                 async with self.show_loading():
-                    await self.complete_task_uc.execute(self.current_list, task.id)
+                    await self.complete_task.execute(task.id, self.current_list)
                     await self.update_tasks_list()
 
     def action_toggle_dark(self) -> None:

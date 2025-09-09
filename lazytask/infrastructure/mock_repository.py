@@ -19,6 +19,28 @@ class MockTaskRepository(AbstractTaskRepository):
         if self.data_path.exists():
             with open(self.data_path, "r") as f:
                 data = json.load(f)
+                for task_list_data in data:
+                    for task_data in task_list_data.get("tasks", []):
+                        if "created_at" in task_data and isinstance(
+                            task_data["created_at"], str
+                        ):
+                            task_data["created_at"] = datetime.fromisoformat(
+                                task_data["created_at"]
+                            )
+                        if "updated_at" in task_data and isinstance(
+                            task_data["updated_at"], str
+                        ):
+                            task_data["updated_at"] = datetime.fromisoformat(
+                                task_data["updated_at"]
+                            )
+                        if (
+                            "due_date" in task_data
+                            and task_data["due_date"]
+                            and isinstance(task_data["due_date"], str)
+                        ):
+                            task_data["due_date"] = datetime.fromisoformat(
+                                task_data["due_date"]
+                            )
                 self._task_lists = [
                     TaskList(
                         id=tl["id"],

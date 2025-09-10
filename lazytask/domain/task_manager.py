@@ -1,33 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
 
-class Task:
-    def __init__(self, id: str, title: str, completed: bool = False,
-                 due_date: Optional[str] = None, description: Optional[str] = None,
-                 tags: Optional[List[str]] = None, priority: Optional[int] = None,
-                 flagged: Optional[bool] = None):
-        self.id = id
-        self.title = title
-        self.completed = completed
-        self.due_date = due_date
-        self.description = description
-        self.tags = tags if tags is not None else []
-        self.priority = priority
-        self.flagged = flagged
+from lazytask.domain.task import Task
 
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "id": self.id,
-            "title": self.title,
-            "completed": self.completed,
-            "due_date": self.due_date,
-            "description": self.description,
-            "tags": self.tags,
-            "priority": self.priority,
-            "flagged": self.flagged,
-        }
-
-class AbstractTaskManager(ABC):
+class TaskManager(ABC):
     @abstractmethod
     async def add_task(self, title: str, list_name: str = "develop") -> Task:
         """Adds a new task to the specified list."""
@@ -93,4 +69,15 @@ class AbstractTaskManager(ABC):
     @abstractmethod
     async def sort_tasks(self, list_name: str = "develop", sort_by: str = "due_date") -> List[Task]:
         """Sorts tasks based on a specified criterion."""
+        pass
+
+
+    @abstractmethod
+    async def edit_task_full(self, task_id: str, updates: Dict[str, Any], list_name: str = "develop") -> Optional[Task]:
+        """Edits multiple fields of a task at once."""
+        pass
+
+    @abstractmethod
+    async def set_task_recurring(self, task_id: str, recurring: str, list_name: str = "develop") -> Optional[Task]:
+        """Sets the recurring rule for a task."""
         pass

@@ -6,11 +6,18 @@ from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, ListView, ListItem, Label, LoadingIndicator
 from textual.containers import Container
 
-from lazytask.domain.models import Task
-from lazytask.container import container
+from lazytask.domain.task import Task
+from lazytask.application.use_cases import (
+    AddTask,
+    GetTasks,
+    CompleteTask,
+    UpdateTask,
+    GetLists,
+)
 from lazytask.presentation.edit_screen import EditScreen
 from lazytask.presentation.help_screen import HelpScreen
 from lazytask.presentation.text_input_modal import TextInputModal
+from lazytask.container import container
 
 class LazyTaskApp(App):
     """A Textual app to manage tasks."""
@@ -36,11 +43,11 @@ class LazyTaskApp(App):
 
     def __init__(self):
         super().__init__()
-        self.get_all_tasks = container.get_all_tasks
-        self.add_task = container.add_task
-        self.complete_task = container.complete_task
-        self.switch_list = container.switch_list
-        self.update_task = container.update_task
+        self.add_task_uc = container.get(AddTask)
+        self.get_tasks_uc = container.get(GetTasks)
+        self.complete_task_uc = container.get(CompleteTask)
+        self.update_task_uc = container.get(UpdateTask)
+        self.get_lists_uc = container.get(GetLists)
         self.sort_by = "title"
         self.current_list = "develop"
 
@@ -71,7 +78,7 @@ class LazyTaskApp(App):
         tasks_list_view.clear()
         async with self.show_loading():
             try:
-                tasks = await self.get_all_tasks.execute(self.current_list)
+                tasks = await self.get_tasks_uc.execute(self.current_list)
             except Exception as e:
                 self.notify(f"Error getting tasks: {e}", title="Error", severity="error")
                 return
@@ -92,7 +99,7 @@ class LazyTaskApp(App):
                 details.append(f"tags: {','.join(task.tags)}")
             if task.priority:
                 details.append(f"prio: {task.priority}")
-            if task.flagged:
+            if task.is_flagged:
                 details.append("flagged")
             details_str = f" ({', '.join(details)})" if details else ""
 
@@ -107,7 +114,7 @@ class LazyTaskApp(App):
             if title:
                 async def add_task_async():
                     async with self.show_loading():
-                        await self.add_task.execute(title, self.current_list)
+                        await self.add_task_uc.execute(title, self.current_list)
                         await self.update_tasks_list()
                 self.call_later(add_task_async)
 
@@ -118,7 +125,6 @@ class LazyTaskApp(App):
         def on_submit(list_name: str):
             if list_name:
                 self.current_list = list_name
-                self.switch_list.execute(list_name)
                 self.call_later(self.update_tasks_list)
 
         self.push_screen(TextInputModal(prompt="Switch to list:"), on_submit)
@@ -132,10 +138,10 @@ class LazyTaskApp(App):
                 if date_str:
                     try:
                         new_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
-                        task.due_date = new_date
+                        updates = {"due_date": new_date}
                         async def update_task_async():
                             async with self.show_loading():
-                                await self.update_task.execute(task, self.current_list)
+                                await self.update_task_uc.execute(task.id, updates, self.current_list)
                                 await self.update_tasks_list()
                         self.call_later(update_task_async)
                     except ValueError:
@@ -149,9 +155,9 @@ class LazyTaskApp(App):
         tasks_list = self.query_one(ListView)
         if tasks_list.highlighted_child:
             task = tasks_list.highlighted_child.data
-            task.due_date = datetime.date.today() + datetime.timedelta(days=1)
+            updates = {"due_date": datetime.date.today() + datetime.timedelta(days=1)}
             async with self.show_loading():
-                await self.update_task.execute(task, self.current_list)
+                await self.update_task_uc.execute(task.id, updates, self.current_list)
                 await self.update_tasks_list()
 
     def action_edit_task(self) -> None:
@@ -163,8 +169,9 @@ class LazyTaskApp(App):
 
     async def on_edit_screen_closed(self, task: Task) -> None:
         if task:
+            updates = task.__dict__
             async with self.show_loading():
-                await self.update_task.execute(task, self.current_list)
+                await self.update_task_uc.execute(task.id, updates, self.current_list)
                 await self.update_tasks_list()
 
     async def action_refresh(self) -> None:
@@ -205,7 +212,7 @@ class LazyTaskApp(App):
             task = tasks_list.highlighted_child.data
             if task:
                 async with self.show_loading():
-                    await self.complete_task.execute(task.id, self.current_list)
+                    await self.complete_task_uc.execute(task.id, self.current_list)
                     await self.update_tasks_list()
 
     def action_toggle_dark(self) -> None:

@@ -1,17 +1,21 @@
 import uuid
 from typing import List, Optional, Dict, Any
-from lazytask.domain.task_manager import AbstractTaskManager, Task
+from lazytask.domain.task_manager import TaskManager
+from lazytask.domain.task import Task
 import datetime
 
-class MockTaskManager(AbstractTaskManager):
+class MockTaskManager(TaskManager):
     def __init__(self):
         self._tasks: Dict[str, Dict[str, Task]] = {"develop": {}}  # list_name -> {task_id -> Task}
 
-    async def add_task(self, title: str, list_name: str = "develop") -> Task:
+    async def add_task(self, title: str, list_name: str = "develop", **kwargs) -> Task:
         if list_name not in self._tasks:
             self._tasks[list_name] = {}
         task_id = str(uuid.uuid4())
         new_task = Task(id=task_id, title=title)
+        for key, value in kwargs.items():
+            if hasattr(new_task, key):
+                setattr(new_task, key, value)
         self._tasks[list_name][task_id] = new_task
         return new_task
 
@@ -72,7 +76,7 @@ class MockTaskManager(AbstractTaskManager):
     async def edit_task_flag(self, task_id: str, flagged: bool, list_name: str = "develop") -> Optional[Task]:
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
-            task.flagged = flagged
+            task.is_flagged = flagged
             return task
         return None
 
@@ -94,7 +98,7 @@ class MockTaskManager(AbstractTaskManager):
                 match = False
             if priority is not None and task.priority != priority:
                 match = False
-            if flagged is not None and task.flagged != flagged:
+            if flagged is not None and task.is_flagged != flagged:
                 match = False
             if match:
                 filtered_tasks.append(task)
@@ -111,3 +115,19 @@ class MockTaskManager(AbstractTaskManager):
         elif sort_by == "completed":
             tasks.sort(key=lambda t: t.completed)
         return tasks
+
+    async def edit_task_full(self, task_id: str, updates: Dict[str, Any], list_name: str = "develop") -> Optional[Task]:
+        if list_name in self._tasks and task_id in self._tasks[list_name]:
+            task = self._tasks[list_name][task_id]
+            for key, value in updates.items():
+                if hasattr(task, key):
+                    setattr(task, key, value)
+            return task
+        return None
+
+    async def set_task_recurring(self, task_id: str, recurring: str, list_name: str = "develop") -> Optional[Task]:
+        if list_name in self._tasks and task_id in self._tasks[list_name]:
+            task = self._tasks[list_name][task_id]
+            task.recurring = recurring
+            return task
+        return None

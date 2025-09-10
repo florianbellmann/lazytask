@@ -1,5 +1,8 @@
 test:
-    uv run pytest tests/test_backend.py
+    uv run pytest 
 
 dev:
     uv run main.py
+
+run:
+    uv run -m lazytask

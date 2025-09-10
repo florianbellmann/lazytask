@@ -4,7 +4,8 @@ from textual.containers import Container, VerticalScroll
 from textual.reactive import var
 
 from lazytask.container import container
-from lazytask.domain.models import Task
+from lazytask.domain.task import Task
+from lazytask.application.use_cases import AddTask, GetTasks, CompleteTask, GetLists
 
 class TaskDisplay(Static):
     """A widget to display a single task."""
@@ -17,14 +18,14 @@ class TaskDisplay(Static):
         status = "[x]" if self.task.completed else "[ ]"
         title = self.task.title
         description = f"\n  [dim]{self.task.description}[/dim]" if self.task.description else ""
-        due_date = f"\n  [dim]Due: {self.task.due_date.strftime('%Y-%m-%d')}[/dim]" if self.task.due_date else ""
+        due_date = f"\n  [dim]Due: {self.task.due_date.strftime('%Y-%m-%d')}" if self.task.due_date else ""
         tags = f"\n  [dim]Tags: {', '.join(self.task.tags)}[/dim]" if self.task.tags else ""
         priority = f"\n  [dim]Prio: {self.task.priority}[/dim]" if self.task.priority else ""
-        flagged = f"\n  [dim]Flagged: {self.task.flagged}[/dim]" if self.task.flagged else ""
+        flagged = f"\n  [dim]Flagged: {self.task.is_flagged}[/dim]" if self.task.is_flagged else ""
 
         self.update(f"{status} {title}{description}{due_date}{tags}{priority}{flagged}")
 
-class LazyTaskApp(App):
+class LazyTaskCLI(App):
     """A Textual app for managing tasks."""
 
     BINDINGS = [
@@ -36,6 +37,13 @@ class LazyTaskApp(App):
     ]
 
     current_list_name = var("develop")
+
+    def __init__(self):
+        super().__init__()
+        self.add_task_uc = container.get(AddTask)
+        self.get_tasks_uc = container.get(GetTasks)
+        self.complete_task_uc = container.get(CompleteTask)
+        self.get_lists_uc = container.get(GetLists)
 
     def watch_current_list_name(self, new_name: str) -> None:
         self.update_task_list_display()
@@ -50,15 +58,15 @@ class LazyTaskApp(App):
                 yield Button("Add Task", id="add-task-button", variant="primary")
         yield Footer()
 
-    def on_mount(self) -> None:
-        self.update_task_list_display()
+    async def on_mount(self) -> None:
+        await self.update_task_list_display()
 
-    def update_task_list_display(self) -> None:
-        task_list = container.get_task_list_use_case.execute(self.current_list_name)
+    async def update_task_list_display(self) -> None:
+        tasks = await self.get_tasks_uc.execute(self.current_list_name)
         task_list_display = self.query_one("#task-list-display", Static)
-        if task_list:
+        if tasks:
             content = f"[b]Tasks in '{self.current_list_name}'[/b]\n\n"
-            for task in task_list.tasks:
+            for task in tasks:
                 content += f"[dim]{task.id[:8]}[/dim] - "
                 status = "[green]✓[/green]" if task.completed else "[red]✗[/red]"
                 content += f"{status} {task.title}\n"
@@ -73,14 +81,14 @@ class LazyTaskApp(App):
         if event.button.id == "add-task-button":
             self.action_add_task()
 
-    def action_add_task(self) -> None:
+    async def action_add_task(self) -> None:
         input_widget = self.query_one("#task-input", Input)
         title = input_widget.value.strip()
         if title:
             try:
-                container.add_task_use_case.execute(self.current_list_name, title)
+                await self.add_task_uc.execute(self.current_list_name, title)
                 input_widget.value = ""
-                self.update_task_list_display()
+                await self.update_task_list_display()
                 self.notify(f"Task '{title}' added.")
             except ValueError as e:
                 self.notify(str(e), severity="error")
@@ -95,13 +103,13 @@ class LazyTaskApp(App):
         self.notify("Enter list name to switch to.")
         # For now, just a notification. Later, a modal input.
 
-    def action_refresh_list(self) -> None:
-        self.update_task_list_display()
+    async def action_refresh_list(self) -> None:
+        await self.update_task_list_display()
         self.notify(f"List '{self.current_list_name}' refreshed.")
 
     def action_quit(self) -> None:
         self.exit()
 
 if __name__ == "__main__":
-    app = LazyTaskApp()
+    app = LazyTaskCLI()
     app.run()

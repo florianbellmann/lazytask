@@ -1,48 +1,43 @@
-from typing import List
-from lazytask.domain.ports import AbstractTaskRepository
-from lazytask.domain.models import Task
+from typing import List, Optional, Dict, Any
+from lazytask.domain.task_manager import TaskManager
+from lazytask.domain.task import Task
 
 
 class AddTask:
-    def __init__(self, task_repository: AbstractTaskRepository):
-        self.task_repository = task_repository
+    def __init__(self, task_manager: TaskManager):
+        self.task_manager = task_manager
 
-    async def execute(self, title: str, list_name: str = "develop") -> Task:
-        return self.task_repository.add_task(list_name, Task(title=title))
+    async def execute(self, title: str, list_name: str = "develop", **kwargs) -> Task:
+        return await self.task_manager.add_task(title, list_name, **kwargs)
 
 
-class GetAllTasks:
-    def __init__(self, task_repository: AbstractTaskRepository):
-        self.task_repository = task_repository
+class GetTasks:
+    def __init__(self, task_manager: TaskManager):
+        self.task_manager = task_manager
 
-    async def execute(self, list_name: str = "develop") -> List[Task]:
-        task_list = self.task_repository.get_task_list(list_name)
-        if task_list:
-            return task_list.tasks
-        return []
+    async def execute(self, list_name: str = "develop", include_completed: bool = False) -> List[Task]:
+        return await self.task_manager.get_tasks(list_name, include_completed)
 
 
 class CompleteTask:
-    def __init__(self, task_repository: AbstractTaskRepository):
-        self.task_repository = task_repository
+    def __init__(self, task_manager: TaskManager):
+        self.task_manager = task_manager
 
-    async def execute(self, task_id: str, list_name: str = "develop") -> None:
-        self.task_repository.complete_task(list_name, task_id)
+    async def execute(self, task_id: str, list_name: str = "develop") -> Optional[Task]:
+        return await self.task_manager.complete_task(task_id, list_name)
 
 
 class UpdateTask:
-    def __init__(self, task_repository: AbstractTaskRepository):
-        self.task_repository = task_repository
+    def __init__(self, task_manager: TaskManager):
+        self.task_manager = task_manager
 
-    async def execute(self, task: Task, list_name: str = "develop") -> None:
-        self.task_repository.update_task(list_name, task)
+    async def execute(self, task_id: str, updates: Dict[str, Any], list_name: str = "develop") -> Optional[Task]:
+        return await self.task_manager.edit_task_full(task_id, updates, list_name)
 
 
-class SwitchList:
-    def __init__(self, task_repository: AbstractTaskRepository):
-        self.task_repository = task_repository
+class GetLists:
+    def __init__(self, task_manager: TaskManager):
+        self.task_manager = task_manager
 
-    def execute(self, list_name: str) -> None:
-        # This is not implemented in the repository, but it is not used either.
-        # self.task_repository.switch_list(list_name)
-        pass
+    async def execute(self) -> List[str]:
+        return await self.task_manager.get_lists()

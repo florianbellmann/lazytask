@@ -1,11 +1,12 @@
 import asyncio
 import json
 from typing import List, Optional, Dict, Any
-from lazytask.domain.task_manager import AbstractTaskManager, Task
+from lazytask.domain.task_manager import TaskManager
+from lazytask.domain.task import Task
 
 REMINDERS_CLI_PATH = "/home/flo/lazytask/adapters/reminders-cli/reminders" # Assuming binary is here
 
-class RemindersCliTaskManager(AbstractTaskManager):
+class RemindersCliTaskManager(TaskManager):
     async def _run_cli_command(self, command: List[str]) -> Dict[str, Any]:
         process = await asyncio.create_subprocess_exec(
             REMINDERS_CLI_PATH, *command,
@@ -34,9 +35,8 @@ class RemindersCliTaskManager(AbstractTaskManager):
             due_date=reminder_json.get("dueDate"),
             description=reminder_json.get("notes"),
             priority=reminder_json.get("priority"),
-            # Tags and flagged are not directly supported by reminders-cli
-            tags=[],
-            flagged=False
+            is_flagged=False,  # reminders-cli doesn't support flags
+            tags=[]  # reminders-cli doesn't support tags
         )
 
     async def add_task(self, title: str, list_name: str = "develop") -> Task:
@@ -171,3 +171,30 @@ class RemindersCliTaskManager(AbstractTaskManager):
         elif sort_by == "completed":
             tasks.sort(key=lambda t: t.completed)
         return tasks
+
+    async def edit_task_full(self, task_id: str, updates: Dict[str, Any], list_name: str = "develop") -> Optional[Task]:
+        # This is a workaround as reminders-cli edit doesn't support all fields
+        # We will call the specific edit methods for each field
+        task = None
+        if "title" in updates:
+            # Not supported by reminders-cli
+            pass
+        if "due_date" in updates:
+            task = await self.edit_task_date(task_id, updates["due_date"], list_name)
+        if "description" in updates:
+            task = await self.edit_task_description(task_id, updates["description"], list_name)
+        if "priority" in updates:
+            task = await self.edit_task_priority(task_id, updates["priority"], list_name)
+        if "tags" in updates:
+            task = await self.edit_task_tags(task_id, updates["tags"], list_name)
+        if "is_flagged" in updates:
+            task = await self.edit_task_flag(task_id, updates["is_flagged"], list_name)
+        if "recurring" in updates:
+            task = await self.set_task_recurring(task_id, updates["recurring"], list_name)
+
+        return task
+
+    async def set_task_recurring(self, task_id: str, recurring: str, list_name: str = "develop") -> Optional[Task]:
+        # Recurring tasks are not supported by reminders-cli
+        print("Warning: Setting recurring tasks is not supported by reminders-cli.")
+        return None

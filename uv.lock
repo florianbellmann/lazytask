@@ -33,6 +33,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
+    { name = "textual" },
 ]
 
 [package.metadata]
@@ -41,6 +42,7 @@ requires-dist = [
     { name = "pytest-asyncio", marker = "extra == 'dev'" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "textual" },
+    { name = "textual", extras = ["dev"], marker = "extra == 'dev'" },
 ]
 provides-extras = ["dev"]
 

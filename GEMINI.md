@@ -75,6 +75,10 @@ Keep a checklist of what you did and what your status is. So next time we can co
 - [ ] recurring tasks handling
 - [x] Implement app logging for debugging
 
+
+## reminders cli
+
+
 ### Example repos that I like
 
 - Lazygit

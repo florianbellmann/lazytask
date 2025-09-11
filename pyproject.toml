@@ -26,3 +26,4 @@ allow-direct-references = true
 markers = [
     "integration: marks tests as integration tests",
 ]
+asyncio_mode = "auto"

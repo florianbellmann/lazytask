@@ -50,6 +50,14 @@ class LazyTaskApp(App):
         self.get_lists_uc = container.get(GetLists)
         self.sort_by = "title"
         self.current_list = "develop"
+        self.title = f"LazyTask - {self.current_list}"
+
+    async def add_task(self, title: str):
+        await self.add_task_uc.execute(title, self.current_list)
+        await self.update_tasks_list()
+
+    async def clear_tasks(self):
+        await self.get_tasks_uc.task_manager.clear_tasks()
 
     @asynccontextmanager
     async def show_loading(self):

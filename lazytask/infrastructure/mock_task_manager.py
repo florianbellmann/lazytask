@@ -8,6 +8,9 @@ class MockTaskManager(TaskManager):
     def __init__(self):
         self._tasks: Dict[str, Dict[str, Task]] = {"develop": {}}  # list_name -> {task_id -> Task}
 
+    async def clear_tasks(self):
+        self._tasks = {"develop": {}}
+
     async def add_task(self, title: str, list_name: str = "develop", **kwargs) -> Task:
         if list_name not in self._tasks:
             self._tasks[list_name] = {}

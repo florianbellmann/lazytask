@@ -36,3 +36,4 @@ infrastructure/.DS_Store
 tests/__pycache__/test_backend.cpython-311-pytest-8.4.2.pyc
 lazytask.log
 data.json
+mock_tasks.json

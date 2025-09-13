@@ -4,6 +4,7 @@ name = "lazytask"
 version = "0.1.0"
 dependencies = [
     "textual",
+    "textual-datepicker",
 ]
 
 [build-system]

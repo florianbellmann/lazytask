@@ -3,13 +3,46 @@ from typing import List, Optional, Dict, Any
 from lazytask.domain.task_manager import TaskManager
 from lazytask.domain.task import Task
 import datetime
+import json
+import os
 
 class MockTaskManager(TaskManager):
-    def __init__(self):
+    def __init__(self, file_path: str = "mock_tasks.json"):
+        self.file_path = file_path
         self._tasks: Dict[str, Dict[str, Task]] = {"develop": {}}  # list_name -> {task_id -> Task}
+        self._load_tasks()
+
+    def _load_tasks(self):
+        if os.path.exists(self.file_path):
+            with open(self.file_path, 'r') as f:
+                data = json.load(f)
+                for list_name, tasks in data.items():
+                    self._tasks[list_name] = {}
+                    for task_id, task_data in tasks.items():
+                        if task_data.get('due_date'):
+                            task_data['due_date'] = datetime.datetime.strptime(task_data['due_date'], '%Y-%m-%d').date()
+                        self._tasks[list_name][task_id] = Task(**task_data)
+
+    def _save_tasks(self):
+        with open(self.file_path, 'w') as f:
+            data = {
+                list_name: {
+                    task_id: self._task_to_dict(task)
+                    for task_id, task in tasks.items()
+                }
+                for list_name, tasks in self._tasks.items()
+            }
+            json.dump(data, f, indent=4)
+
+    def _task_to_dict(self, task: Task) -> Dict[str, Any]:
+        task_dict = task.__dict__
+        if isinstance(task_dict.get('due_date'), datetime.date):
+            task_dict['due_date'] = task_dict['due_date'].isoformat()
+        return task_dict
 
     async def clear_tasks(self):
         self._tasks = {"develop": {}}
+        self._save_tasks()
 
     async def add_task(self, title: str, list_name: str = "develop", **kwargs) -> Task:
         if list_name not in self._tasks:
@@ -20,12 +53,14 @@ class MockTaskManager(TaskManager):
             if hasattr(new_task, key):
                 setattr(new_task, key, value)
         self._tasks[list_name][task_id] = new_task
+        self._save_tasks()
         return new_task
 
     async def complete_task(self, task_id: str, list_name: str = "develop") -> Optional[Task]:
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             task.completed = True
+            self._save_tasks()
             return task
         return None
 
@@ -44,6 +79,7 @@ class MockTaskManager(TaskManager):
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             task.due_date = new_date
+            self._save_tasks()
             return task
         return None
 
@@ -52,6 +88,7 @@ class MockTaskManager(TaskManager):
             task = self._tasks[list_name][task_id]
             tomorrow = datetime.date.today() + datetime.timedelta(days=1)
             task.due_date = tomorrow.isoformat()
+            self._save_tasks()
             return task
         return None
 
@@ -59,6 +96,7 @@ class MockTaskManager(TaskManager):
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             task.description = description
+            self._save_tasks()
             return task
         return None
 
@@ -66,6 +104,7 @@ class MockTaskManager(TaskManager):
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             task.tags = tags
+            self._save_tasks()
             return task
         return None
 
@@ -73,6 +112,7 @@ class MockTaskManager(TaskManager):
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             task.priority = priority
+            self._save_tasks()
             return task
         return None
 
@@ -80,6 +120,7 @@ class MockTaskManager(TaskManager):
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             task.is_flagged = flagged
+            self._save_tasks()
             return task
         return None
 
@@ -125,6 +166,7 @@ class MockTaskManager(TaskManager):
             for key, value in updates.items():
                 if hasattr(task, key):
                     setattr(task, key, value)
+            self._save_tasks()
             return task
         return None
 
@@ -132,5 +174,6 @@ class MockTaskManager(TaskManager):
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             task.recurring = recurring
+            self._save_tasks()
             return task
         return None

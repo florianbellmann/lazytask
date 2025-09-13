@@ -44,7 +44,7 @@ should be an adapter to the Reminder CLI and needs to implement all of
 these functions. In order to test this application well, create a mock
 backend task management and use that always. Never communicate directly with
 the Reminder CLI. Always assume that the list that you're working on is
-called "develop".
+called "develop". in addition always use a second öist called "develop2"
 
 Keep a checklist of what you did and what your status is. So next time we can continue where we left of
 

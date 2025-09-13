@@ -3,8 +3,9 @@ import pytest
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
 @pytest.fixture
-def task_manager():
-    return MockTaskManager()
+def task_manager(tmp_path):
+    file_path = tmp_path / "test_tasks.json"
+    return MockTaskManager(file_path=str(file_path))
 
 @pytest.mark.asyncio
 async def test_add_task(task_manager):

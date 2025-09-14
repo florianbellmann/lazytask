@@ -170,6 +170,8 @@ class MockTaskManager(TaskManager):
             task = self._tasks[list_name][task_id]
             for key, value in updates.items():
                 if hasattr(task, key):
+                    if key == 'due_date' and isinstance(value, str):
+                        value = datetime.datetime.strptime(value, '%Y-%m-%d').date()
                     setattr(task, key, value)
             self._save_tasks()
             return task

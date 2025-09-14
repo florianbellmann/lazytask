@@ -20,7 +20,7 @@ class DatePickerTestApp(LazyTaskApp):
 @pytest.fixture
 def mock_task_manager():
     manager = MockTaskManager()
-    container.task_manager.override(manager)
+    container.set_task_manager(manager)
     return manager
 
 @pytest.mark.asyncio

@@ -51,6 +51,8 @@ class MockTaskManager(TaskManager):
         new_task = Task(id=task_id, title=title)
         for key, value in kwargs.items():
             if hasattr(new_task, key):
+                if key == 'due_date' and isinstance(value, str):
+                    value = datetime.datetime.strptime(value, '%Y-%m-%d').date()
                 setattr(new_task, key, value)
         self._tasks[list_name][task_id] = new_task
         self._save_tasks()
@@ -78,7 +80,10 @@ class MockTaskManager(TaskManager):
     async def edit_task_date(self, task_id: str, new_date: str, list_name: str = "develop") -> Optional[Task]:
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
-            task.due_date = new_date
+            if isinstance(new_date, str):
+                task.due_date = datetime.datetime.strptime(new_date, '%Y-%m-%d').date()
+            else:
+                task.due_date = new_date
             self._save_tasks()
             return task
         return None
@@ -87,7 +92,7 @@ class MockTaskManager(TaskManager):
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             tomorrow = datetime.date.today() + datetime.timedelta(days=1)
-            task.due_date = tomorrow.isoformat()
+            task.due_date = tomorrow
             self._save_tasks()
             return task
         return None

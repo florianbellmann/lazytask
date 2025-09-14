@@ -21,6 +21,7 @@ from lazytask.presentation.help_screen import HelpScreen
 from lazytask.presentation.list_tabs import ListTabs
 from lazytask.presentation.task_detail import TaskDetail
 from lazytask.presentation.text_input_modal import TextInputModal
+from .date_picker_screen import DatePickerScreen
 from lazytask.container import container
 
 class LazyTaskApp(App):
@@ -193,21 +194,16 @@ class LazyTaskApp(App):
         tasks_list = self.query_one(ListView)
         if tasks_list.highlighted_child:
             task = tasks_list.highlighted_child.data
-            def on_submit(date_str: str):
-                if date_str:
-                    try:
-                        new_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
-                        updates = {"due_date": new_date}
-                        async def update_task_async():
-                            async with self.show_loading():
-                                await self.update_task_uc.execute(task.id, updates, self.current_list)
-                                await self.update_tasks_list()
-                        self.call_later(update_task_async)
-                    except ValueError:
-                        self.notify("Invalid date format. Please use YYYY-MM-DD.", title="Error", severity="error")
+            def on_date_selected(new_date: datetime.date | None):
+                if new_date:
+                    updates = {"due_date": new_date}
+                    async def update_task_async():
+                        async with self.show_loading():
+                            await self.update_task_uc.execute(task.id, updates, self.current_list)
+                            await self.update_tasks_list()
+                    self.call_later(update_task_async)
 
-            initial_value = task.due_date.strftime('%Y-%m-%d') if task.due_date else ""
-            self.push_screen(TextInputModal(prompt="New due date (YYYY-MM-DD):", initial_value=initial_value), on_submit)
+            self.push_screen(DatePickerScreen(initial_date=task.due_date), on_date_selected)
 
     async def action_move_to_tomorrow(self) -> None:
         """An action to move a task to tomorrow."""

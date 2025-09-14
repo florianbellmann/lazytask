@@ -66,6 +66,14 @@ class LazyTaskApp(App):
         self.title = f"LazyTask - {self.current_list}"
         self.available_lists = []
         self.show_overdue_only = False
+        self.context_sensitive_actions = [
+            "c",
+            "e",
+            "t",
+            "m",
+            "w",
+            "meta+e",
+        ]
 
     async def add_task(self, title: str):
         await self.add_task_uc.execute(title, self.current_list)
@@ -100,6 +108,8 @@ class LazyTaskApp(App):
         self.available_lists = await self.get_lists_uc.execute()
         await self.update_tasks_list()
         self.query_one(TaskDetail).update_task(None)
+        for key in self.context_sensitive_actions:
+            self.screen.bindings.set_key_enabled(key, False)
 
     async def on_key(self, event: events.Key) -> None:
         if event.key.isdigit():
@@ -118,6 +128,11 @@ class LazyTaskApp(App):
         task = item.data
         if task:
             self.query_one(TaskDetail).update_task(task)
+            for key in self.context_sensitive_actions:
+                self.screen.bindings.set_key_enabled(key, True)
+        else:
+            for key in self.context_sensitive_actions:
+                self.screen.bindings.set_key_enabled(key, False)
 
     async def update_tasks_list(self, filter_query: str = ""):
         """Update the tasks list view."""

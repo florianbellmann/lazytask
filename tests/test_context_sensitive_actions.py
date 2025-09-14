@@ -13,7 +13,7 @@ async def test_context_sensitive_actions(app: LazyTaskApp):
     async with app.run_test() as pilot:
         # Check that the context-sensitive actions are disabled when the app starts
         for key in app.context_sensitive_actions:
-            assert not app.bindings.get_key(key).enabled
+            assert not app.screen.bindings.get_key(key).enabled
 
         # Add a task to the list
         await app.add_task("Test Task")
@@ -26,7 +26,7 @@ async def test_context_sensitive_actions(app: LazyTaskApp):
 
         # Check that the context-sensitive actions are enabled
         for key in app.context_sensitive_actions:
-            assert app.bindings.get_key(key).enabled
+            assert app.screen.bindings.get_key(key).enabled
 
         # Clear the selection
         tasks_list.highlighted_child = None
@@ -34,4 +34,4 @@ async def test_context_sensitive_actions(app: LazyTaskApp):
 
         # Check that the context-sensitive actions are disabled
         for key in app.context_sensitive_actions:
-            assert not app.bindings.get_key(key).enabled
+            assert not app.screen.bindings.get_key(key).enabled

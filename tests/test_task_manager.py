@@ -1,5 +1,6 @@
 
 import pytest
+import datetime
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
 @pytest.fixture
@@ -39,7 +40,7 @@ async def test_edit_task_date(task_manager):
     task = await task_manager.add_task("Test Task")
     new_date = "2025-12-31"
     updated_task = await task_manager.edit_task_date(task.id, new_date)
-    assert updated_task.due_date == new_date
+    assert updated_task.due_date == datetime.datetime.strptime(new_date, '%Y-%m-%d').date()
 
 @pytest.mark.asyncio
 async def test_move_task_to_tomorrow(task_manager):
@@ -47,7 +48,7 @@ async def test_move_task_to_tomorrow(task_manager):
     updated_task = await task_manager.move_task_to_tomorrow(task.id)
     import datetime
     tomorrow = datetime.date.today() + datetime.timedelta(days=1)
-    assert updated_task.due_date == tomorrow.isoformat()
+    assert updated_task.due_date == tomorrow
 
 @pytest.mark.asyncio
 async def test_edit_task_description(task_manager):

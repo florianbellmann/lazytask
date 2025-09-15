@@ -19,7 +19,7 @@ class MockTaskManager(TaskManager):
                 for list_name, tasks in data.items():
                     self._tasks[list_name] = {}
                     for task_id, task_data in tasks.items():
-                        if task_data.get('due_date'):
+                        if task_data.get('due_date') and isinstance(task_data.get('due_date'), str):
                             task_data['due_date'] = datetime.datetime.strptime(task_data['due_date'], '%Y-%m-%d').date()
                         self._tasks[list_name][task_id] = Task(**task_data)
 
@@ -35,7 +35,7 @@ class MockTaskManager(TaskManager):
             json.dump(data, f, indent=4)
 
     def _task_to_dict(self, task: Task) -> Dict[str, Any]:
-        task_dict = task.__dict__
+        task_dict = task.__dict__.copy()
         if isinstance(task_dict.get('due_date'), datetime.date):
             task_dict['due_date'] = task_dict['due_date'].isoformat()
         return task_dict

@@ -66,6 +66,7 @@ class LazyTaskApp(App):
         self.title = f"LazyTask - {self.current_list}"
         self.available_lists = []
         self.show_overdue_only = False
+        self.task_selected = False
         self.context_sensitive_actions = [
             "c",
             "e",
@@ -108,10 +109,11 @@ class LazyTaskApp(App):
         self.available_lists = await self.get_lists_uc.execute()
         await self.update_tasks_list()
         self.query_one(TaskDetail).update_task(None)
-        for key in self.context_sensitive_actions:
-            self.screen.bindings.set_key_enabled(key, False)
 
     async def on_key(self, event: events.Key) -> None:
+        if event.key in self.context_sensitive_actions and not self.task_selected:
+            return
+
         if event.key.isdigit():
             digit = int(event.key)
             if digit == 1:
@@ -126,13 +128,8 @@ class LazyTaskApp(App):
     async def on_list_view_selected(self, item: ListItem):
         """Called when a task is selected."""
         task = item.data
-        if task:
-            self.query_one(TaskDetail).update_task(task)
-            for key in self.context_sensitive_actions:
-                self.screen.bindings.set_key_enabled(key, True)
-        else:
-            for key in self.context_sensitive_actions:
-                self.screen.bindings.set_key_enabled(key, False)
+        self.task_selected = True if task else False
+        self.query_one(TaskDetail).update_task(task)
 
     async def update_tasks_list(self, filter_query: str = ""):
         """Update the tasks list view."""
@@ -265,7 +262,7 @@ class LazyTaskApp(App):
         tasks_list = self.query_one(ListView)
         if tasks_list.highlighted_child:
             task = tasks_list.highlighted_child.data
-            self.push_screen(EditScreen(task), self.on_edit_screen_closed)
+            self.push_screen(EditScreen(task=task), self.on_edit_screen_closed)
 
     async def on_edit_screen_closed(self, task: Task) -> None:
         if task:

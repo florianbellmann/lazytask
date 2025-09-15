@@ -1,4 +1,5 @@
 import datetime
+import pendulum
 
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
@@ -14,10 +15,13 @@ class DatePickerScreen(ModalScreen[datetime.date | None]):
         self.initial_date = initial_date
 
     def compose(self) -> ComposeResult:
-        yield DatePicker(id="date-picker", date=self.initial_date)
+        date_picker = DatePicker()
+        if self.initial_date:
+            date_picker.date = pendulum.instance(self.initial_date)
+        yield date_picker
         yield Button("Select", id="select_date")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "select_date":
-            date_picker = self.query_one("#date-picker", DatePicker)
+            date_picker = self.query_one(DatePicker)
             self.dismiss(date_picker.date)

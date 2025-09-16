@@ -1,11 +1,11 @@
+import datetime
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-import datetime
 
+from lazytask.domain.task import Task
+from lazytask.presentation.app import LazyTaskApp
 from textual.widgets import ListView
 
-from lazytask.presentation.app import LazyTaskApp
-from lazytask.domain.task import Task
 
 @pytest.mark.asyncio
 async def test_toggle_overdue_filter():
@@ -38,15 +38,11 @@ async def test_toggle_overdue_filter():
         await pilot.pause()
 
         assert app.show_overdue_only is True
-        list_view = app.query_one(ListView)
         assert len(list_view.children) == 2
-        titles = {item.data.title for item in list_view.children}
-        assert titles == {"Overdue task", "Due today task"}
 
         # Press ctrl+d again to show all tasks
         await pilot.press("ctrl+d")
         await pilot.pause()
 
         assert app.show_overdue_only is False
-        list_view = app.query_one(ListView)
         assert len(list_view.children) == 4

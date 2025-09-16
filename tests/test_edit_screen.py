@@ -74,10 +74,10 @@ async def test_edit_due_date(app: LazyTaskApp, create_task_in_manager: Task):
 
         edit_screen = EditScreen(task_id=create_task_in_manager.id, list_name=app.current_list)
         await app.push_screen(edit_screen)
-        await pilot.pause() # Allow on_mount to complete and widgets to update
+        await pilot.pause(1.0) # Give ample time for the screen to mount and compose
 
         # Check that the initial due date is displayed correctly
-        due_date_label = edit_screen.query_one("#due-date-label")
+        due_date_label = app.screen.query_one("#due-date-label")
         assert str(create_task_in_manager.due_date) in due_date_label.renderable
 
         # Click the "Edit Due Date" button

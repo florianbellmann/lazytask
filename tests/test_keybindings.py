@@ -35,14 +35,19 @@ async def test_navigation_keybindings():
         tasks_list = app.query_one(ListView)
         assert len(tasks_list.children) == 3
 
+        # Focus the ListView
+        tasks_list.focus()
+        await pilot.pause()
+
+        # Test 'j' for moving down
         # Test 'j' for moving down
         await pilot.press("j")
-        await pilot.pause()
+        await pilot.pause(0.5) # Give more time for the ListView to update its index and render
         assert tasks_list.index == 1
 
         # Test 'k' for moving up
         await pilot.press("k")
-        await pilot.pause()
+        await pilot.pause(0.5) # Give more time for the ListView to update its index and render
         assert tasks_list.index == 0
 
 

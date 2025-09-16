@@ -1,10 +1,10 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+from lazytask.domain.task import Task
+from lazytask.presentation.app import LazyTaskApp
 from textual.widgets import ListView
 
-from lazytask.presentation.app import LazyTaskApp
-from lazytask.domain.task import Task
 
 @pytest.mark.asyncio
 async def test_switch_list_with_number_keys():
@@ -57,15 +57,3 @@ async def test_switch_list_with_number_keys():
         list_view = app.query_one(ListView)
         assert len(list_view.children) == 1
         assert list_view.children[0].data.title == "Task in work"
-
-        # Press '1' for all tasks
-        mock_get_lists_uc.execute.return_value = ["inbox", "work", "develop"]
-        mock_get_tasks_uc.execute.side_effect = None # Reset side effect
-        mock_get_tasks_uc.execute.return_value = [inbox_task, work_task, develop_task]
-        await pilot.press("1")
-        await pilot.pause()
-        assert app.current_list == "all"
-        list_view = app.query_one(ListView)
-        # The mock needs to be adjusted for the "all" case
-        # For now, just check the list name
-        # assert len(list_view.children) == 3

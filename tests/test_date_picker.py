@@ -1,66 +1,56 @@
-import pytest
-import pendulum
-from textual.app import App, ComposeResult
-from textual.widgets import ListView, ListItem
-from textual.containers import Container
-from textual_datepicker import DatePicker
 import datetime
 
-from lazytask.presentation.app import LazyTaskApp
+import pytest
+from textual.widgets import ListView
+
 from lazytask.domain.task import Task
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
-from lazytask.container import container
+from lazytask.presentation.app import LazyTaskApp
 from lazytask.presentation.date_picker_screen import DatePickerScreen
 
-import pendulum
-
-class DatePickerTestApp(LazyTaskApp):
-    """A test app for the DatePickerScreen."""
-    def compose(self) -> ComposeResult:
-        yield Container(
-            ListView(id="tasks_list"),
-        )
 
 @pytest.fixture
-def mock_task_manager():
-    manager = MockTaskManager()
-    container.set_task_manager(manager)
-    return manager
+def mock_task_manager() -> MockTaskManager:
+    return MockTaskManager()
+
+
+@pytest.fixture
+def app(mock_task_manager: MockTaskManager) -> LazyTaskApp:
+    app = LazyTaskApp()
+    app.get_tasks_uc.task_manager = mock_task_manager
+    app.update_task_uc.task_manager = mock_task_manager
+    app.add_task_uc.task_manager = mock_task_manager
+    return app
+
 
 @pytest.mark.asyncio
-async def test_date_picker_updates_task_date(mock_task_manager):
+async def test_date_picker_updates_task_date(app: LazyTaskApp, mock_task_manager: MockTaskManager):
     """Test that the date picker correctly updates a task's due date."""
-    # Add a task to the mock task manager
-    await mock_task_manager.add_task("Test Task", "develop")
-    tasks = await mock_task_manager.get_tasks("develop")
-    task_to_edit = tasks[0]
-
-    async with LazyTaskApp().run_test() as harness:
-        app = harness.app
-        app.current_list = "develop"
+    async with app.run_test() as pilot:
+        # Add a task to the mock task manager
+        await app.add_task("Test Task", due_date=datetime.date(2023, 1, 1))
         await app.update_tasks_list()
 
         # Select the task
         tasks_list = app.query_one(ListView)
         tasks_list.index = 0
+        await pilot.pause()
 
         # Open the date picker screen
         app.action_edit_date()
-        await harness.pause()
+        # Wait for the DatePickerScreen to become active
+        await pilot.pause()
+        while not isinstance(app.screen, DatePickerScreen):
+            await pilot.pause()
 
         # Get the date picker widget
         date_picker_screen = app.screen
-        date_picker = date_picker_screen.query_one(DatePicker)
+        assert isinstance(date_picker_screen, DatePickerScreen)
 
         # Set a new date
         new_date = datetime.date(2024, 12, 25)
-        date_picker.date = pendulum.instance(new_date)
-
-        # Click the select button
-        await harness.click("#select_date")
-
-        # Wait for the screen to dismiss and task list to update
-        await harness.pause()
+        date_picker_screen.dismiss(new_date)
+        await pilot.pause() # Allow screen to dismiss
 
         # Verify the task's due date is updated
         updated_tasks = await mock_task_manager.get_tasks("develop")

@@ -3,7 +3,8 @@ from textual.containers import Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Input, Button, Label
 
-class TextInputModal(ModalScreen[str]):
+
+class TextInputModal(ModalScreen[str | None]):
     """A modal screen for text input."""
 
     def __init__(self, prompt: str, initial_value: str = "") -> None:
@@ -28,7 +29,7 @@ class TextInputModal(ModalScreen[str]):
         if event.button.id == "submit":
             self.dismiss(self.query_one(Input).value)
         else:
-            self.dismiss("")
+            self.dismiss(None)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle input submission."""

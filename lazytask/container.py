@@ -7,6 +7,7 @@ from lazytask.application.use_cases import (
     GetLists,
 )
 
+
 class DependencyContainer:
     def __init__(self):
         self.task_manager = MockTaskManager()
@@ -34,5 +35,6 @@ class DependencyContainer:
             return self.update_task
         if use_case == GetLists:
             return self.get_lists
+
 
 container = DependencyContainer()

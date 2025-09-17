@@ -17,7 +17,9 @@ class GetTasks:
     def __init__(self, task_manager: TaskManager):
         self.task_manager = task_manager
 
-    async def execute(self, list_name: str = "develop", include_completed: bool = False) -> List[Task]:
+    async def execute(
+        self, list_name: str = "develop", include_completed: bool = False
+    ) -> List[Task]:
         return await self.task_manager.get_tasks(list_name, include_completed)
 
 
@@ -33,7 +35,9 @@ class UpdateTask:
     def __init__(self, task_manager: TaskManager):
         self.task_manager = task_manager
 
-    async def execute(self, task_id: str, updates: Dict[str, Any], list_name: str = "develop") -> Optional[Task]:
+    async def execute(
+        self, task_id: str, updates: Dict[str, Any], list_name: str = "develop"
+    ) -> Optional[Task]:
         return await self.task_manager.edit_task_full(task_id, updates, list_name)
 
 

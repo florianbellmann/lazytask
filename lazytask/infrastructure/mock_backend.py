@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from lazytask.domain.backend import Backend
 from lazytask.domain.task import Task
 
+
 class MockBackend(Backend):
     def __init__(self):
         self.tasks: List[Task] = [

@@ -8,8 +8,14 @@ class TaskDetail(Static):
     def update_task(self, task: Task | None) -> None:
         if task:
             details = []
+            if task.list_name:
+                details.append(f"List: {task.list_name}")
             if task.due_date:
                 details.append(f"Due Date: {task.due_date.strftime('%Y-%m-%d')}")
+            if task.created_date:
+                details.append(
+                    f"Created Date: {task.created_date.strftime('%Y-%m-%d')}"
+                )
             if task.description:
                 details.append(f"Notes: {task.description}")
             if task.tags:
@@ -18,6 +24,8 @@ class TaskDetail(Static):
                 details.append(f"Priority: {task.priority}")
             if task.is_flagged:
                 details.append("Flagged")
+            if task.recurring:
+                details.append(f"Recurring: {task.recurring}")
             if task.completed:
                 details.append("Status: Completed")
             else:

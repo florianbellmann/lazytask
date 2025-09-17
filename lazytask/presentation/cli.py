@@ -7,8 +7,10 @@ from lazytask.container import container
 from lazytask.domain.task import Task
 from lazytask.application.use_cases import AddTask, GetTasks, CompleteTask, GetLists
 
+
 class TaskDisplay(Static):
     """A widget to display a single task."""
+
     def __init__(self, task: Task, **kwargs):
         super().__init__(**kwargs)
         self.task = task
@@ -17,13 +19,30 @@ class TaskDisplay(Static):
     def update_content(self):
         status = "[x]" if self.task.completed else "[ ]"
         title = self.task.title
-        description = f"\n  [dim]{self.task.description}[/dim]" if self.task.description else ""
-        due_date = f"\n  [dim]Due: {self.task.due_date.strftime('%Y-%m-%d')}" if self.task.due_date else ""
-        tags = f"\n  [dim]Tags: {', '.join(self.task.tags)}[/dim]" if self.task.tags else ""
-        priority = f"\n  [dim]Prio: {self.task.priority}[/dim]" if self.task.priority else ""
-        flagged = f"\n  [dim]Flagged: {self.task.is_flagged}[/dim]" if self.task.is_flagged else ""
+        description = (
+            f"\n  [dim]{self.task.description}[/dim]" if self.task.description else ""
+        )
+        due_date = (
+            f"\n  [dim]Due: {self.task.due_date.strftime('%Y-%m-%d')}"
+            if self.task.due_date
+            else ""
+        )
+        tags = (
+            f"\n  [dim]Tags: {', '.join(self.task.tags)}[/dim]"
+            if self.task.tags
+            else ""
+        )
+        priority = (
+            f"\n  [dim]Prio: {self.task.priority}[/dim]" if self.task.priority else ""
+        )
+        flagged = (
+            f"\n  [dim]Flagged: {self.task.is_flagged}[/dim]"
+            if self.task.is_flagged
+            else ""
+        )
 
         self.update(f"{status} {title}{description}{due_date}{tags}{priority}{flagged}")
+
 
 class LazyTaskCLI(App):
     """A Textual app for managing tasks."""
@@ -72,7 +91,9 @@ class LazyTaskCLI(App):
                 content += f"{status} {task.title}\n"
             task_list_display.update(content)
         else:
-            task_list_display.update(f"No tasks found in list '{self.current_list_name}'.")
+            task_list_display.update(
+                f"No tasks found in list '{self.current_list_name}'."
+            )
 
     def action_add_task_prompt(self) -> None:
         self.query_one("#task-input", Input).focus()
@@ -109,6 +130,7 @@ class LazyTaskCLI(App):
 
     def action_quit(self) -> None:
         self.exit()
+
 
 if __name__ == "__main__":
     app = LazyTaskCLI()

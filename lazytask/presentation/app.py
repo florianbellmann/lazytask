@@ -24,6 +24,7 @@ from lazytask.presentation.text_input_modal import TextInputModal
 from .date_picker_screen import DatePickerScreen
 from lazytask.container import container
 
+
 class LazyTaskApp(App):
     """A Textual app to manage tasks."""
 
@@ -58,6 +59,8 @@ class LazyTaskApp(App):
         ("k", "cursor_up", "Cursor Up"),
         ("g", "go_to_top", "Go to top"),
         ("G", "go_to_bottom", "Go to bottom"),
+        ("ctrl+b", "edit_description", "Edit description"),
+        ("escape", "clear_filter", "Clear filter"),
         ("q", "quit", "Quit"),
         ("1", "show_all_tasks", "All Tasks"),
         ("2", "switch_to_list_2", "List 2"),
@@ -73,7 +76,7 @@ class LazyTaskApp(App):
         self.complete_task_uc = container.get(CompleteTask)
         self.update_task_uc = container.get(UpdateTask)
         self.get_lists_uc = container.get(GetLists)
-        self.sort_by = "title"
+        self.sort_by = "due_date"
         self.current_list = os.environ.get("LAZYTASK_DEFAULT_LIST", "develop")
         self.title = f"LazyTask - {self.current_list}"
         self.available_lists = []
@@ -155,13 +158,19 @@ class LazyTaskApp(App):
                     all_tasks = []
                     lists = await self.get_lists_uc.execute()
                     for list_name in lists:
-                        tasks_in_list = await self.get_tasks_uc.execute(list_name, include_completed=self.show_completed)
+                        tasks_in_list = await self.get_tasks_uc.execute(
+                            list_name, include_completed=self.show_completed
+                        )
                         all_tasks.extend(tasks_in_list)
                     tasks = all_tasks
                 else:
-                    tasks = await self.get_tasks_uc.execute(self.current_list, include_completed=self.show_completed)
+                    tasks = await self.get_tasks_uc.execute(
+                        self.current_list, include_completed=self.show_completed
+                    )
             except Exception as e:
-                self.notify(f"Error getting tasks: {e}", title="Error", severity="error")
+                self.notify(
+                    f"Error getting tasks: {e}", title="Error", severity="error"
+                )
                 return
 
         if self.show_overdue_only:
@@ -169,12 +178,16 @@ class LazyTaskApp(App):
             tasks = [task for task in tasks if task.due_date and task.due_date <= today]
 
         if filter_query:
-            tasks = [task for task in tasks if filter_query.lower() in task.title.lower()]
+            tasks = [
+                task for task in tasks if filter_query.lower() in task.title.lower()
+            ]
 
         if self.sort_by == "due_date":
             tasks.sort(key=lambda t: t.due_date or datetime.date.max)
+        elif self.sort_by == "creation_date":
+            tasks.sort(key=lambda t: t.creation_date or datetime.datetime.max)
         else:
-            tasks.sort(key=lambda t: t.title)
+            tasks.sort(key=lambda t: t.title.lower())
 
         for task in tasks:
             details = []
@@ -188,13 +201,16 @@ class LazyTaskApp(App):
                 details.append("flagged")
             details_str = f" ({', '.join(details)})" if details else ""
 
-            list_item = ListItem(Label(f"{'[x]' if task.completed else '[ ]'} {task.title}{details_str}"))
+            list_item = ListItem(
+                Label(f"{'[x]' if task.completed else '[ ]'} {task.title}{details_str}")
+            )
             list_item.data = task
             tasks_list_view.append(list_item)
         self.query_one(Header).title = f"LazyTask - {self.current_list}"
 
     def action_add_task(self) -> None:
         """An action to add a task."""
+
         def on_submit(title: str):
             if title:
                 self.call_later(self.add_task, title)
@@ -203,6 +219,7 @@ class LazyTaskApp(App):
 
     def action_switch_list(self) -> None:
         """An action to switch list."""
+
         def on_submit(list_name: str):
             if list_name:
                 self.current_list = list_name
@@ -215,16 +232,23 @@ class LazyTaskApp(App):
         tasks_list = self.query_one(ListView)
         if tasks_list.highlighted_child:
             task = tasks_list.highlighted_child.data
+
             def on_date_selected(new_date: datetime.date | None):
                 if new_date:
                     updates = {"due_date": new_date}
+
                     async def update_task_async():
                         async with self.show_loading():
-                            await self.update_task_uc.execute(task.id, updates, self.current_list)
+                            await self.update_task_uc.execute(
+                                task.id, updates, self.current_list
+                            )
                             await self.update_tasks_list()
+
                     self.call_later(update_task_async)
 
-            self.push_screen(DatePickerScreen(initial_date=task.due_date), on_date_selected)
+            self.push_screen(
+                DatePickerScreen(initial_date=task.due_date), on_date_selected
+            )
 
     async def action_move_to_tomorrow(self) -> None:
         """An action to move a task to tomorrow."""
@@ -243,7 +267,7 @@ class LazyTaskApp(App):
             task = tasks_list.highlighted_child.data
             today = datetime.date.today()
             days_until_monday = (0 - today.weekday() + 7) % 7
-            if days_until_monday == 0: # if today is monday, move to next monday
+            if days_until_monday == 0:  # if today is monday, move to next monday
                 days_until_monday = 7
             next_monday = today + datetime.timedelta(days=days_until_monday)
             updates = {"due_date": next_monday}
@@ -258,7 +282,7 @@ class LazyTaskApp(App):
             task = tasks_list.highlighted_child.data
             today = datetime.date.today()
             days_until_saturday = (5 - today.weekday() + 7) % 7
-            if days_until_saturday == 0: # if today is saturday, move to next saturday
+            if days_until_saturday == 0:  # if today is saturday, move to next saturday
                 days_until_saturday = 7
             next_saturday = today + datetime.timedelta(days=days_until_saturday)
             updates = {"due_date": next_saturday}
@@ -280,23 +304,56 @@ class LazyTaskApp(App):
                 await self.update_task_uc.execute(task.id, updates, self.current_list)
                 await self.update_tasks_list()
 
+    def action_edit_description(self) -> None:
+        """An action to edit a task's description."""
+        tasks_list = self.query_one(ListView)
+        if tasks_list.highlighted_child:
+            task = tasks_list.highlighted_child.data
+
+            def on_submit(new_description: str | None):
+                if new_description is not None:
+                    updates = {"description": new_description}
+
+                    async def update_task_async():
+                        async with self.show_loading():
+                            await self.update_task_uc.execute(
+                                task.id, updates, self.current_list
+                            )
+                            await self.update_tasks_list()
+
+                    self.call_later(update_task_async)
+
+            self.push_screen(
+                TextInputModal(
+                    prompt="Edit description:", initial_value=task.description or ""
+                ),
+                on_submit,
+            )
+
     async def action_refresh(self) -> None:
         """An action to refresh the list."""
         await self.update_tasks_list()
 
+    async def action_clear_filter(self) -> None:
+        """An action to clear the filter."""
+        await self.update_tasks_list()
+
     def action_filter_tasks(self) -> None:
         """An action to filter tasks."""
-        def on_submit(query: str):
-            self.call_later(self.update_tasks_list, query)
+
+        def on_submit(value: str):
+            self.call_later(self.update_tasks_list, value)
 
         self.push_screen(TextInputModal(prompt="Filter tasks:"), on_submit)
 
     async def action_sort_tasks(self) -> None:
         """An action to sort tasks."""
-        if self.sort_by == "title":
-            self.sort_by = "due_date"
-        else:
+        if self.sort_by == "due_date":
             self.sort_by = "title"
+        elif self.sort_by == "title":
+            self.sort_by = "creation_date"
+        else:
+            self.sort_by = "due_date"
         await self.update_tasks_list()
 
     async def action_toggle_overdue(self) -> None:
@@ -319,7 +376,6 @@ class LazyTaskApp(App):
         tasks_list.action_cursor_down()
         if tasks_list.highlighted_child:
             self.query_one(TaskDetail).update_task(tasks_list.highlighted_child.data)
-
 
     def action_cursor_up(self) -> None:
         """Move cursor up in the list."""
@@ -344,7 +400,6 @@ class LazyTaskApp(App):
         if tasks_list.highlighted_child:
             self.query_one(TaskDetail).update_task(tasks_list.highlighted_child.data)
 
-
     async def action_complete_task(self) -> None:
         """An action to complete a task."""
         tasks_list = self.query_one(ListView)
@@ -355,12 +410,14 @@ class LazyTaskApp(App):
                 async with self.show_loading():
                     await self.complete_task_uc.execute(task.id, self.current_list)
                     await self.update_tasks_list()
-                    if current_index is not None and current_index > 0:
-                        tasks_list.index = current_index - 1
+                    new_list_size = len(tasks_list.children)
+                    if new_list_size > 0 and current_index is not None:
+                        tasks_list.index = min(current_index, new_list_size - 1)
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
         self.dark = not self.dark
+
 
 if __name__ == "__main__":
     app = LazyTaskApp()

@@ -8,9 +8,11 @@ from lazytask.presentation.app import LazyTaskApp
 from lazytask.presentation.edit_screen import EditScreen
 from lazytask.presentation.date_picker_screen import DatePickerScreen
 
+
 @pytest.fixture
 def sample_task() -> Task:
     return Task(id="1", title="Test Task", due_date=datetime.date(2025, 1, 1))
+
 
 async def test_edit_due_date(sample_task: Task):
     app = LazyTaskApp()
@@ -36,6 +38,7 @@ async def test_edit_due_date(sample_task: Task):
         new_date = datetime.date.today()
         import datetime
 
+
 import pytest
 from textual.widgets import Button, ListView
 
@@ -45,9 +48,11 @@ from lazytask.presentation.edit_screen import EditScreen
 from lazytask.presentation.date_picker_screen import DatePickerScreen
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
+
 @pytest.fixture
 def mock_task_manager() -> MockTaskManager:
     return MockTaskManager()
+
 
 @pytest.fixture
 def app(mock_task_manager: MockTaskManager) -> LazyTaskApp:
@@ -57,14 +62,18 @@ def app(mock_task_manager: MockTaskManager) -> LazyTaskApp:
     app.add_task_uc.task_manager = mock_task_manager
     return app
 
+
 @pytest.fixture
 async def create_task_in_manager(mock_task_manager: MockTaskManager):
-    task = await mock_task_manager.add_task("Test Task", due_date=datetime.date(2025, 1, 1))
+    task = await mock_task_manager.add_task(
+        "Test Task", due_date=datetime.date(2025, 1, 1)
+    )
     return task
+
 
 async def test_edit_due_date(app: LazyTaskApp, create_task_in_manager: Task):
     async with app.run_test() as pilot:
-        await app.update_tasks_list() # Now call update_tasks_list after app is running
+        await app.update_tasks_list()  # Now call update_tasks_list after app is running
         await pilot.pause()
 
         # Select the task
@@ -72,9 +81,11 @@ async def test_edit_due_date(app: LazyTaskApp, create_task_in_manager: Task):
         tasks_list.index = 0
         await pilot.pause()
 
-        edit_screen = EditScreen(task_id=create_task_in_manager.id, list_name=app.current_list)
+        edit_screen = EditScreen(
+            task_id=create_task_in_manager.id, list_name=app.current_list
+        )
         await app.push_screen(edit_screen)
-        await pilot.pause(1.0) # Give ample time for the screen to mount and compose
+        await pilot.pause(1.0)  # Give ample time for the screen to mount and compose
 
         # Check that the initial due date is displayed correctly
         due_date_label = app.screen.query_one("#due-date-label")

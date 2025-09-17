@@ -28,6 +28,7 @@ async def test_switch_list_with_number_keys():
         if list_name == "develop":
             return [develop_task]
         return []
+
     mock_get_tasks_uc.execute = AsyncMock(side_effect=get_tasks_side_effect)
 
     app.get_lists_uc = mock_get_lists_uc

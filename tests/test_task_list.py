@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.skip(reason="Test not implemented yet")
 def test_toggle_completed_tasks():
     """Test that toggling the completed tasks view works correctly."""

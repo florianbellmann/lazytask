@@ -1,4 +1,3 @@
-
 import pytest
 import logging
 import os
@@ -10,15 +9,18 @@ from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
 LOG_FILE = "lazytask.log"
 
+
 @pytest.fixture
 def task_manager():
     return MockTaskManager()
+
 
 def configure_logging():
     # Remove all existing handlers
     for handler in logging.getLogger().handlers[:]:
         logging.getLogger().removeHandler(handler)
     logging.basicConfig(filename=LOG_FILE, level=logging.INFO)
+
 
 @pytest.fixture(autouse=True)
 def setup_logging():
@@ -33,6 +35,7 @@ def setup_logging():
     # Remove the log file after the test
     if os.path.exists(LOG_FILE):
         os.remove(LOG_FILE)
+
 
 @pytest.mark.asyncio
 async def test_add_task_logs_message(task_manager):

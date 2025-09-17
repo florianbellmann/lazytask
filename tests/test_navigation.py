@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.skip(reason="Test not implemented yet")
 def test_go_to_top():
     """Test that 'g' moves the cursor to the top of the list."""
@@ -9,6 +10,7 @@ def test_go_to_top():
     # 4. Simulate the user pressing 'g'.
     # 5. Assert that the cursor is at the top of the list.
     pass
+
 
 @pytest.mark.skip(reason="Test not implemented yet")
 def test_go_to_bottom():

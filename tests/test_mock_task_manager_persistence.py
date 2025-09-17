@@ -3,9 +3,11 @@ import os
 import json
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
+
 @pytest.fixture
 def temp_file(tmp_path):
     return tmp_path / "test_tasks.json"
+
 
 @pytest.mark.asyncio
 async def test_task_persistence(temp_file):

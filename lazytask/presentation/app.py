@@ -27,6 +27,15 @@ from lazytask.container import container
 class LazyTaskApp(App):
     """A Textual app to manage tasks."""
 
+    DEFAULT_CSS = """
+    #tasks_list {
+        width: 50%;
+    }
+    #task_detail {
+        width: 50%;
+    }
+    """
+
     LOGGING = True
 
     BINDINGS = [
@@ -40,12 +49,15 @@ class LazyTaskApp(App):
         ("w", "move_to_next_weekend", "Move to next weekend"),
         ("meta+e", "edit_task", "Edit task"),
         ("ctrl+d", "toggle_overdue", "Toggle Overdue"),
+        ("ctrl+c", "toggle_completed", "Toggle Completed"),
         ("ctrl+r", "refresh", "Refresh"),
         ("/", "filter_tasks", "Filter tasks"),
         ("ctrl+o", "sort_tasks", "Sort tasks"),
         ("?", "show_help", "Show help"),
         ("j", "cursor_down", "Cursor Down"),
         ("k", "cursor_up", "Cursor Up"),
+        ("g", "go_to_top", "Go to top"),
+        ("G", "go_to_bottom", "Go to bottom"),
         ("q", "quit", "Quit"),
         ("1", "show_all_tasks", "All Tasks"),
         ("2", "switch_to_list_2", "List 2"),
@@ -66,6 +78,7 @@ class LazyTaskApp(App):
         self.title = f"LazyTask - {self.current_list}"
         self.available_lists = []
         self.show_overdue_only = False
+        self.show_completed = False
         self.task_selected = False
         self.context_sensitive_actions = [
             "c",
@@ -142,11 +155,11 @@ class LazyTaskApp(App):
                     all_tasks = []
                     lists = await self.get_lists_uc.execute()
                     for list_name in lists:
-                        tasks_in_list = await self.get_tasks_uc.execute(list_name, include_completed=True)
+                        tasks_in_list = await self.get_tasks_uc.execute(list_name, include_completed=self.show_completed)
                         all_tasks.extend(tasks_in_list)
                     tasks = all_tasks
                 else:
-                    tasks = await self.get_tasks_uc.execute(self.current_list, include_completed=True)
+                    tasks = await self.get_tasks_uc.execute(self.current_list, include_completed=self.show_completed)
             except Exception as e:
                 self.notify(f"Error getting tasks: {e}", title="Error", severity="error")
                 return
@@ -184,11 +197,7 @@ class LazyTaskApp(App):
         """An action to add a task."""
         def on_submit(title: str):
             if title:
-                async def add_task_async():
-                    async with self.show_loading():
-                        await self.add_task_uc.execute(title, self.current_list)
-                        await self.update_tasks_list()
-                self.call_later(add_task_async)
+                self.call_later(self.add_task, title)
 
         self.push_screen(TextInputModal(prompt="New task title:"), on_submit)
 
@@ -295,6 +304,11 @@ class LazyTaskApp(App):
         self.show_overdue_only = not self.show_overdue_only
         await self.update_tasks_list()
 
+    async def action_toggle_completed(self) -> None:
+        """Toggle showing completed tasks."""
+        self.show_completed = not self.show_completed
+        await self.update_tasks_list()
+
     def action_show_help(self) -> None:
         """An action to show the help screen."""
         self.push_screen(HelpScreen())
@@ -314,17 +328,35 @@ class LazyTaskApp(App):
         if tasks_list.highlighted_child:
             self.query_one(TaskDetail).update_task(tasks_list.highlighted_child.data)
 
+    def action_go_to_top(self) -> None:
+        """Go to the top of the list."""
+        tasks_list = self.query_one(ListView)
+        tasks_list.scroll_home(animate=False)
+        tasks_list.index = 0
+        if tasks_list.highlighted_child:
+            self.query_one(TaskDetail).update_task(tasks_list.highlighted_child.data)
+
+    def action_go_to_bottom(self) -> None:
+        """Go to the bottom of the list."""
+        tasks_list = self.query_one(ListView)
+        tasks_list.scroll_end(animate=False)
+        tasks_list.index = len(tasks_list.children) - 1
+        if tasks_list.highlighted_child:
+            self.query_one(TaskDetail).update_task(tasks_list.highlighted_child.data)
+
 
     async def action_complete_task(self) -> None:
         """An action to complete a task."""
         tasks_list = self.query_one(ListView)
         if tasks_list.highlighted_child:
+            current_index = tasks_list.index
             task = tasks_list.highlighted_child.data
             if task:
-                print(f"Completing task: {task.id}")
                 async with self.show_loading():
                     await self.complete_task_uc.execute(task.id, self.current_list)
                     await self.update_tasks_list()
+                    if current_index is not None and current_index > 0:
+                        tasks_list.index = current_index - 1
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""

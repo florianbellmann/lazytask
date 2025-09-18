@@ -1,7 +1,3 @@
-
-        
-
-
 import datetime
 
 import pytest

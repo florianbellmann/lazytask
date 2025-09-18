@@ -302,7 +302,10 @@ class LazyTaskApp(App):
         tasks_list = self.query_one(ListView)
         if tasks_list.highlighted_child:
             task: Task = tasks_list.highlighted_child._task
-            self.push_screen(EditScreen(task_id=task.id, list_name=self.current_list), self.on_edit_screen_closed)
+            self.push_screen(
+                EditScreen(task_id=task.id, list_name=self.current_list),
+                self.on_edit_screen_closed,
+            )
 
     async def on_edit_screen_closed(self, task: Task) -> None:
         if task:

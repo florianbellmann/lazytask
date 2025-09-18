@@ -12,7 +12,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.optional-dependencies]
-dev = ["ruff", "pytest", "pytest-asyncio", "textual[dev]"]
+dev = ["ruff", "pytest", "pytest-asyncio", "textual[dev]", "mypy"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["lazytask"]

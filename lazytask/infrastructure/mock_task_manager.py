@@ -28,11 +28,11 @@ class MockTaskManager(TaskManager):
                             task_data["due_date"] = datetime.datetime.strptime(
                                 task_data["due_date"], "%Y-%m-%d"
                             ).date()
-                        if task_data.get("created_date") and isinstance(
-                            task_data.get("created_date"), str
+                        if task_data.get("creation_date") and isinstance(
+                            task_data.get("creation_date"), str
                         ):
                             task_data["creation_date"] = datetime.datetime.fromisoformat(
-                                task_data.pop("created_date")
+                                task_data.pop("creation_date")
                             )
                         task_data["list_name"] = list_name
                         self._tasks[list_name][task_id] = Task(**task_data)

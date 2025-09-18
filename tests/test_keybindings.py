@@ -42,9 +42,7 @@ async def test_navigation_keybindings():
         # Test 'j' for moving down
         # Test 'j' for moving down
         await pilot.press("j")
-        await pilot.pause(
-            0.5
-        )  # Give more time for the ListView to update its index and render
+        await pilot.pause(1.0)
         assert tasks_list.index == 1
 
         # Test 'k' for moving up

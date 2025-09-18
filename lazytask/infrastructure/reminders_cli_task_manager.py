@@ -35,20 +35,18 @@ class RemindersCliTaskManager(TaskManager):
 
     def _parse_reminder_json(self, reminder_json: Dict[str, Any]) -> Task:
         creation_date = None
-        if reminder_json.get("creationDate"):
+        creation_date_str = reminder_json.get("creationDate")
+        if creation_date_str:
             try:
-                creation_date = datetime.datetime.fromisoformat(
-                    reminder_json.get("creationDate")
-                )
+                creation_date = datetime.datetime.fromisoformat(creation_date_str)
             except (ValueError, TypeError):
                 creation_date = None
 
         due_date = None
-        if reminder_json.get("dueDate"):
+        due_date_str = reminder_json.get("dueDate")
+        if due_date_str:
             try:
-                due_date = datetime.datetime.fromisoformat(
-                    reminder_json.get("dueDate")
-                ).date()
+                due_date = datetime.datetime.fromisoformat(due_date_str).date()
             except (ValueError, TypeError):
                 due_date = None
 

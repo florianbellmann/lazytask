@@ -13,7 +13,7 @@ class TaskDisplay(Static):
 
     def __init__(self, task: Task, **kwargs):
         super().__init__(**kwargs)
-        self.task = task
+        self._task = task
         self.update_content()
 
     def update_content(self):
@@ -64,8 +64,8 @@ class LazyTaskCLI(App):
         self.complete_task_uc = container.get(CompleteTask)
         self.get_lists_uc = container.get(GetLists)
 
-    def watch_current_list_name(self, new_name: str) -> None:
-        self.update_task_list_display()
+    async def watch_current_list_name(self, new_name: str) -> None:
+        await self.update_task_list_display()
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -98,9 +98,9 @@ class LazyTaskCLI(App):
     def action_add_task_prompt(self) -> None:
         self.query_one("#task-input", Input).focus()
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "add-task-button":
-            self.action_add_task()
+            await self.action_add_task()
 
     async def action_add_task(self) -> None:
         input_widget = self.query_one("#task-input", Input)
@@ -128,7 +128,7 @@ class LazyTaskCLI(App):
         await self.update_task_list_display()
         self.notify(f"List '{self.current_list_name}' refreshed.")
 
-    def action_quit(self) -> None:
+    async def action_quit(self) -> None:
         self.exit()
 
 

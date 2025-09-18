@@ -1,43 +1,8 @@
+
+        
+
+
 import datetime
-
-import pytest
-from textual.widgets import Button
-
-from lazytask.domain.task import Task
-from lazytask.presentation.app import LazyTaskApp
-from lazytask.presentation.edit_screen import EditScreen
-from lazytask.presentation.date_picker_screen import DatePickerScreen
-
-
-@pytest.fixture
-def sample_task() -> Task:
-    return Task(id="1", title="Test Task", due_date=datetime.date(2025, 1, 1))
-
-
-async def test_edit_due_date(sample_task: Task):
-    app = LazyTaskApp()
-
-    async with app.run_test() as pilot:
-        edit_screen = EditScreen(task=sample_task)
-        await app.push_screen(edit_screen)
-        await pilot.pause()
-
-        # Check that the initial due date is displayed correctly
-        due_date_label = edit_screen.query_one("#due-date-label")
-        assert str(sample_task.due_date) in due_date_label.renderable
-
-        # Click the "Edit Due Date" button
-        await pilot.click("#edit-due-date")
-        await pilot.pause()
-
-        # Check that the DatePickerScreen is displayed
-        date_picker_screen = app.screen
-        assert isinstance(date_picker_screen, DatePickerScreen)
-
-        # Select a new date (e.g., today)
-        new_date = datetime.date.today()
-        import datetime
-
 
 import pytest
 from textual.widgets import Button, ListView
@@ -87,8 +52,9 @@ async def test_edit_due_date(app: LazyTaskApp, create_task_in_manager: Task):
         await app.push_screen(edit_screen)
         await pilot.pause(1.0)  # Give ample time for the screen to mount and compose
 
+        await pilot.pause()
         # Check that the initial due date is displayed correctly
-        due_date_label = app.screen.query_one("#due-date-label")
+        due_date_label = edit_screen.query_one("#due-date-label")
         assert str(create_task_in_manager.due_date) in due_date_label.renderable
 
         # Click the "Edit Due Date" button

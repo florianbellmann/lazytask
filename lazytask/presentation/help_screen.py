@@ -9,8 +9,11 @@ class HelpScreen(ModalScreen):
     BINDINGS = [("escape", "app.pop_screen", "Pop screen")]
 
     def compose(self) -> ComposeResult:
-        bindings = self.parent.BINDINGS
-        text = "\n".join(
-            [f"{key.upper()}: {description}" for key, _, description in bindings]
-        )
-        yield Static(text, id="help-text")
+        if self.parent:
+            bindings = self.parent.BINDINGS
+            text = []
+            for binding in bindings:
+                text.append(f"{binding.key.upper()}: {binding.description}")
+            yield Static("\n".join(text), id="help-text")
+        else:
+            yield Static("No help available.", id="help-text")

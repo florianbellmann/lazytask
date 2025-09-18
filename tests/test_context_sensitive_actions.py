@@ -16,6 +16,8 @@ def app() -> LazyTaskApp:
     app.update_task_uc = AsyncMock()
     app.get_lists_uc = MagicMock()
     app.get_lists_uc.execute = AsyncMock(return_value=["develop", "develop2"])
+    import logging
+    logging.basicConfig(filename="lazytask.log", level=logging.INFO)
     return app
 
 

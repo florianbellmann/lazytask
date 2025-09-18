@@ -12,9 +12,9 @@ class TaskDetail(Static):
                 details.append(f"List: {task.list_name}")
             if task.due_date:
                 details.append(f"Due Date: {task.due_date.strftime('%Y-%m-%d')}")
-            if task.created_date:
+            if task.creation_date:
                 details.append(
-                    f"Created Date: {task.created_date.strftime('%Y-%m-%d')}"
+                    f"Created Date: {task.creation_date.strftime('%Y-%m-%d')}"
                 )
             if task.description:
                 details.append(f"Notes: {task.description}")

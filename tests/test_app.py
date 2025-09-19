@@ -12,6 +12,24 @@ async def test_quit_app():
         await pilot.pause()
         assert app._exit is True
 
+import pytest
+
+@pytest.mark.skip(reason="App startup test not implemented yet")
+def test_app_starts_without_crashes():
+    """
+    Verify that the application starts up cleanly without crashing.
+    """
+    # TODO: Implement startup verification
+    pass
+
+
+@pytest.mark.skip(reason="App quit test not implemented yet")
+def test_app_quits_on_q_press():
+    """
+    Verify that the application exits cleanly when the user presses 'Q'.
+    """
+    # TODO: Implement quit behavior verification
+    pass
 
 @pytest.mark.skip(reason="Test not implemented yet")
 def test_reselect_previous_task_after_completion():

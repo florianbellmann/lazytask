@@ -5,6 +5,68 @@ import datetime
 from lazytask.presentation.app import LazyTaskApp
 
 
+import pytest
+
+# ----------------------------
+# Feature Tests: Sorting
+# ----------------------------
+
+@pytest.mark.skip(reason="Default sort not implemented yet")
+def test_default_sort_due_date_oldest_first_selected_on_startup():
+    """
+    On startup:
+      - The selected sort is 'due date ascending' (oldest first).
+      - The visible list is sorted by due date from oldest to newest.
+    """
+    # TODO: Implement startup/default sort verification
+    pass
+
+
+@pytest.mark.skip(reason="Sort direction toggle not implemented yet")
+def test_sort_due_date_descending_when_direction_reversed():
+    """
+    When switching the sort direction while on 'due date':
+      - The list becomes sorted newest -> oldest.
+      - Confirm it is strictly the reverse order of ascending-by-due-date.
+    """
+    # TODO: Implement direction toggle verification for due date
+    pass
+
+
+@pytest.mark.skip(reason="Alphabetical ascending sort not implemented yet")
+def test_sort_alphabetically_ascending():
+    """
+    When choosing alphabetical sort:
+      - The list is sorted A -> Z by task title.
+      - The selected sort reflects 'alphabetical ascending'.
+    """
+    # TODO: Implement alphabetical ascending verification
+    pass
+
+
+@pytest.mark.skip(reason="Alphabetical descending sort not implemented yet")
+def test_sort_alphabetically_descending():
+    """
+    When choosing alphabetical sort reversed:
+      - The list is sorted Z -> A by task title.
+      - Confirm it is strictly the reverse order of alphabetical ascending.
+      - The selected sort reflects 'alphabetical descending'.
+    """
+    # TODO: Implement alphabetical descending verification
+    pass
+
+
+@pytest.mark.skip(reason="Alphabetical selection state not implemented yet")
+def test_selecting_alphabetical_updates_selected_sort():
+    """
+    Choosing alphabetical again (from any prior sort) sets the selected sort to 'alphabetical'
+    and displays the list accordingly (default direction A -> Z).
+    """
+    # TODO: Implement selected-sort state update check when choosing alphabetical
+    pass
+
+
+
 @pytest.mark.asyncio
 @pytest.mark.skip(reason="Not implemented yet")
 async def test_sort_by_title_case_insensitive():

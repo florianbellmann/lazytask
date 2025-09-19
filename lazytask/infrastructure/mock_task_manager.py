@@ -8,12 +8,16 @@ import os
 
 
 class MockTaskManager(TaskManager):
-    def __init__(self, file_path: str = "mock_tasks.json"):
+    def __init__(
+        self, file_path: str = "mock_tasks.json", use_persistence: bool = True
+    ):
         self.file_path = file_path
+        self.use_persistence = use_persistence
         self._tasks: Dict[str, Dict[str, Task]] = {
             "develop": {}
         }  # list_name -> {task_id -> Task}
-        self._load_tasks()
+        if self.use_persistence:
+            self._load_tasks()
 
     def _load_tasks(self):
         if os.path.exists(self.file_path):
@@ -40,6 +44,8 @@ class MockTaskManager(TaskManager):
                         self._tasks[list_name][task_id] = Task(**task_data)
 
     def _save_tasks(self):
+        if not self.use_persistence:
+            return
         with open(self.file_path, "w") as f:
             data = {
                 list_name: {

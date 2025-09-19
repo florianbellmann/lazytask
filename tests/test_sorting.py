@@ -11,6 +11,7 @@ import pytest
 # Feature Tests: Sorting
 # ----------------------------
 
+
 @pytest.mark.skip(reason="Default sort not implemented yet")
 def test_default_sort_due_date_oldest_first_selected_on_startup():
     """
@@ -64,7 +65,6 @@ def test_selecting_alphabetical_updates_selected_sort():
     """
     # TODO: Implement selected-sort state update check when choosing alphabetical
     pass
-
 
 
 @pytest.mark.asyncio

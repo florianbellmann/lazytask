@@ -6,6 +6,7 @@ import pytest
 # Feature Tests: Highlighting & Selection (synchronized)
 # ----------------------------
 
+
 @pytest.mark.skip(reason="J/K navigation behavior not implemented yet")
 def test_navigation_j_k_changes_highlight_and_selection():
     """
@@ -66,6 +67,7 @@ def test_filtering_keeps_current_selection_unless_filtered_out_then_first_else_n
     """
     # TODO: Implement selection rules during filtering
     pass
+
 
 @pytest.mark.skip(reason="This test is for a bug that needs to be fixed.")
 def test_highlight_moves_correctly_after_completing_task_in_middle():

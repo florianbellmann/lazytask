@@ -18,9 +18,8 @@ def test_default_list_fallback():
         del os.environ["LAZYTASK_DEFAULT_LIST"]
     app = LazyTaskApp()
     assert app.current_list == "develop"
-    
-    
-    
+
+
 import pytest
 
 # ----------------------------
@@ -29,6 +28,7 @@ import pytest
 #   - Lists: comma-separated string of list names
 #   - DefaultList: must be one of the names in Lists
 # ----------------------------
+
 
 @pytest.mark.skip(reason="Config validation not implemented yet")
 def test_app_requires_valid_lists_and_defaultlist():
@@ -61,8 +61,7 @@ def test_defaultlist_must_be_in_lists_else_error():
     """
     # TODO: Start with mismatched DefaultList and assert a clear error is shown
     pass
-    
-    
-    
+
+
 # in dev always use develop and develop2
 # in testing use test and test2

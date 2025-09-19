@@ -10,6 +10,7 @@ import pytest
 # Feature Tests: Filtering
 # ----------------------------
 
+
 @pytest.mark.skip(reason="Filtering via slash not implemented yet")
 def test_filtering_with_slash_button():
     """
@@ -66,14 +67,15 @@ def test_filtering_clears_when_switching_list():
     pass
 
 
-@pytest.mark.skip(reason="Filter cleared when switching to all-list mode not implemented yet")
+@pytest.mark.skip(
+    reason="Filter cleared when switching to all-list mode not implemented yet"
+)
 def test_filtering_clears_when_switching_to_all_list_mode():
     """
     Verify that switching to 'all lists' mode clears the current filter.
     """
     # TODO: Implement filter clear on all-list mode switch test
     pass
-
 
 
 @pytest.mark.asyncio

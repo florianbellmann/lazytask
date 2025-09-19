@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.domain.task import Task
 
+# completing a task or changing any task details should only be available if a task is selected. 
 
 @pytest.fixture
 def app() -> LazyTaskApp:

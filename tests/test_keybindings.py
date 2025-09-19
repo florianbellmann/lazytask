@@ -7,6 +7,12 @@ from lazytask.presentation.help_screen import HelpScreen
 from textual.widgets import ListView
 
 
+
+@pytest.mark.skip(reason=" not implemented yet")
+def test_tab_keybindings_from_config():
+    # TODO: Implement test that the number keybindings > 1 are equal to the comma separated lists from the env var configs 
+    pass
+
 @pytest.mark.asyncio
 async def test_initial_state():
     """Test the initial state of the app."""

@@ -1,23 +1,52 @@
 import pytest
+from lazytask.presentation.app import LazyTaskApp
+from lazytask.container import container
 
 
-@pytest.mark.skip(reason="Test not implemented yet")
-def test_go_to_top():
+async def test_go_to_top():
     """Test that 'g' moves the cursor to the top of the list."""
-    # 1. Create a mock task manager with multiple tasks.
-    # 2. Initialize the app with the mock task manager.
-    # 3. Set the cursor to a position other than the top.
-    # 4. Simulate the user pressing 'g'.
-    # 5. Assert that the cursor is at the top of the list.
-    pass
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.add_task("task 1")
+    await task_manager.add_task("task 2")
+    await task_manager.add_task("task 3")
+
+    async with app.run_test() as pilot:
+        tasks_list = app.query_one("ListView")
+
+        # Set the cursor to a position other than the top.
+        await pilot.press("j")
+        await pilot.press("j")
+        await pilot.pause()
+        assert tasks_list.index == 2
+
+        # Simulate the user pressing 'g'.
+        await pilot.press("g")
+        await pilot.pause()
+
+        # Assert that the cursor is at the top of the list.
+        assert tasks_list.index == 0
 
 
-@pytest.mark.skip(reason="Test not implemented yet")
-def test_go_to_bottom():
+async def test_go_to_bottom():
     """Test that 'G' moves the cursor to the bottom of the list."""
-    # 1. Create a mock task manager with multiple tasks.
-    # 2. Initialize the app with the mock task manager.
-    # 3. Set the cursor to a position other than the bottom.
-    # 4. Simulate the user pressing 'G'.
-    # 5. Assert that the cursor is at the bottom of the list.
-    pass
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.add_task("task 1")
+    await task_manager.add_task("task 2")
+    await task_manager.add_task("task 3")
+
+    async with app.run_test() as pilot:
+        tasks_list = app.query_one("ListView")
+
+        # Set the cursor to a position other than the bottom.
+        await pilot.press("j")
+        await pilot.pause()
+        assert tasks_list.index == 1
+
+        # Simulate the user pressing 'G'.
+        await pilot.press("G")
+        await pilot.pause()
+
+        # Assert that the cursor is at the bottom of the list.
+        assert tasks_list.index == 2

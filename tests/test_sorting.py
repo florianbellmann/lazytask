@@ -1,26 +1,28 @@
 import pytest
-from unittest.mock import MagicMock, AsyncMock
 import datetime
-
 from lazytask.presentation.app import LazyTaskApp
+from lazytask.container import container
 
 
-import pytest
-
-# ----------------------------
-# Feature Tests: Sorting
-# ----------------------------
-
-
-@pytest.mark.skip(reason="Default sort not implemented yet")
-def test_default_sort_due_date_oldest_first_selected_on_startup():
+async def test_default_sort_due_date_oldest_first_selected_on_startup():
     """
     On startup:
       - The selected sort is 'due date ascending' (oldest first).
       - The visible list is sorted by due date from oldest to newest.
     """
-    # TODO: Implement startup/default sort verification
-    pass
+    app = LazyTaskApp()
+    assert app.sort_by == "due_date"
+
+    task_manager = container.task_manager
+    await task_manager.add_task("task 1", due_date=datetime.date(2025, 1, 2))
+    await task_manager.add_task("task 2", due_date=datetime.date(2025, 1, 1))
+    await task_manager.add_task("task 3", due_date=datetime.date(2025, 1, 3))
+
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        tasks_list = app.query_one("ListView")
+        rendered_tasks = [item._task.title for item in tasks_list.children]
+        assert rendered_tasks == ["task 2", "task 1", "task 3"]
 
 
 @pytest.mark.skip(reason="Sort direction toggle not implemented yet")
@@ -30,22 +32,33 @@ def test_sort_due_date_descending_when_direction_reversed():
       - The list becomes sorted newest -> oldest.
       - Confirm it is strictly the reverse order of ascending-by-due-date.
     """
-    # TODO: Implement direction toggle verification for due date
     pass
 
 
-@pytest.mark.skip(reason="Alphabetical ascending sort not implemented yet")
-def test_sort_alphabetically_ascending():
+async def test_sort_alphabetically_ascending():
     """
     When choosing alphabetical sort:
       - The list is sorted A -> Z by task title.
       - The selected sort reflects 'alphabetical ascending'.
     """
-    # TODO: Implement alphabetical ascending verification
-    pass
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.add_task("b task")
+    await task_manager.add_task("a task")
+    await task_manager.add_task("c task")
+
+    async with app.run_test() as pilot:
+        # Default sort is by due_date. Press ctrl+o to switch to title sort.
+        await pilot.press("ctrl+o")
+        await pilot.pause()
+
+        assert app.sort_by == "title"
+        tasks_list = app.query_one("ListView")
+        rendered_tasks = [item._task.title for item in tasks_list.children]
+        assert rendered_tasks == ["a task", "b task", "c task"]
 
 
-@pytest.mark.skip(reason="Alphabetical descending sort not implemented yet")
+@pytest.mark.skip(reason="Sort direction toggle not implemented yet")
 def test_sort_alphabetically_descending():
     """
     When choosing alphabetical sort reversed:
@@ -53,69 +66,67 @@ def test_sort_alphabetically_descending():
       - Confirm it is strictly the reverse order of alphabetical ascending.
       - The selected sort reflects 'alphabetical descending'.
     """
-    # TODO: Implement alphabetical descending verification
     pass
 
 
-@pytest.mark.skip(reason="Alphabetical selection state not implemented yet")
-def test_selecting_alphabetical_updates_selected_sort():
+async def test_sort_cycle():
     """
-    Choosing alphabetical again (from any prior sort) sets the selected sort to 'alphabetical'
-    and displays the list accordingly (default direction A -> Z).
+    Choosing sort cycles through due_date, title, creation_date.
     """
-    # TODO: Implement selected-sort state update check when choosing alphabetical
-    pass
+    app = LazyTaskApp()
+    async with app.run_test() as pilot:
+        assert app.sort_by == "due_date"
+
+        await pilot.press("ctrl+o")
+        await pilot.pause()
+        assert app.sort_by == "title"
+
+        await pilot.press("ctrl+o")
+        await pilot.pause()
+        assert app.sort_by == "creation_date"
+
+        await pilot.press("ctrl+o")
+        await pilot.pause()
+        assert app.sort_by == "due_date"
 
 
-@pytest.mark.asyncio
-@pytest.mark.skip(reason="Not implemented yet")
 async def test_sort_by_title_case_insensitive():
     """Test that sorting by title is case-insensitive."""
-    # Given
     app = LazyTaskApp()
-    app.use_case = MagicMock()
-    app.use_case.get_tasks = AsyncMock(
-        return_value=[
-            {"id": "1", "title": "b"},
-            {"id": "2", "title": "a"},
-            {"id": "3", "title": "C"},
-        ]
-    )
-    app.query_one = MagicMock()
-    app.sort_by = "title"
+    task_manager = container.task_manager
+    await task_manager.add_task("b task")
+    await task_manager.add_task("a task")
+    await task_manager.add_task("C task")
 
-    # When
-    await app.update_tasks_list()
+    async with app.run_test() as pilot:
+        await pilot.press("ctrl+o")  # sort by title
+        await pilot.pause()
 
-    # Then
-    task_list = app.query_one.return_value
-    assert task_list.add_task.call_args_list[0].args[0].title == "a"
-    assert task_list.add_task.call_args_list[1].args[0].title == "b"
-    assert task_list.add_task.call_args_list[2].args[0].title == "C"
+        tasks_list = app.query_one("ListView")
+        rendered_tasks = [item._task.title for item in tasks_list.children]
+        assert rendered_tasks == ["a task", "b task", "C task"]
 
 
-@pytest.mark.asyncio
-@pytest.mark.skip(reason="Not implemented yet")
 async def test_sort_by_creation_date():
     """Test that sorting by creation date works."""
-    # Given
     app = LazyTaskApp()
-    app.use_case = MagicMock()
-    app.use_case.get_tasks = AsyncMock(
-        return_value=[
-            {"id": "1", "title": "b", "creation_date": datetime.datetime(2023, 1, 2)},
-            {"id": "2", "title": "a", "creation_date": datetime.datetime(2023, 1, 1)},
-            {"id": "3", "title": "C", "creation_date": datetime.datetime(2023, 1, 3)},
-        ]
+    task_manager = container.task_manager
+    await task_manager.add_task(
+        "task 1", creation_date=datetime.datetime(2025, 1, 1, 12, 0, 2)
     )
-    app.query_one = MagicMock()
-    app.sort_by = "creation_date"
+    await task_manager.add_task(
+        "task 2", creation_date=datetime.datetime(2025, 1, 1, 12, 0, 1)
+    )
+    await task_manager.add_task(
+        "task 3", creation_date=datetime.datetime(2025, 1, 1, 12, 0, 3)
+    )
 
-    # When
-    await app.update_tasks_list()
+    async with app.run_test() as pilot:
+        await pilot.press("ctrl+o")  # sort by title
+        await pilot.press("ctrl+o")  # sort by creation_date
+        await pilot.pause()
 
-    # Then
-    task_list = app.query_one.return_value
-    assert task_list.add_task.call_args_list[0].args[0].title == "a"
-    assert task_list.add_task.call_args_list[1].args[0].title == "b"
-    assert task_list.add_task.call_args_list[2].args[0].title == "C"
+        assert app.sort_by == "creation_date"
+        tasks_list = app.query_one("ListView")
+        rendered_tasks = [item._task.title for item in tasks_list.children]
+        assert rendered_tasks == ["task 2", "task 1", "task 3"]

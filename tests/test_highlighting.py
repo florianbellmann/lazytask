@@ -1,106 +1,167 @@
 import pytest
-
-import pytest
-
-# ----------------------------
-# Feature Tests: Highlighting & Selection (synchronized)
-# ----------------------------
+from lazytask.presentation.app import LazyTaskApp
+from lazytask.container import container
 
 
-@pytest.mark.skip(reason="J/K navigation behavior not implemented yet")
-def test_navigation_j_k_changes_highlight_and_selection():
+async def test_navigation_j_k_changes_highlight_and_selection():
     """
     Using 'J' moves the highlight/selection down one item; using 'K' moves it up one item.
     Both highlight and selection change together and remain in sync.
     """
-    # TODO: Implement J/K navigation test
-    pass
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.add_task("task 1")
+    await task_manager.add_task("task 2")
+    await task_manager.add_task("task 3")
+
+    async with app.run_test() as pilot:
+        tasks_list = app.query_one("ListView")
+        assert tasks_list.index is None  # Nothing selected initially
+
+        # Press 'j' to select the first item
+        await pilot.press("j")
+        await pilot.pause()
+        assert tasks_list.index == 0
+
+        # Press 'j' to move down
+        await pilot.press("j")
+        await pilot.pause()
+        assert tasks_list.index == 1
+
+        # Press 'k' to move up
+        await pilot.press("k")
+        await pilot.pause()
+        assert tasks_list.index == 0
 
 
-@pytest.mark.skip(reason="Highlight-selection sync enforcement not implemented yet")
-def test_highlight_always_matches_selection():
+async def test_highlight_always_matches_selection():
     """
     The highlighted task is always the selected task; they never diverge.
     """
-    # TODO: Implement invariant check to ensure no desync possible
-    pass
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.add_task("task 1")
+    await task_manager.add_task("task 2")
+
+    async with app.run_test() as pilot:
+        tasks_list = app.query_one("ListView")
+        assert tasks_list.index is None
+        assert tasks_list.highlighted_child is None
+
+        await pilot.press("j")
+        await pilot.pause()
+        assert tasks_list.index == 0
+        assert tasks_list.highlighted_child is tasks_list.children[0]
+
+        await pilot.press("j")
+        await pilot.pause()
+        assert tasks_list.index == 1
+        assert tasks_list.highlighted_child is tasks_list.children[1]
 
 
-@pytest.mark.skip(reason="Reset on list switch not implemented yet")
-def test_selection_and_highlight_reset_to_first_on_list_switch():
+async def test_selection_and_highlight_reset_to_first_on_list_switch():
     """
-    When switching to another list OR to 'all lists' mode, set highlight/selection to the first item.
-    If the destination list is empty, select and highlight nothing.
+    When switching to another list, set highlight/selection to the first item.
     """
-    # TODO: Implement reset on list switch / all-list mode test
-    pass
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.add_task("task 1", list_name="develop")
+    await task_manager.add_task("task 2", list_name="develop")
+    await task_manager.add_task("task 3", list_name="develop2")
+
+    async with app.run_test() as pilot:
+        tasks_list = app.query_one("ListView")
+
+        # select second task in 'develop'
+        await pilot.press("j")
+        await pilot.press("j")
+        await pilot.pause()
+        assert tasks_list.index == 1
+
+        # switch to 'develop2'
+        app.current_list = "develop2"
+        await app.update_tasks_list()
+        await pilot.pause()
+
+        # check that selection is reset to first item
+        assert tasks_list.index == 0
 
 
-@pytest.mark.skip(reason="Completion selection rules not implemented yet")
-def test_selection_after_completing_task_prefers_next_else_prev_else_none():
+async def test_selection_after_completing_task():
     """
     When completing the currently selected task:
       - Select/highlight the task below it, if any.
       - Otherwise select/highlight the previous task (above), if any.
       - If neither exists (list becomes empty), select/highlight nothing.
     """
-    # TODO: Implement selection rules after completion
-    pass
+    # Case 1: complete task in the middle
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.clear_tasks()
+    await task_manager.add_task("task 1")
+    await task_manager.add_task("task 2")
+    await task_manager.add_task("task 3")
+
+    async with app.run_test() as pilot:
+        tasks_list = app.query_one("ListView")
+        await pilot.press("j")  # select task 1
+        await pilot.press("j")  # select task 2
+        await pilot.pause()
+        assert tasks_list.highlighted_child._task.title == "task 2"
+
+        await pilot.press("c")  # complete task 2
+        await pilot.pause()
+        assert tasks_list.highlighted_child._task.title == "task 3"
+
+    # Case 2: complete last task
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.clear_tasks()
+    await task_manager.add_task("task 1")
+    await task_manager.add_task("task 2")
+
+    async with app.run_test() as pilot:
+        tasks_list = app.query_one("ListView")
+        await pilot.press("j")
+        await pilot.press("j")
+        await pilot.pause()
+        assert tasks_list.highlighted_child._task.title == "task 2"
+
+        await pilot.press("c")  # complete task 2
+        await pilot.pause()
+        assert tasks_list.highlighted_child._task.title == "task 1"
+
+    # Case 3: complete only task
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.clear_tasks()
+    await task_manager.add_task("task 1")
+
+    async with app.run_test() as pilot:
+        tasks_list = app.query_one("ListView")
+        await pilot.press("j")
+        await pilot.pause()
+        assert tasks_list.highlighted_child._task.title == "task 1"
+
+        await pilot.press("c")  # complete task 1
+        await pilot.pause()
+        assert tasks_list.highlighted_child is None
 
 
-@pytest.mark.skip(reason="Post-add focus behavior not implemented yet")
+@pytest.mark.skip(reason="Feature not implemented yet")
 def test_selection_and_highlight_move_to_new_task_after_adding():
     """
     After adding a new task, highlight/select the newly added task.
     """
-    # TODO: Implement focus new task after add
     pass
 
 
-@pytest.mark.skip(reason="Filtering selection rules not implemented yet")
+@pytest.mark.skip(reason="Feature not implemented yet")
 def test_filtering_keeps_current_selection_unless_filtered_out_then_first_else_none():
     """
     While filtering:
       - Keep the current highlight/selection if the selected task still matches the filter.
       - If it no longer matches, select/highlight the first item in the filtered list.
       - If the filtered list is empty, select/highlight nothing.
-    """
-    # TODO: Implement selection rules during filtering
-    pass
-
-
-@pytest.mark.skip(reason="This test is for a bug that needs to be fixed.")
-def test_highlight_moves_correctly_after_completing_task_in_middle():
-    """
-    When a task in the middle of the list is completed, the highlight
-    should move to the next task in the list (which takes the index
-    of the completed task).
-    """
-    pass
-
-
-@pytest.mark.skip(reason="This test is for a bug that needs to be fixed.")
-def test_highlight_moves_correctly_after_completing_last_task():
-    """
-    When the last task in the list is completed, the highlight should
-    move to the new last task in the list.
-    """
-    pass
-
-
-@pytest.mark.skip(reason="This test is for a bug that needs to be fixed.")
-def test_highlight_moves_correctly_after_completing_first_task():
-    """
-    When the first task in the list is completed, the highlight should
-    move to the new first task in the list (the one that was second).
-    """
-    pass
-
-
-@pytest.mark.skip(reason="This test is for a bug that needs to be fixed.")
-def test_no_highlight_after_completing_only_task():
-    """
-    When the only task in the list is completed, the list becomes empty
-    and there should be no highlighted task.
     """
     pass

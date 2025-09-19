@@ -1,17 +1,26 @@
 import pytest
+from lazytask.presentation.app import LazyTaskApp
+from lazytask.container import container
+from lazytask.presentation.text_input_modal import TextInputModal
 
 
-@pytest.mark.skip(reason="This test is for a feature that needs to be implemented.")
-def test_edit_description_hotkey():
+async def test_edit_description_hotkey():
     """
     When the user presses the hotkey to edit the description of a selected task,
-    a modal should appear with the current description, and submitting it
-    should update the task.
+    a modal should appear with the current description.
     """
-    # 1. Setup app with a list of tasks, one with a description.
-    # 2. Select the task.
-    # 3. Simulate pressing the 'edit description' hotkey.
-    # 4. Check that the TextInputModal is on screen with the correct initial value.
-    # 5. Simulate entering a new description and submitting.
-    # 6. Check that the task's description has been updated.
-    pass
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.add_task("task 1", description="initial description")
+
+    async with app.run_test() as pilot:
+        await pilot.press("j")  # select task
+        await pilot.pause()
+
+        await pilot.press("ctrl+b")
+        await pilot.pause()
+
+        assert len(app.screen_stack) == 2
+        modal = app.screen
+        assert isinstance(modal, TextInputModal)
+        assert modal.query_one("Input").value == "initial description"

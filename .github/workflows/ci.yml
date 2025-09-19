@@ -24,7 +24,13 @@ jobs:
         uv sync --all-extras
 
     - name: Lint with ruff
+      run: uv run mypy . 
+
+    - name: Lint with ruff
       run: uv run ruff check .
+
+    - name: Format with ruff
+      run: uv run ruff format .
 
     - name: Test with pytest
       run: uv run pytest

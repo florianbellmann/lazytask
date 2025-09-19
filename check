@@ -1,0 +1,2 @@
+#!/bin/bash
+just test && just lint && just format && just check

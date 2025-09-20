@@ -5,10 +5,18 @@ from lazytask.presentation.app import LazyTaskApp
 from lazytask.presentation.list_tabs import ListTabs
 
 
-@pytest.mark.skip(reason=" not implemented yet")
-def test_list_tabs_from_config():
-    # TODO: Implement test that the displayed tab list is equal to the comma separated lists from the env var configs 
-    pass
+async def test_list_tabs_from_config(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "list1,list2,list3")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "list2")
+    app = LazyTaskApp()
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        list_tabs = app.query_one(ListTabs)
+        rendered_text = str(list_tabs.render())
+        assert "list1" in rendered_text
+        assert "list2" in rendered_text
+        assert "list3" in rendered_text
+        assert app.current_list == "list2"
 
 
 @pytest.mark.asyncio

@@ -11,7 +11,7 @@ lint:
     cd lazytask && uv run mypy .
 
 check:
-    uv run ruff check
+    uv run ruff check --fix
 
 format:
     uv run ruff format

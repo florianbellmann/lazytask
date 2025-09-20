@@ -1,4 +1,3 @@
-import pytest
 import datetime
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.container import container

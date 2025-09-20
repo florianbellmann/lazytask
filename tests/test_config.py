@@ -1,7 +1,7 @@
 import os
-from unittest.mock import patch
 import pytest
 from lazytask.presentation.app import LazyTaskApp
+
 
 def test_default_list_from_env_var(monkeypatch):
     """Test that the default list is read from the environment variable."""

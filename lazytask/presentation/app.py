@@ -100,7 +100,7 @@ class LazyTaskApp(App):
             if not lists_str.strip():
                 raise ValueError("LAZYTASK_LISTS must not be empty")
 
-            self.available_lists = [name.strip() for name in lists_str.split(',')]
+            self.available_lists = [name.strip() for name in lists_str.split(",")]
             if default_list not in self.available_lists:
                 raise ValueError(
                     f"LAZYTASK_DEFAULT_LIST '{default_list}' not in LAZYTASK_LISTS"
@@ -186,7 +186,11 @@ class LazyTaskApp(App):
     async def update_tasks_list(self):
         """Update the tasks list view."""
         tasks_list_view = self.query_one(ListView)
-        selected_task_id = tasks_list_view.highlighted_child._task.id if tasks_list_view.highlighted_child else None
+        selected_task_id = (
+            tasks_list_view.highlighted_child._task.id
+            if tasks_list_view.highlighted_child
+            else None
+        )
 
         self.query_one(ListTabs).update_lists(self.available_lists, self.current_list)
         tasks_list_view.clear()
@@ -217,13 +221,20 @@ class LazyTaskApp(App):
 
         if self.filter_query:
             tasks = [
-                task for task in tasks if self.filter_query.lower() in task.title.lower()
+                task
+                for task in tasks
+                if self.filter_query.lower() in task.title.lower()
             ]
 
         if self.sort_by == "due_date":
-            tasks.sort(key=lambda t: t.due_date or datetime.date.max, reverse=self.sort_reverse)
+            tasks.sort(
+                key=lambda t: t.due_date or datetime.date.max, reverse=self.sort_reverse
+            )
         elif self.sort_by == "creation_date":
-            tasks.sort(key=lambda t: t.creation_date or datetime.datetime.max, reverse=self.sort_reverse)
+            tasks.sort(
+                key=lambda t: t.creation_date or datetime.datetime.max,
+                reverse=self.sort_reverse,
+            )
         else:
             tasks.sort(key=lambda t: t.title.lower(), reverse=self.sort_reverse)
 

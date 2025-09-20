@@ -10,9 +10,7 @@ async def test_date_picker_updates_task_date():
     """Test that the date picker correctly updates a task's due date."""
     app = LazyTaskApp()
     task_manager = container.task_manager
-    await task_manager.add_task(
-        "Test Task", due_date=datetime.date(2023, 1, 1)
-    )
+    await task_manager.add_task("Test Task", due_date=datetime.date(2023, 1, 1))
 
     async with app.run_test() as pilot:
         # Select the task

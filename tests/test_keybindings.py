@@ -8,7 +8,9 @@ from textual.widgets import ListView
 
 
 async def test_tab_keybindings_from_config(monkeypatch):
-    monkeypatch.setenv("LAZYTASK_LISTS", "list1,list2,list3,list4,list5,list6,list7,list8")
+    monkeypatch.setenv(
+        "LAZYTASK_LISTS", "list1,list2,list3,list4,list5,list6,list7,list8"
+    )
     monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "list1")
     app = LazyTaskApp()
     async with app.run_test() as pilot:

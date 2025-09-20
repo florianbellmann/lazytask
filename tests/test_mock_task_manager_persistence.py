@@ -1,6 +1,5 @@
 import pytest
 import os
-import json
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
 

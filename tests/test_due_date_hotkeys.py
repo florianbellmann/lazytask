@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 import datetime
 
 from lazytask.presentation.app import LazyTaskApp

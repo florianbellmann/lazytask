@@ -1,4 +1,3 @@
-import pytest
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.container import container
 from lazytask.presentation.text_input_modal import TextInputModal

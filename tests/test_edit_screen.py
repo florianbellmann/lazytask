@@ -1,7 +1,7 @@
 import datetime
 
 import pytest
-from textual.widgets import Button, ListView
+from textual.widgets import ListView
 
 from lazytask.domain.task import Task
 from lazytask.presentation.app import LazyTaskApp

@@ -4,9 +4,6 @@ import os
 from lazytask.application.use_cases import AddTask
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
-# Note: This test requires a logging statement in the AddTask use case.
-# The logging statement was removed from the application code, so this test will fail.
-
 LOG_FILE = "lazytask.log"
 
 
@@ -16,10 +13,11 @@ def task_manager():
 
 
 def configure_logging():
+    logging.shutdown()
     # Remove all existing handlers
     for handler in logging.getLogger().handlers[:]:
         logging.getLogger().removeHandler(handler)
-    logging.basicConfig(filename=LOG_FILE, level=logging.INFO)
+    logging.basicConfig(filename=LOG_FILE, level=logging.INFO, force=True)
 
 
 @pytest.fixture(autouse=True)

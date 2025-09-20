@@ -148,20 +148,83 @@ async def test_selection_after_completing_task():
         assert tasks_list.highlighted_child is None
 
 
-@pytest.mark.skip(reason="Feature not implemented yet")
-def test_selection_and_highlight_move_to_new_task_after_adding():
+async def test_selection_and_highlight_move_to_new_task_after_adding():
     """
     After adding a new task, highlight/select the newly added task.
     """
-    pass
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.add_task("task 1")
+
+    async with app.run_test() as pilot:
+        tasks_list = app.query_one("ListView")
+        await pilot.press("j")
+        await pilot.pause()
+        assert tasks_list.index == 0
+
+        await pilot.press("a")
+        await pilot.press("t")
+        await pilot.press("e")
+        await pilot.press("s")
+        await pilot.press("t")
+        await pilot.press("enter")
+        await pilot.pause()
+
+        assert len(tasks_list.children) == 2
+        assert tasks_list.index == 1
+        assert tasks_list.highlighted_child._task.title == "test"
 
 
-@pytest.mark.skip(reason="Feature not implemented yet")
-def test_filtering_keeps_current_selection_unless_filtered_out_then_first_else_none():
+async def test_filtering_keeps_current_selection_unless_filtered_out_then_first_else_none():
     """
     While filtering:
       - Keep the current highlight/selection if the selected task still matches the filter.
       - If it no longer matches, select/highlight the first item in the filtered list.
       - If the filtered list is empty, select/highlight nothing.
     """
-    pass
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.add_task("apple")
+    await task_manager.add_task("banana")
+    await task_manager.add_task("apricot")
+
+    async with app.run_test() as pilot:
+        tasks_list = app.query_one("ListView")
+
+        # Select "banana"
+        await pilot.press("j")
+        await pilot.press("j")
+        await pilot.pause()
+        assert tasks_list.highlighted_child._task.title == "banana"
+
+        # Filter for "ap"
+        await pilot.press("/")
+        await pilot.press("a")
+        await pilot.press("p")
+        await pilot.press("enter")
+        await pilot.pause()
+
+        # "banana" is filtered out, so selection should move to the first match, "apple"
+        assert tasks_list.index == 0
+        assert tasks_list.highlighted_child._task.title == "apple"
+
+        # Filter for "b"
+        await pilot.press("/")
+        await pilot.press("b")
+        await pilot.press("enter")
+        await pilot.pause()
+
+        # "banana" is now in the filtered list, but it was not selected before.
+        # The selection should be on the first item, "banana".
+        assert tasks_list.index == 0
+        assert tasks_list.highlighted_child._task.title == "banana"
+
+        # Filter for "z"
+        await pilot.press("/")
+        await pilot.press("z")
+        await pilot.press("enter")
+        await pilot.pause()
+
+        # No tasks match, so nothing should be selected
+        assert tasks_list.index is None
+        assert tasks_list.highlighted_child is None

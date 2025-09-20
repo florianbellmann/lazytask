@@ -12,6 +12,7 @@ async def test_default_sort_due_date_oldest_first_selected_on_startup():
     """
     app = LazyTaskApp()
     assert app.sort_by == "due_date"
+    assert app.sort_reverse is False
 
     task_manager = container.task_manager
     await task_manager.add_task("task 1", due_date=datetime.date(2025, 1, 2))
@@ -25,14 +26,26 @@ async def test_default_sort_due_date_oldest_first_selected_on_startup():
         assert rendered_tasks == ["task 2", "task 1", "task 3"]
 
 
-@pytest.mark.skip(reason="Sort direction toggle not implemented yet")
-def test_sort_due_date_descending_when_direction_reversed():
+async def test_sort_due_date_descending_when_direction_reversed():
     """
     When switching the sort direction while on 'due date':
       - The list becomes sorted newest -> oldest.
       - Confirm it is strictly the reverse order of ascending-by-due-date.
     """
-    pass
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.add_task("task 1", due_date=datetime.date(2025, 1, 2))
+    await task_manager.add_task("task 2", due_date=datetime.date(2025, 1, 1))
+    await task_manager.add_task("task 3", due_date=datetime.date(2025, 1, 3))
+
+    async with app.run_test() as pilot:
+        await pilot.press("ctrl+i")  # reverse sort
+        await pilot.pause()
+
+        assert app.sort_reverse is True
+        tasks_list = app.query_one("ListView")
+        rendered_tasks = [item._task.title for item in tasks_list.children]
+        assert rendered_tasks == ["task 3", "task 1", "task 2"]
 
 
 async def test_sort_alphabetically_ascending():
@@ -58,15 +71,29 @@ async def test_sort_alphabetically_ascending():
         assert rendered_tasks == ["a task", "b task", "c task"]
 
 
-@pytest.mark.skip(reason="Sort direction toggle not implemented yet")
-def test_sort_alphabetically_descending():
+async def test_sort_alphabetically_descending():
     """
     When choosing alphabetical sort reversed:
       - The list is sorted Z -> A by task title.
       - Confirm it is strictly the reverse order of alphabetical ascending.
       - The selected sort reflects 'alphabetical descending'.
     """
-    pass
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    await task_manager.add_task("b task")
+    await task_manager.add_task("a task")
+    await task_manager.add_task("c task")
+
+    async with app.run_test() as pilot:
+        await pilot.press("ctrl+o")  # sort by title
+        await pilot.press("ctrl+i")  # reverse sort
+        await pilot.pause()
+
+        assert app.sort_by == "title"
+        assert app.sort_reverse is True
+        tasks_list = app.query_one("ListView")
+        rendered_tasks = [item._task.title for item in tasks_list.children]
+        assert rendered_tasks == ["c task", "b task", "a task"]
 
 
 async def test_sort_cycle():

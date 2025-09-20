@@ -60,6 +60,7 @@ class LazyTaskApp(App):
         ("ctrl+r", "refresh", "Refresh"),
         ("/", "filter_tasks", "Filter tasks"),
         ("ctrl+o", "sort_tasks", "Sort tasks"),
+        ("ctrl+i", "toggle_sort_direction", "Toggle sort direction"),
         ("?", "show_help", "Show help"),
         ("j", "cursor_down", "Cursor Down"),
         ("k", "cursor_up", "Cursor Up"),
@@ -83,9 +84,30 @@ class LazyTaskApp(App):
         self.update_task_uc = container.get(UpdateTask)
         self.get_lists_uc = container.get(GetLists)
         self.sort_by = "due_date"
-        self.current_list = os.environ.get("LAZYTASK_DEFAULT_LIST", "develop")
+        self.sort_reverse = False
+
+        lists_str = os.environ.get("LAZYTASK_LISTS")
+        default_list = os.environ.get("LAZYTASK_DEFAULT_LIST")
+
+        if not lists_str and not default_list:
+            self.available_lists = ["develop", "develop2"]
+            self.current_list = "develop"
+        else:
+            if not lists_str:
+                raise ValueError("LAZYTASK_LISTS environment variable not set")
+            if not default_list:
+                raise ValueError("LAZYTASK_DEFAULT_LIST environment variable not set")
+            if not lists_str.strip():
+                raise ValueError("LAZYTASK_LISTS must not be empty")
+
+            self.available_lists = [name.strip() for name in lists_str.split(',')]
+            if default_list not in self.available_lists:
+                raise ValueError(
+                    f"LAZYTASK_DEFAULT_LIST '{default_list}' not in LAZYTASK_LISTS"
+                )
+            self.current_list = default_list
+
         self.title = f"LazyTask - {self.current_list}"
-        self.available_lists = []
         self.show_overdue_only = False
         self.show_completed = False
         self.task_selected = False
@@ -97,10 +119,16 @@ class LazyTaskApp(App):
             "w",
             "meta+e",
         ]
+        self.filter_query = ""
 
     async def add_task(self, title: str):
-        await self.add_task_uc.execute(title, self.current_list)
+        new_task = await self.add_task_uc.execute(title, self.current_list)
         await self.update_tasks_list()
+        tasks_list_view = self.query_one(ListView)
+        for i, item in enumerate(tasks_list_view.children):
+            if item._task.id == new_task.id:
+                tasks_list_view.index = i
+                break
 
     async def clear_tasks(self):
         await self.get_tasks_uc.task_manager.clear_tasks()
@@ -128,7 +156,6 @@ class LazyTaskApp(App):
         """Called when the app is mounted."""
         if self.LOGGING:
             logging.basicConfig(filename="lazytask.log", level=logging.INFO)
-        self.available_lists = await self.get_lists_uc.execute()
         await self.update_tasks_list()
         self.query_one(TaskDetail).update_task(None)
 
@@ -140,11 +167,13 @@ class LazyTaskApp(App):
             digit = int(event.key)
             if digit == 1:
                 self.current_list = "all"
+                self.filter_query = ""
                 await self.update_tasks_list()
             elif 2 <= digit <= 9:
                 list_index = digit - 2
                 if list_index < len(self.available_lists):
                     self.current_list = self.available_lists[list_index]
+                    self.filter_query = ""
                     await self.update_tasks_list()
 
     async def on_list_view_selected(self, item: TaskListItem):
@@ -154,16 +183,18 @@ class LazyTaskApp(App):
         self.task_selected = item._task is not None
         self.query_one(TaskDetail).update_task(task)
 
-    async def update_tasks_list(self, filter_query: str = ""):
+    async def update_tasks_list(self):
         """Update the tasks list view."""
-        self.query_one(ListTabs).update_lists(self.available_lists, self.current_list)
         tasks_list_view = self.query_one(ListView)
+        selected_task_id = tasks_list_view.highlighted_child._task.id if tasks_list_view.highlighted_child else None
+
+        self.query_one(ListTabs).update_lists(self.available_lists, self.current_list)
         tasks_list_view.clear()
         async with self.show_loading():
             try:
                 if self.current_list == "all":
                     all_tasks = []
-                    lists = await self.get_lists_uc.execute()
+                    lists = self.available_lists
                     for list_name in lists:
                         tasks_in_list = await self.get_tasks_uc.execute(
                             list_name, include_completed=self.show_completed
@@ -184,17 +215,17 @@ class LazyTaskApp(App):
             today = datetime.date.today()
             tasks = [task for task in tasks if task.due_date and task.due_date <= today]
 
-        if filter_query:
+        if self.filter_query:
             tasks = [
-                task for task in tasks if filter_query.lower() in task.title.lower()
+                task for task in tasks if self.filter_query.lower() in task.title.lower()
             ]
 
         if self.sort_by == "due_date":
-            tasks.sort(key=lambda t: t.due_date or datetime.date.max)
+            tasks.sort(key=lambda t: t.due_date or datetime.date.max, reverse=self.sort_reverse)
         elif self.sort_by == "creation_date":
-            tasks.sort(key=lambda t: t.creation_date or datetime.datetime.max)
+            tasks.sort(key=lambda t: t.creation_date or datetime.datetime.max, reverse=self.sort_reverse)
         else:
-            tasks.sort(key=lambda t: t.title.lower())
+            tasks.sort(key=lambda t: t.title.lower(), reverse=self.sort_reverse)
 
         for task in tasks:
             details = []
@@ -214,6 +245,17 @@ class LazyTaskApp(App):
             )
             tasks_list_view.append(list_item)
         self.title = f"LazyTask - {self.current_list}"
+
+        if selected_task_id:
+            for i, item in enumerate(tasks_list_view.children):
+                if item._task.id == selected_task_id:
+                    tasks_list_view.index = i
+                    break
+            else:
+                if tasks_list_view.children:
+                    tasks_list_view.index = 0
+        elif tasks_list_view.children:
+            tasks_list_view.index = 0
 
     def action_add_task(self) -> None:
         """An action to add a task."""
@@ -346,13 +388,15 @@ class LazyTaskApp(App):
 
     async def action_clear_filter(self) -> None:
         """An action to clear the filter."""
+        self.filter_query = ""
         await self.update_tasks_list()
 
     def action_filter_tasks(self) -> None:
         """An action to filter tasks."""
 
         def on_submit(value: str | None) -> None:
-            self.call_later(self.update_tasks_list, value or "")
+            self.filter_query = value or ""
+            self.call_later(self.update_tasks_list)
 
         self.push_screen(TextInputModal(prompt="Filter tasks:"), on_submit)
 
@@ -364,6 +408,11 @@ class LazyTaskApp(App):
             self.sort_by = "creation_date"
         else:
             self.sort_by = "due_date"
+        await self.update_tasks_list()
+
+    async def action_toggle_sort_direction(self) -> None:
+        """An action to toggle the sort direction."""
+        self.sort_reverse = not self.sort_reverse
         await self.update_tasks_list()
 
     async def action_toggle_overdue(self) -> None:

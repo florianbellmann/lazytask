@@ -5,6 +5,12 @@ from lazytask.presentation.app import LazyTaskApp
 from lazytask.presentation.list_tabs import ListTabs
 
 
+@pytest.mark.skip(reason=" not implemented yet")
+def test_list_tabs_from_config():
+    # TODO: Implement test that the displayed tab list is equal to the comma separated lists from the env var configs 
+    pass
+
+
 @pytest.mark.asyncio
 async def test_list_tabs_display():
     """Test that the list tabs are displayed and updated correctly."""

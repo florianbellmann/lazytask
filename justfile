@@ -8,7 +8,7 @@ run:
     uv run -m lazytask
 
 lint:
-    cd lazytask && uv run mypy .
+    cd lazytask && uv run mypy . --fix
 
 check:
     uv run ruff check --fix

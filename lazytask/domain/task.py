@@ -16,3 +16,11 @@ class Task:
     priority: Optional[int] = None
     is_flagged: bool = False
     recurring: Optional[str] = None
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __eq__(self, other):
+        if not isinstance(other, Task):
+            return NotImplemented
+        return self.id == other.id

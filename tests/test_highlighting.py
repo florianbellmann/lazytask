@@ -86,8 +86,7 @@ async def test_selection_and_highlight_reset_to_first_on_list_switch():
         assert tasks_list.index == 1
 
         # switch to 'develop2'
-        app.current_list = "develop2"
-        await app.update_tasks_list()
+        await app.switch_list("develop2")
         await pilot.pause()
 
         # check that selection is reset to first item

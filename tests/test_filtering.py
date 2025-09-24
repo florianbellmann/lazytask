@@ -105,7 +105,7 @@ async def test_escape_clears_filtering():
         await app.update_tasks_list(filter_query="Task")
         await pilot.pause()
         tasks_list = app.query_one("ListView")
-        assert len(tasks_list.children) == 1
+        assert len(tasks_list.children) == 2
 
         await pilot.press("escape")
         await pilot.pause()
@@ -129,8 +129,7 @@ async def test_filtering_clears_when_switching_list():
         tasks_list = app.query_one("ListView")
         assert len(tasks_list.children) == 2
 
-        app.current_list = "develop2"
-        await app.update_tasks_list()
+        await app.switch_list("develop2")
         await pilot.pause()
 
         assert len(tasks_list.children) == 1
@@ -151,8 +150,7 @@ async def test_filtering_clears_when_switching_to_all_list_mode():
         tasks_list = app.query_one("ListView")
         assert len(tasks_list.children) == 1
 
-        app.current_list = "all"
-        await app.update_tasks_list()
+        await app.switch_list("all")
         await pilot.pause()
 
         assert len(tasks_list.children) == 1

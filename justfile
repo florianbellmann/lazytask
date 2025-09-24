@@ -1,17 +1,15 @@
-
-dev:
-    uv run main.py
-
 run:
 	uv run lazytask/__main__.py
-   
-run-watch:
-  :x
 
+dev: 
+  LAZYTASK_DEFAULT_LIST="develop" LAZYTASK_LISTS="develop,develop2" uv run python lazytask
+   
+dev-watch:
+  watchexec --exts py --restart "just dev"
 
 test:
     uv run pytest 
-     
+
 test-watch:
 	watchexec --exts py --restart "just test"
 

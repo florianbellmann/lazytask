@@ -8,7 +8,7 @@ from textual.containers import Vertical
 from lazytask.domain.task import Task
 from lazytask.presentation.date_picker_screen import DatePickerScreen
 from lazytask.container import container
-from lazytask.application.use_cases import GetTasks
+from lazytask.application.use_cases import GetTasks, UpdateTask
 
 
 class EditScreen(ModalScreen[Task]):
@@ -27,6 +27,7 @@ class EditScreen(ModalScreen[Task]):
         self._list_name = list_name
         self._task: Task | None = None
         self.get_tasks_uc = container.get(GetTasks)
+        self.update_task_uc = container.get(UpdateTask)
 
     async def on_mount(self) -> None:
         tasks = await self.get_tasks_uc.execute(self._list_name, include_completed=True)
@@ -73,6 +74,9 @@ class EditScreen(ModalScreen[Task]):
             yield Button("Edit Due Date", id="edit-due-date")
             yield Button("Save", variant="primary", id="save")
             yield Button("Cancel", id="cancel")
+
+    def get_due_date_label_text(self) -> str:
+        return str(self.query_one("#due-date-label").render())
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if not self._task:

@@ -13,7 +13,8 @@ class HelpScreen(ModalScreen):
             bindings = self.parent.BINDINGS
             text = []
             for binding in bindings:
-                text.append(f"{binding.key.upper()}: {binding.description}")
+                key, action, description = binding
+                text.append(f"{key.upper()}: {description}")
             yield Static("\n".join(text), id="help-text")
         else:
             yield Static("No help available.", id="help-text")

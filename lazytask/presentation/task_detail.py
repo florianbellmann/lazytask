@@ -1,9 +1,14 @@
 from textual.widgets import Static
+from rich.text import Text
 from lazytask.domain.task import Task
 
 
 class TaskDetail(Static):
     """A widget to display the details of a task."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.text = Text()
 
     def update_task(self, task: Task | None) -> None:
         if task:
@@ -32,6 +37,8 @@ class TaskDetail(Static):
                 details.append("Status: Pending")
 
             details_str = "\n".join(details)
-            self.update(f"## {task.title}\n\n{details_str}")
+            self.text = Text(f"## {task.title}\n\n{details_str}")
+            self.update(self.text)
         else:
-            self.update("No task selected")
+            self.text = Text("No task selected")
+            self.update(self.text)

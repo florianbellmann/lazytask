@@ -24,7 +24,7 @@ async def test_app_quits_on_q_press():
     """
     app = LazyTaskApp()
     async with app.run_test() as pilot:
-        await pilot.pause(0.5)
+        await pilot.pause()
         await pilot.press("q")
-        await pilot.pause(0.5)
+        await pilot.pause()
         assert app._exit

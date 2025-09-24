@@ -89,7 +89,7 @@ async def test_navigation_keybindings(monkeypatch):
         # Test 'j' for moving down
         # Test 'j' for moving down
         await pilot.press("j")
-        await pilot.pause(1.0)
+        await pilot.pause()
         assert tasks_list.index == 1
 
         # Test 'k' for moving up

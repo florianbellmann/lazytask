@@ -78,28 +78,37 @@ class EditScreen(ModalScreen[Task]):
     def get_due_date_label_text(self) -> str:
         return str(self.query_one("#due-date-label").render())
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
         if not self._task:
             self.dismiss()
             return
 
         if event.button.id == "save":
-            self._task.description = self.query_one("#description", Input).value
-            self._task.tags = [
-                tag.strip() for tag in self.query_one("#tags", Input).value.split(",")
-            ]
+            updates = {
+                "description": self.query_one("#description", Input).value,
+                "tags": [
+                    tag.strip() for tag in self.query_one("#tags", Input).value.split(",")
+                ],
+                "priority": None,
+                "is_flagged": self.query_one("#flagged", Switch).value,
+                "due_date": self._task.due_date,
+            }
             priority_str = self.query_one("#priority", Input).value
-            try:
-                self._task.priority = int(priority_str) if priority_str else None
-            except ValueError:
-                self.app.notify(
-                    "Invalid priority. Please enter a number.",
-                    title="Error",
-                    severity="error",
-                )
-                return
-            self._task.is_flagged = self.query_one("#flagged", Switch).value
-            self.dismiss(self._task)
+            if priority_str:
+                try:
+                    updates["priority"] = int(priority_str)
+                except ValueError:
+                    self.app.notify(
+                        "Invalid priority. Please enter a number.",
+                        title="Error",
+                        severity="error",
+                    )
+                    return
+
+            await self.update_task_uc.execute(
+                self._task.id, updates, self._list_name
+            )
+            self.dismiss()
         elif event.button.id == "edit-due-date":
 
             def on_date_selected(new_date: datetime.date | None):

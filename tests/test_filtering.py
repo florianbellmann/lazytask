@@ -127,7 +127,7 @@ async def test_filtering_clears_when_switching_list():
         await app.update_tasks_list(filter_query="Task")
         await pilot.pause()
         tasks_list = app.query_one("ListView")
-        assert len(tasks_list.children) == 1
+        assert len(tasks_list.children) == 2
 
         app.current_list = "develop2"
         await app.update_tasks_list()

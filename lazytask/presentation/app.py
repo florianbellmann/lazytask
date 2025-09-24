@@ -202,6 +202,7 @@ class LazyTaskApp(App):
         """Update the tasks list view."""
         if filter_query is not None:
             self.filter_query = filter_query
+
         self.query_one(ListTabs).update_lists(self.available_lists, self.current_list)
         tasks_list_view = self.query_one(ListView)
         selected_task_id = (

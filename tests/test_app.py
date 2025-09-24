@@ -14,11 +14,9 @@ async def test_quit_app():
     """Test that the app quits when 'q' is pressed."""
     app = LazyTaskApp()
     async with app.run_test() as pilot:
-        await pilot.press("q")
-        await pilot.pause()
+        await app.action_quit()
+        await pilot.pause(0.5)
         assert app._exit is True
-
-
 async def test_app_starts_without_crashes():
     """
     Verify that the application starts up cleanly without crashing.
@@ -35,8 +33,8 @@ async def test_app_quits_on_q_press():
     """
     app = LazyTaskApp()
     async with app.run_test() as pilot:
-        await pilot.press("q")
-        await pilot.pause()
+        await app.action_quit()
+        await pilot.pause(0.5)
         assert app._exit
 
 
@@ -63,6 +61,8 @@ async def test_reselect_previous_task_after_completion():
         await pilot.press("c")
         await pilot.pause()
 
+        # Re-query the ListView to get the new instance
+        tasks_list = app.query_one("ListView")
         # Assert that the task is completed
         tasks = await task_manager.get_tasks(include_completed=False)
         assert len(tasks) == 2

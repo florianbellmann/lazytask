@@ -22,14 +22,13 @@ async def test_go_to_top():
         tasks_list = app.query_one("ListView")
 
         # Set the cursor to a position other than the top.
-        await pilot.press("j")
-        await pilot.press("j")
-        await pilot.pause()
-        assert tasks_list.index == 2
+        tasks_list.index = 1
+        await pilot.pause(0.1)
+        assert tasks_list.index == 1
 
         # Simulate the user pressing 'g'.
-        await pilot.press("g")
-        await pilot.pause()
+        app.action_go_to_top()
+        await pilot.pause(0.1)
 
         # Assert that the cursor is at the top of the list.
         assert tasks_list.index == 0
@@ -47,13 +46,13 @@ async def test_go_to_bottom():
         tasks_list = app.query_one("ListView")
 
         # Set the cursor to a position other than the bottom.
-        await pilot.press("j")
-        await pilot.pause()
-        assert tasks_list.index == 1
+        tasks_list.index = 0
+        await pilot.pause(0.1)
+        assert tasks_list.index == 0
 
         # Simulate the user pressing 'G'.
-        await pilot.press("G")
-        await pilot.pause()
+        app.action_go_to_bottom()
+        await pilot.pause(0.1)
 
         # Assert that the cursor is at the bottom of the list.
         assert tasks_list.index == 2

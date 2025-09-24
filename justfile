@@ -1,11 +1,19 @@
-test:
-    uv run pytest 
 
 dev:
     uv run main.py
 
 run:
-    uv run -m lazytask
+	uv run lazytask/__main__.py
+   
+run-watch:
+  :x
+
+
+test:
+    uv run pytest 
+     
+test-watch:
+	watchexec --exts py --restart "just test"
 
 lint:
     cd lazytask && uv run mypy . --fix

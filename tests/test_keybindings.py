@@ -41,7 +41,9 @@ async def test_tab_keybindings_from_config(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_initial_state():
+async def test_initial_state(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test the initial state of the app."""
     app = LazyTaskApp()
     async with app.run_test() as pilot:
@@ -51,7 +53,9 @@ async def test_initial_state():
 
 
 @pytest.mark.asyncio
-async def test_navigation_keybindings():
+async def test_navigation_keybindings(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test the navigation keybindings 'j' and 'k'."""
     app = LazyTaskApp()
     tasks = [
@@ -87,7 +91,9 @@ async def test_navigation_keybindings():
 
 
 @pytest.mark.asyncio
-async def test_add_task_keybinding():
+async def test_add_task_keybinding(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test the 'a' keybinding for adding a task."""
     app = LazyTaskApp()
     app.add_task_uc = MagicMock()
@@ -105,7 +111,9 @@ async def test_add_task_keybinding():
 
 
 @pytest.mark.asyncio
-async def test_complete_task_keybinding():
+async def test_complete_task_keybinding(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test the 'c' keybinding for completing a task."""
     app = LazyTaskApp()
     task = Task(id="1", title="Test Task")
@@ -128,7 +136,9 @@ async def test_complete_task_keybinding():
 
 
 @pytest.mark.asyncio
-async def test_show_help_keybinding():
+async def test_show_help_keybinding(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test the '?' keybinding for showing the help screen."""
     app = LazyTaskApp()
     async with app.run_test() as pilot:
@@ -138,7 +148,9 @@ async def test_show_help_keybinding():
 
 
 @pytest.mark.asyncio
-async def test_quit_keybinding():
+async def test_quit_keybinding(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test the 'q' keybinding for quitting the app."""
     app = LazyTaskApp()
     async with app.run_test() as pilot:

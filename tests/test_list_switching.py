@@ -7,7 +7,9 @@ from textual.widgets import ListView
 
 
 @pytest.mark.asyncio
-async def test_switch_list_with_number_keys():
+async def test_switch_list_with_number_keys(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2,inbox,work")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test that switching lists with number keys works."""
     app = LazyTaskApp()
 

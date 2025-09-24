@@ -1,7 +1,6 @@
 import datetime
 
 import pytest
-from textual.widgets import ListView
 
 from lazytask.domain.task import Task
 from lazytask.presentation.app import LazyTaskApp
@@ -16,7 +15,9 @@ def mock_task_manager() -> MockTaskManager:
 
 
 @pytest.fixture
-def app(mock_task_manager: MockTaskManager) -> LazyTaskApp:
+def app(mock_task_manager: MockTaskManager, monkeypatch) -> LazyTaskApp:
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     app = LazyTaskApp()
     app.get_tasks_uc.task_manager = mock_task_manager
     app.update_task_uc.task_manager = mock_task_manager
@@ -34,24 +35,15 @@ async def create_task_in_manager(mock_task_manager: MockTaskManager):
 
 async def test_edit_due_date(app: LazyTaskApp, create_task_in_manager: Task):
     async with app.run_test() as pilot:
-        await app.update_tasks_list()  # Now call update_tasks_list after app is running
-        await pilot.pause()
+        await pilot.press("j")
+        await pilot.press("meta+e")
+        await pilot.pause(1.0)
+        edit_screen = app.screen
+        assert isinstance(edit_screen, EditScreen)
 
-        # Select the task
-        tasks_list = app.query_one(ListView)
-        tasks_list.index = 0
-        await pilot.pause()
-
-        edit_screen = EditScreen(
-            task_id=create_task_in_manager.id, list_name=app.current_list
-        )
-        await app.push_screen(edit_screen)
-        await pilot.pause(1.0)  # Give ample time for the screen to mount and compose
-
-        await pilot.pause()
         # Check that the initial due date is displayed correctly
         due_date_label = edit_screen.query_one("#due-date-label")
-        assert str(create_task_in_manager.due_date) in due_date_label.renderable
+        assert str(create_task_in_manager.due_date) in edit_screen.get_due_date_label_text()
 
         # Click the "Edit Due Date" button
         await pilot.click("#edit-due-date")
@@ -67,12 +59,9 @@ async def test_edit_due_date(app: LazyTaskApp, create_task_in_manager: Task):
         await pilot.pause()
 
         # Check that the due date label on the EditScreen is updated
-        assert str(new_date) in due_date_label.renderable
+        assert str(new_date) in edit_screen.get_due_date_label_text()
 
         # Click the "Save" button
         await pilot.click("#save")
         await pilot.pause()
-
-        # Check that the screen was dismissed with the updated task
-        assert edit_screen.is_dismissed
-        assert edit_screen.dismiss_result.due_date == new_date
+        

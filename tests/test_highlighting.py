@@ -1,5 +1,13 @@
+import pytest
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.container import container
+
+
+@pytest.fixture(autouse=True)
+def set_env(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
+
 
 
 async def test_navigation_j_k_changes_highlight_and_selection():
@@ -106,11 +114,11 @@ async def test_selection_after_completing_task():
         await pilot.press("j")  # select task 1
         await pilot.press("j")  # select task 2
         await pilot.pause()
-        assert tasks_list.highlighted_child._task.title == "task 2"
+        assert tasks_list.highlighted_child.data.title == "task 2"
 
         await pilot.press("c")  # complete task 2
         await pilot.pause()
-        assert tasks_list.highlighted_child._task.title == "task 3"
+        assert tasks_list.highlighted_child.data.title == "task 3"
 
     # Case 2: complete last task
     app = LazyTaskApp()
@@ -124,11 +132,11 @@ async def test_selection_after_completing_task():
         await pilot.press("j")
         await pilot.press("j")
         await pilot.pause()
-        assert tasks_list.highlighted_child._task.title == "task 2"
+        assert tasks_list.highlighted_child.data.title == "task 2"
 
         await pilot.press("c")  # complete task 2
         await pilot.pause()
-        assert tasks_list.highlighted_child._task.title == "task 1"
+        assert tasks_list.highlighted_child.data.title == "task 1"
 
     # Case 3: complete only task
     app = LazyTaskApp()
@@ -140,7 +148,7 @@ async def test_selection_after_completing_task():
         tasks_list = app.query_one("ListView")
         await pilot.press("j")
         await pilot.pause()
-        assert tasks_list.highlighted_child._task.title == "task 1"
+        assert tasks_list.highlighted_child.data.title == "task 1"
 
         await pilot.press("c")  # complete task 1
         await pilot.pause()
@@ -171,7 +179,7 @@ async def test_selection_and_highlight_move_to_new_task_after_adding():
 
         assert len(tasks_list.children) == 2
         assert tasks_list.index == 1
-        assert tasks_list.highlighted_child._task.title == "test"
+        assert tasks_list.highlighted_child.data.title == "test"
 
 
 async def test_filtering_keeps_current_selection_unless_filtered_out_then_first_else_none():
@@ -194,7 +202,7 @@ async def test_filtering_keeps_current_selection_unless_filtered_out_then_first_
         await pilot.press("j")
         await pilot.press("j")
         await pilot.pause()
-        assert tasks_list.highlighted_child._task.title == "banana"
+        assert tasks_list.highlighted_child.data.title == "banana"
 
         # Filter for "ap"
         await pilot.press("/")
@@ -205,7 +213,7 @@ async def test_filtering_keeps_current_selection_unless_filtered_out_then_first_
 
         # "banana" is filtered out, so selection should move to the first match, "apple"
         assert tasks_list.index == 0
-        assert tasks_list.highlighted_child._task.title == "apple"
+        assert tasks_list.highlighted_child.data.title == "apple"
 
         # Filter for "b"
         await pilot.press("/")
@@ -216,7 +224,7 @@ async def test_filtering_keeps_current_selection_unless_filtered_out_then_first_
         # "banana" is now in the filtered list, but it was not selected before.
         # The selection should be on the first item, "banana".
         assert tasks_list.index == 0
-        assert tasks_list.highlighted_child._task.title == "banana"
+        assert tasks_list.highlighted_child.data.title == "banana"
 
         # Filter for "z"
         await pilot.press("/")

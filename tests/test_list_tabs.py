@@ -20,7 +20,9 @@ async def test_list_tabs_from_config(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_list_tabs_display():
+async def test_list_tabs_display(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2,inbox,work")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test that the list tabs are displayed and updated correctly."""
     app = LazyTaskApp()
 

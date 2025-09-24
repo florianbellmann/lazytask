@@ -3,7 +3,13 @@ from lazytask.container import container
 from lazytask.presentation.text_input_modal import TextInputModal
 
 
-async def test_edit_description_hotkey():
+import pytest
+
+
+@pytest.mark.asyncio
+async def test_edit_description_hotkey(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """
     When the user presses the hotkey to edit the description of a selected task,
     a modal should appear with the current description.

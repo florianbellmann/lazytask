@@ -1,6 +1,14 @@
 import datetime
+import pytest
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.container import container
+
+
+@pytest.fixture(autouse=True)
+def set_env(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
+
 
 
 async def test_default_sort_due_date_oldest_first_selected_on_startup():
@@ -21,7 +29,7 @@ async def test_default_sort_due_date_oldest_first_selected_on_startup():
     async with app.run_test() as pilot:
         await pilot.pause()
         tasks_list = app.query_one("ListView")
-        rendered_tasks = [item._task.title for item in tasks_list.children]
+        rendered_tasks = [item.data.title for item in tasks_list.children]
         assert rendered_tasks == ["task 2", "task 1", "task 3"]
 
 
@@ -43,7 +51,7 @@ async def test_sort_due_date_descending_when_direction_reversed():
 
         assert app.sort_reverse is True
         tasks_list = app.query_one("ListView")
-        rendered_tasks = [item._task.title for item in tasks_list.children]
+        rendered_tasks = [item.data.title for item in tasks_list.children]
         assert rendered_tasks == ["task 3", "task 1", "task 2"]
 
 
@@ -66,7 +74,7 @@ async def test_sort_alphabetically_ascending():
 
         assert app.sort_by == "title"
         tasks_list = app.query_one("ListView")
-        rendered_tasks = [item._task.title for item in tasks_list.children]
+        rendered_tasks = [item.data.title for item in tasks_list.children]
         assert rendered_tasks == ["a task", "b task", "c task"]
 
 
@@ -91,7 +99,7 @@ async def test_sort_alphabetically_descending():
         assert app.sort_by == "title"
         assert app.sort_reverse is True
         tasks_list = app.query_one("ListView")
-        rendered_tasks = [item._task.title for item in tasks_list.children]
+        rendered_tasks = [item.data.title for item in tasks_list.children]
         assert rendered_tasks == ["c task", "b task", "a task"]
 
 
@@ -129,7 +137,7 @@ async def test_sort_by_title_case_insensitive():
         await pilot.pause()
 
         tasks_list = app.query_one("ListView")
-        rendered_tasks = [item._task.title for item in tasks_list.children]
+        rendered_tasks = [item.data.title for item in tasks_list.children]
         assert rendered_tasks == ["a task", "b task", "C task"]
 
 
@@ -154,5 +162,5 @@ async def test_sort_by_creation_date():
 
         assert app.sort_by == "creation_date"
         tasks_list = app.query_one("ListView")
-        rendered_tasks = [item._task.title for item in tasks_list.children]
+        rendered_tasks = [item.data.title for item in tasks_list.children]
         assert rendered_tasks == ["task 2", "task 1", "task 3"]

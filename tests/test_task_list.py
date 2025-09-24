@@ -1,8 +1,12 @@
+import pytest
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.container import container
 
 
-async def test_toggle_completed_tasks():
+@pytest.mark.asyncio
+async def test_toggle_completed_tasks(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test that toggling the completed tasks view works correctly."""
     app = LazyTaskApp()
     task_manager = container.task_manager

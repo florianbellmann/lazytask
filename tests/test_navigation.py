@@ -1,5 +1,13 @@
+import pytest
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.container import container
+
+
+@pytest.fixture(autouse=True)
+def set_env(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
+
 
 
 async def test_go_to_top():

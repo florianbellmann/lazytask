@@ -1,9 +1,13 @@
 import datetime
+import pytest
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.container import container
 
 
-async def test_task_detail_shows_all_fields():
+@pytest.mark.asyncio
+async def test_task_detail_shows_all_fields(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """
     The TaskDetail widget should display all relevant fields of a Task.
     """
@@ -25,7 +29,7 @@ async def test_task_detail_shows_all_fields():
         await pilot.pause()
 
         task_detail = app.query_one("#task_detail")
-        rendered_text = task_detail.renderable.text
+        rendered_text = task_detail.text.plain
 
         assert "Test Task" in rendered_text
         assert "List: develop" in rendered_text
@@ -46,5 +50,5 @@ async def test_task_detail_shows_all_fields():
         await pilot.press("j")
         await pilot.pause()
 
-        rendered_text = task_detail.renderable.text
+        rendered_text = task_detail.text.plain
         assert "Status: Completed" in rendered_text

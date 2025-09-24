@@ -8,7 +8,9 @@ from textual.widgets import ListView
 
 
 @pytest.mark.asyncio
-async def test_toggle_overdue_filter():
+async def test_toggle_overdue_filter(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test that toggling the overdue filter works."""
     app = LazyTaskApp()
 

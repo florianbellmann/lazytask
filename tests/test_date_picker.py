@@ -6,7 +6,9 @@ from lazytask.presentation.date_picker_screen import DatePickerScreen
 
 
 @pytest.mark.asyncio
-async def test_date_picker_updates_task_date():
+async def test_date_picker_updates_task_date(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test that the date picker correctly updates a task's due date."""
     app = LazyTaskApp()
     task_manager = container.task_manager

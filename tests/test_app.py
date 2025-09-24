@@ -1,6 +1,13 @@
-
+import pytest
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.container import container
+
+
+@pytest.fixture(autouse=True)
+def set_env(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
+
 
 
 async def test_quit_app():
@@ -47,8 +54,10 @@ async def test_reselect_previous_task_after_completion():
         # Select a task in the middle of the list.
         await pilot.press("j")  # move to second task
         await pilot.pause()
+        await pilot.press("j")  # move to second task
+        await pilot.pause()
         assert tasks_list.index == 1
-        assert tasks_list.highlighted_child._task.id == task2.id
+        assert tasks_list.highlighted_child.data.id == task2.id
 
         # Simulate the user pressing 'c' to complete the task.
         await pilot.press("c")
@@ -62,4 +71,4 @@ async def test_reselect_previous_task_after_completion():
         # The current behavior is to keep the same index, which means the next
         # task in the list is selected.
         assert tasks_list.index == 1
-        assert tasks_list.highlighted_child._task.id == task3.id
+        assert tasks_list.highlighted_child.data.id == task3.id

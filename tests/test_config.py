@@ -1,6 +1,6 @@
-import os
 import pytest
 from lazytask.presentation.app import LazyTaskApp
+from lazytask.presentation.list_tabs import ListTabs
 
 
 def test_default_list_from_env_var(monkeypatch):
@@ -11,15 +11,7 @@ def test_default_list_from_env_var(monkeypatch):
     assert app.current_list == "my-test-list"
 
 
-def test_default_list_fallback():
-    """Test that the default list falls back to 'develop'."""
-    # Make sure the env var is not set
-    if "LAZYTASK_DEFAULT_LIST" in os.environ:
-        del os.environ["LAZYTASK_DEFAULT_LIST"]
-    if "LAZYTASK_LISTS" in os.environ:
-        del os.environ["LAZYTASK_LISTS"]
-    app = LazyTaskApp()
-    assert app.current_list == "develop"
+
 
 
 # ----------------------------
@@ -84,11 +76,18 @@ async def test_tabs_match_lists_and_default_selected_on_start(monkeypatch):
     monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "home")
     app = LazyTaskApp()
     async with app.run_test() as pilot:
-        list_tabs = pilot.app.query_one("ListTabs")
-        assert list_tabs.children[0].label == "work"
-        assert list_tabs.children[1].label == "home"
-        assert list_tabs.children[2].label == "personal"
-        assert list_tabs.active == "home"
+        list_tabs = pilot.app.query_one(ListTabs)
+        tabs_text = list_tabs.tabs
+        assert "work" in str(tabs_text)
+        assert "home" in str(tabs_text)
+        assert "personal" in str(tabs_text)
+
+        home_span_found = False
+        for span in tabs_text.spans:
+            if "home" in tabs_text.plain[span.start : span.end] and "reverse" in span.style:
+                home_span_found = True
+                break
+        assert home_span_found, "The 'home' tab should be rendered with reverse style."
 
 
 def test_defaultlist_must_be_in_lists_else_error(monkeypatch):

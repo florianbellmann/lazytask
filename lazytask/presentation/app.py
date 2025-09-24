@@ -127,13 +127,15 @@ class LazyTaskApp(App):
         self.filter_query = ""
 
     async def add_task(self, title: str):
+        print(f"DEBUG: add_task - Adding task with title: {title}")
         new_task = await self.add_task_uc.execute(title, self.current_list)
-        await self.update_tasks_list()
+        print(f"DEBUG: add_task - New task ID: {new_task.id}")
+        await self.update_tasks_list(newly_added_task_id=new_task.id)
         tasks_list_view = self.query_one(ListView)
+        print(f"DEBUG: add_task - After update_tasks_list, tasks_list_view.index: {tasks_list_view.index}")
+        print(f"DEBUG: add_task - After update_tasks_list, tasks_list_view.children count: {len(tasks_list_view.children)}")
         for i, item in enumerate(tasks_list_view.children):
-            if item.data.id == new_task.id:
-                tasks_list_view.index = i
-                break
+            print(f"DEBUG: add_task - child {i}: {item.data.title} (ID: {item.data.id})")
 
     async def clear_tasks(self):
         await self.get_tasks_uc.task_manager.clear_tasks()
@@ -201,19 +203,42 @@ class LazyTaskApp(App):
         task: Task = event.item.data
         self.query_one(TaskDetail).update_task(task)
 
-    async def update_tasks_list(self, filter_query: str | None = None, preserve_selection: bool = True):
+    async def update_tasks_list(self, filter_query: str | None = None, preserve_selection: bool = True, newly_added_task_id: str | None = None):
+        print(f"DEBUG: update_tasks_list - filter_query: {filter_query}, preserve_selection: {preserve_selection}, newly_added_task_id: {newly_added_task_id}")
         """Update the tasks list view."""
         if filter_query is not None:
             self.filter_query = filter_query
 
         self.query_one(ListTabs).update_lists(self.available_lists, self.current_list)
         tasks_list_view = self.query_one(ListView)
-        selected_task_id = (
-            tasks_list_view.highlighted_child.data.id
-            if tasks_list_view.highlighted_child and preserve_selection
-            else None
-        )
+        if newly_added_task_id:
+            selected_task_id = newly_added_task_id
+            preserve_selection = True # Ensure we try to select the new task
+        elif preserve_selection:
+            selected_task_id = (
+                tasks_list_view.highlighted_child.data.id
+                if tasks_list_view.highlighted_child
+                else None
+            )
+        else:
+            selected_task_id = None
+        print(f"DEBUG: update_tasks_list - selected_task_id (after logic): {selected_task_id}")
+        if newly_added_task_id:
+            selected_task_id = newly_added_task_id
+            preserve_selection = True # Ensure we try to select the new task
+        elif preserve_selection:
+            selected_task_id = (
+                tasks_list_view.highlighted_child.data.id
+                if tasks_list_view.highlighted_child
+                else None
+            )
+        else:
+            selected_task_id = None
+        print(f"DEBUG: update_tasks_list - selected_task_id (after logic): {selected_task_id}")
+        tasks_list_view = self.query_one(ListView)
+        print(f"DEBUG: Before manual removal - children count: {len(tasks_list_view.children)}")
         tasks_list_view.clear()
+        print(f"DEBUG: After manual removal - children count: {len(tasks_list_view.children)}")
         async with self.show_loading():
             try:
                 if self.current_list == "all":
@@ -234,6 +259,9 @@ class LazyTaskApp(App):
                     f"Error getting tasks: {e}", title="Error", severity="error"
                 )
                 return
+
+        # Re-query ListView here to ensure we have the latest instance
+        tasks_list_view = self.query_one(ListView)
 
         if self.show_overdue_only:
             today = datetime.date.today()
@@ -266,21 +294,34 @@ class LazyTaskApp(App):
                 details.append(f"prio: {task.priority}")
             if task.is_flagged:
                 details.append("flagged")
-            details_str = f" ({', '.join(details)})" if details else ""
+            details_str = f" ({','.join(details)})" if details else ""
 
             list_item = TaskListItem(task)
             tasks_list_view.append(list_item)
         self.title = f"LazyTask - {self.current_list}"
 
+        print(f"DEBUG: update_tasks_list - Before setting index, tasks_list_view.children count: {len(tasks_list_view.children)}")
+        for i, item in enumerate(tasks_list_view.children):
+            print(f"DEBUG: update_tasks_list - child {i}: {item.data.title} (ID: {item.data.id})")
+
         if selected_task_id:
+            found_selected = False
             for i, item in enumerate(tasks_list_view.children):
                 if item.data.id == selected_task_id:
                     tasks_list_view.index = i
+                    found_selected = True
                     break
-            else:
-                tasks_list_view.index = 0
+            print(f"DEBUG: update_tasks_list - found_selected: {found_selected}, tasks_list_view.index: {tasks_list_view.index}")
+            if not found_selected:
+                if tasks_list_view.children:
+                    tasks_list_view.index = 0
+                else:
+                    tasks_list_view.index = None
         elif tasks_list_view.children:
             tasks_list_view.index = 0
+        else:
+            tasks_list_view.index = None
+        print(f"DEBUG: update_tasks_list - Final tasks_list_view.index: {tasks_list_view.index}")
 
     def action_add_task(self) -> None:
         """An action to add a task."""
@@ -449,14 +490,20 @@ class LazyTaskApp(App):
     def action_cursor_down(self) -> None:
         """Move cursor down in the list."""
         tasks_list = self.query_one(ListView)
-        tasks_list.action_cursor_down()
+        if tasks_list.index is None and tasks_list.children:
+            tasks_list.index = 0
+        elif tasks_list.index is not None and tasks_list.index < len(tasks_list.children) - 1:
+            tasks_list.index += 1
         if tasks_list.highlighted_child:
             self.query_one(TaskDetail).update_task(tasks_list.highlighted_child.data)
 
     def action_cursor_up(self) -> None:
         """Move cursor up in the list."""
         tasks_list = self.query_one(ListView)
-        tasks_list.action_cursor_up()
+        if tasks_list.index is None and tasks_list.children:
+            tasks_list.index = 0
+        elif tasks_list.index is not None and tasks_list.index > 0:
+            tasks_list.index -= 1
         if tasks_list.highlighted_child:
             self.query_one(TaskDetail).update_task(tasks_list.highlighted_child.data)
 
@@ -481,13 +528,49 @@ class LazyTaskApp(App):
             task = tasks_list.highlighted_child.data
             if task:
                 current_index = tasks_list.index
+                print(f"DEBUG: Before completion - current_index: {current_index}")
+
+                task_below_id = None
+                if current_index is not None and current_index < len(tasks_list.children) - 1:
+                    task_below_id = tasks_list.children[current_index + 1].data.id
+                print(f"DEBUG: Before completion - task_below_id: {task_below_id}")
+
+                task_above_id = None
+                if current_index is not None and current_index > 0:
+                    task_above_id = tasks_list.children[current_index - 1].data.id
+                print(f"DEBUG: Before completion - task_above_id: {task_above_id}")
+
                 async with self.show_loading():
                     await self.complete_task_uc.execute(task.id, self.current_list)
                     await self.update_tasks_list(preserve_selection=False)
-                if len(tasks_list.children) > 0:
-                    tasks_list.index = min(current_index, len(tasks_list.children) - 1)
+                
+                print(f"DEBUG: After update_tasks_list - tasks_list.children count: {len(tasks_list.children)}")
+                for i, item in enumerate(tasks_list.children):
+                    print(f"DEBUG: After update_tasks_list - child {i}: {item.data.title} (ID: {item.data.id})")
+
+                new_index = None
+                if task_below_id:
+                    for i, item in enumerate(tasks_list.children):
+                        if item.data.id == task_below_id:
+                            new_index = i
+                            break
+                print(f"DEBUG: After trying task_below_id - new_index: {new_index}")
+                
+                if new_index is None and task_above_id:
+                    for i, item in enumerate(tasks_list.children):
+                        if item.data.id == task_above_id:
+                            new_index = i
+                            break
+                print(f"DEBUG: After trying task_above_id - new_index: {new_index}")
+
+                if new_index is not None:
+                    tasks_list.index = new_index
+                elif len(tasks_list.children) > 0:
+                    tasks_list.index = 0
                 else:
                     tasks_list.index = None
+                print(f"DEBUG: Final tasks_list.index: {tasks_list.index}")
+                tasks_list.refresh()
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""

@@ -9,7 +9,6 @@ def set_env(monkeypatch):
     monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
 
 
-
 async def test_navigation_j_k_changes_highlight_and_selection():
     """
     Using 'J' moves the highlight/selection down one item; using 'K' moves it up one item.
@@ -116,8 +115,9 @@ async def test_selection_after_completing_task():
         assert tasks_list.highlighted_child.data.title == "task 2"
 
         await pilot.press("c")  # complete task 2
-        await pilot.pause()
-        assert tasks_list.highlighted_child.data.title == "task 3"
+        await pilot.pause(0.5)
+        assert tasks_list.index == 1  # task 3 is now at index 1
+        assert tasks_list.children[tasks_list.index].data.title == "task 3"
 
     # Case 2: complete last task
     app = LazyTaskApp()
@@ -134,8 +134,9 @@ async def test_selection_after_completing_task():
         assert tasks_list.highlighted_child.data.title == "task 2"
 
         await pilot.press("c")  # complete task 2
-        await pilot.pause()
-        assert tasks_list.highlighted_child.data.title == "task 1"
+        await pilot.pause(0.5)
+        assert tasks_list.index == 0  # task 1 is now at index 0
+        assert tasks_list.children[tasks_list.index].data.title == "task 1"
 
     # Case 3: complete only task
     app = LazyTaskApp()
@@ -151,6 +152,7 @@ async def test_selection_after_completing_task():
 
         await pilot.press("c")  # complete task 1
         await pilot.pause()
+        assert tasks_list.index is None
         assert tasks_list.highlighted_child is None
 
 
@@ -234,3 +236,39 @@ async def test_filtering_keeps_current_selection_unless_filtered_out_then_first_
         # No tasks match, so nothing should be selected
         assert tasks_list.index is None
         assert tasks_list.highlighted_child is None
+
+
+async def test_reselect_previous_task_after_completion():
+    """Test that the same index is selected after a task is completed."""
+    app = LazyTaskApp()
+    task_manager = container.task_manager
+    task1 = await task_manager.add_task("task 1")
+    task2 = await task_manager.add_task("task 2")
+    task3 = await task_manager.add_task("task 3")
+
+    async with app.run_test() as pilot:
+        tasks_list = app.query_one("ListView")
+
+        # Select a task in the middle of the list.
+        await pilot.press("j")  # move to second task
+        await pilot.pause()
+        await pilot.press("j")  # move to second task
+        await pilot.pause()
+        assert tasks_list.index == 1
+        assert tasks_list.highlighted_child.data.id == task2.id
+
+        # Simulate the user pressing 'c' to complete the task.
+        await pilot.press("c")
+        await pilot.pause()
+
+        # Re-query the ListView to get the new instance
+        tasks_list = app.query_one("ListView")
+        # Assert that the task is completed
+        tasks = await task_manager.get_tasks(include_completed=False)
+        assert len(tasks) == 2
+
+        # Assert that the next task is now selected.
+        # The current behavior is to keep the same index, which means the next
+        # task in the list is selected.
+        assert tasks_list.index == 1
+        assert tasks_list.highlighted_child.data.id == task3.id

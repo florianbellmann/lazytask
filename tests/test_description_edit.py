@@ -22,7 +22,7 @@ async def test_edit_description_hotkey(monkeypatch):
         await pilot.press("j")  # select task
         await pilot.pause()
 
-        await pilot.press("ctrl+b")
+        await pilot.press("s")
         await pilot.pause()
 
         assert len(app.screen_stack) == 2

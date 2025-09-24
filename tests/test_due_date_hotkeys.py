@@ -7,6 +7,12 @@ from lazytask.domain.task import Task
 
 
 @pytest.mark.asyncio
+async def test_move_to_tomorrow(monkeypatch):
+    # TODO: missing impl
+    pass
+
+
+@pytest.mark.asyncio
 async def test_move_to_next_monday_hotkey(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
     monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")

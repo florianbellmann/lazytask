@@ -2,15 +2,17 @@ import pytest
 import os
 from textual.app import App
 from textual.keys import Keys
-from textual.widgets import Label # Added Label import
+from textual.widgets import Label  # Added Label import
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 from lazytask.domain.task import Task
+
 
 @pytest.fixture
 def mock_env(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
     monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
+
 
 @pytest.mark.asyncio
 async def test_smoke_test_workflow(mock_env):
@@ -29,11 +31,15 @@ async def test_smoke_test_workflow(mock_env):
         # Assert tasks are in the list
         tasks_list_view = app.query_one("#tasks_list")
         assert len(tasks_list_view.children) == 2
-        assert "[ ] Task 1 Develop" in str(tasks_list_view.children[0].query_one(Label).render())
-        assert "[ ] Task 2 Develop" in str(tasks_list_view.children[1].query_one(Label).render())
+        assert "[ ] Task 1 Develop" in str(
+            tasks_list_view.children[0].query_one(Label).render()
+        )
+        assert "[ ] Task 2 Develop" in str(
+            tasks_list_view.children[1].query_one(Label).render()
+        )
 
         # 3. Add 2 tasks to the second list ("develop2")
-        await pilot.press("s") # Switch list
+        await pilot.press("s")  # Switch list
         await pilot.press(*"develop2")
         await pilot.press(Keys.Enter)
         await pilot.press("a")
@@ -46,8 +52,12 @@ async def test_smoke_test_workflow(mock_env):
         # Assert tasks are in the list
         tasks_list_view = app.query_one("#tasks_list")
         assert len(tasks_list_view.children) == 2
-        assert "[ ] Task 1 Develop2" in str(tasks_list_view.children[0].query_one(Label).render())
-        assert "[ ] Task 2 Develop2" in str(tasks_list_view.children[1].query_one(Label).render())
+        assert "[ ] Task 1 Develop2" in str(
+            tasks_list_view.children[0].query_one(Label).render()
+        )
+        assert "[ ] Task 2 Develop2" in str(
+            tasks_list_view.children[1].query_one(Label).render()
+        )
 
         # Switch back to develop list
         await pilot.press("s")
@@ -58,9 +68,9 @@ async def test_smoke_test_workflow(mock_env):
 
         # 5. Change sorting (ctrl+o cycles through sort options)
         # Initial sort is by due_date
-        await pilot.press(Keys.ControlO) # Sort by title
-        await pilot.press(Keys.ControlO) # Sort by creation_date
-        await pilot.press(Keys.ControlO) # Sort by due_date again
+        await pilot.press(Keys.ControlO)  # Sort by title
+        await pilot.press(Keys.ControlO)  # Sort by creation_date
+        await pilot.press(Keys.ControlO)  # Sort by due_date again
 
         # 6. Filter
         await pilot.press("/")
@@ -68,10 +78,12 @@ async def test_smoke_test_workflow(mock_env):
         await pilot.press(Keys.Enter)
         tasks_list_view = app.query_one("#tasks_list")
         assert len(tasks_list_view.children) == 1
-        assert "[ ] Task 1 Develop" in str(tasks_list_view.children[0].query_one(Label).render())
+        assert "[ ] Task 1 Develop" in str(
+            tasks_list_view.children[0].query_one(Label).render()
+        )
 
         # 7. Complete one item
-        await pilot.press("c") # Complete the highlighted task (Task 1 Develop)
+        await pilot.press("c")  # Complete the highlighted task (Task 1 Develop)
         # Since completed tasks are hidden by default, the list should now be empty
         tasks_list_view = app.query_one("#tasks_list")
         assert len(tasks_list_view.children) == 0
@@ -82,14 +94,20 @@ async def test_smoke_test_workflow(mock_env):
         # By default, show_completed is false, so only '[ ] Task 2 Develop' should be visible
         tasks_list_view = app.query_one("#tasks_list")
         assert len(tasks_list_view.children) == 1
-        assert "[ ] Task 2 Develop" in str(tasks_list_view.children[0].query_one(Label).render())
+        assert "[ ] Task 2 Develop" in str(
+            tasks_list_view.children[0].query_one(Label).render()
+        )
 
         # 9. Change the list view (to develop2)
-        await pilot.press("3") # Switch to develop2
+        await pilot.press("3")  # Switch to develop2
         tasks_list_view = app.query_one("#tasks_list")
         assert len(tasks_list_view.children) == 2
-        assert "[ ] Task 1 Develop2" in str(tasks_list_view.children[0].query_one(Label).render())
-        assert "[ ] Task 2 Develop2" in str(tasks_list_view.children[1].query_one(Label).render())
+        assert "[ ] Task 1 Develop2" in str(
+            tasks_list_view.children[0].query_one(Label).render()
+        )
+        assert "[ ] Task 2 Develop2" in str(
+            tasks_list_view.children[1].query_one(Label).render()
+        )
 
         # 10. Remove the other items that the smoke test created
         # The prompt asks to remove items, but there's no explicit delete action in the app's keybindings.
@@ -98,3 +116,4 @@ async def test_smoke_test_workflow(mock_env):
 
         # 11. Close the app
         await pilot.press("q")
+

@@ -10,7 +10,6 @@ def set_env(monkeypatch):
     monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
 
 
-
 async def test_default_sort_due_date_oldest_first_selected_on_startup():
     """
     On startup:

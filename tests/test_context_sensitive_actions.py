@@ -9,7 +9,7 @@ from lazytask.domain.task import Task
 
 @pytest.fixture
 def app(monkeypatch) -> LazyTaskApp:
-    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop ,develop2")
     monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     # Mock the use case dependencies
     app = LazyTaskApp()
@@ -37,9 +37,9 @@ async def test_context_sensitive_actions(app: LazyTaskApp):
         await pilot.pause()
         # Press keys for context-sensitive actions
         await pilot.press("c")  # complete_task
-        await pilot.press("e")  # edit_date
+        await pilot.press("d")  # edit_date
         await pilot.press("t")  # move_to_tomorrow
-        await pilot.press("meta+e")  # edit_task
+        await pilot.press("e")  # edit_task
 
         # Check that the actions were not called
         app.action_complete_task.assert_not_called()
@@ -58,9 +58,9 @@ async def test_context_sensitive_actions(app: LazyTaskApp):
 
         # Press keys for context-sensitive actions
         await pilot.press("c")  # complete_task
-        await pilot.press("e")  # edit_date
+        await pilot.press("d")  # edit_date
         await pilot.press("t")  # move_to_tomorrow
-        await pilot.press("meta+e")  # edit_task
+        await pilot.press("e")  # edit_task
 
         # Check that the actions were called
         app.action_complete_task.assert_called_once()

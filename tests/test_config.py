@@ -5,13 +5,10 @@ from lazytask.presentation.list_tabs import ListTabs
 
 def test_default_list_from_env_var(monkeypatch):
     """Test that the default list is read from the environment variable."""
-    monkeypatch.setenv("LAZYTASK_LISTS", "my-test-list,another-list")
+    monkeypatch.setenv("LAZYTASK_LISTS", "my-test-list, another-list")
     monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "my-test-list")
     app = LazyTaskApp()
     assert app.current_list == "my-test-list"
-
-
-
 
 
 # ----------------------------
@@ -72,7 +69,7 @@ async def test_tabs_match_lists_and_default_selected_on_start(monkeypatch):
       - The visible tabs correspond exactly to the names from Lists (in order).
       - The tab corresponding to DefaultList is selected on startup.
     """
-    monkeypatch.setenv("LAZYTASK_LISTS", "work,home,personal")
+    monkeypatch.setenv("LAZYTASK_LISTS", "work,home ,personal ")
     monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "home")
     app = LazyTaskApp()
     async with app.run_test() as pilot:
@@ -84,7 +81,10 @@ async def test_tabs_match_lists_and_default_selected_on_start(monkeypatch):
 
         home_span_found = False
         for span in tabs_text.spans:
-            if "home" in tabs_text.plain[span.start : span.end] and "reverse" in span.style:
+            if (
+                "home" in tabs_text.plain[span.start : span.end]
+                and "reverse" in span.style
+            ):
                 home_span_found = True
                 break
         assert home_span_found, "The 'home' tab should be rendered with reverse style."
@@ -102,7 +102,3 @@ def test_defaultlist_must_be_in_lists_else_error(monkeypatch):
         match="LAZYTASK_DEFAULT_LIST 'personal' not in LAZYTASK_LISTS",
     ):
         LazyTaskApp()
-
-
-# in dev always use develop and develop2
-# in testing use test and test2

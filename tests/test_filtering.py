@@ -5,7 +5,7 @@ from lazytask.container import container
 
 @pytest.fixture(autouse=True)
 async def clear_tasks(monkeypatch):
-    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop ,develop2")
     monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     task_manager = container.task_manager
     await task_manager.clear_tasks()

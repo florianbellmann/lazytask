@@ -20,7 +20,7 @@ async def test_date_picker_updates_task_date(monkeypatch):
         await pilot.pause()
 
         # Open the date picker screen
-        await pilot.press("e")
+        await pilot.press("d")
         await pilot.pause()
 
         assert isinstance(app.screen, DatePickerScreen)

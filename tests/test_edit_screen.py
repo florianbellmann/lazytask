@@ -36,14 +36,16 @@ async def create_task_in_manager(mock_task_manager: MockTaskManager):
 async def test_edit_due_date(app: LazyTaskApp, create_task_in_manager: Task):
     async with app.run_test() as pilot:
         await pilot.press("j")
-        await pilot.press("meta+e")
+        await pilot.press("e")
         await pilot.pause(1.0)
         edit_screen = app.screen
         assert isinstance(edit_screen, EditScreen)
 
         # Check that the initial due date is displayed correctly
-        due_date_label = edit_screen.query_one("#due-date-label")
-        assert str(create_task_in_manager.due_date) in edit_screen.get_due_date_label_text()
+        assert (
+            str(create_task_in_manager.due_date)
+            in edit_screen.get_due_date_label_text()
+        )
 
         # Click the "Edit Due Date" button
         await pilot.click("#edit-due-date")
@@ -64,4 +66,3 @@ async def test_edit_due_date(app: LazyTaskApp, create_task_in_manager: Task):
         # Click the "Save" button
         await pilot.click("#save")
         await pilot.pause()
-        

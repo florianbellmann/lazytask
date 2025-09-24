@@ -87,7 +87,8 @@ class EditScreen(ModalScreen[Task]):
             updates = {
                 "description": self.query_one("#description", Input).value,
                 "tags": [
-                    tag.strip() for tag in self.query_one("#tags", Input).value.split(",")
+                    tag.strip()
+                    for tag in self.query_one("#tags", Input).value.split(",")
                 ],
                 "priority": None,
                 "is_flagged": self.query_one("#flagged", Switch).value,
@@ -105,9 +106,7 @@ class EditScreen(ModalScreen[Task]):
                     )
                     return
 
-            await self.update_task_uc.execute(
-                self._task.id, updates, self._list_name
-            )
+            await self.update_task_uc.execute(self._task.id, updates, self._list_name)
             self.dismiss()
         elif event.button.id == "edit-due-date":
 

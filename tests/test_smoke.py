@@ -1,11 +1,7 @@
 import pytest
-import os
-from textual.app import App
 from textual.keys import Keys
 from textual.widgets import Label  # Added Label import
 from lazytask.presentation.app import LazyTaskApp
-from lazytask.infrastructure.mock_task_manager import MockTaskManager
-from lazytask.domain.task import Task
 
 
 @pytest.fixture
@@ -116,4 +112,3 @@ async def test_smoke_test_workflow(mock_env):
 
         # 11. Close the app
         await pilot.press("q")
-

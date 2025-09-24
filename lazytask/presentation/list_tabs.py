@@ -10,10 +10,12 @@ class ListTabs(Static):
 
     def update_lists(self, lists: List[str], current_list: str):
         tabs = Text.from_markup(
-            " | ".join([
-                f"[bold reverse]{lst}[/]" if lst == current_list else f"{lst}"
-                for lst in ["all"] + lists
-            ])
+            " | ".join(
+                [
+                    f"[bold reverse]{lst}[/]" if lst == current_list else f"{lst}"
+                    for lst in ["all"] + lists
+                ]
+            )
         )
         self.tabs = tabs
         self.update(self.tabs)

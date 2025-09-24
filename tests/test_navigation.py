@@ -3,10 +3,9 @@ from textual.widgets import ListView
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.container import container
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 from lazytask.domain.task import Task
-from lazytask.presentation.app import LazyTaskApp
 
 
 @pytest.fixture(autouse=True)

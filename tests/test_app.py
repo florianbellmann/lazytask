@@ -1,6 +1,5 @@
 import pytest
 from lazytask.presentation.app import LazyTaskApp
-from lazytask.container import container
 
 
 @pytest.fixture(autouse=True)

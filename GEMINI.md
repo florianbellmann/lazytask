@@ -72,9 +72,12 @@ Keep a checklist of what you did and what your status is. So next time we can co
 - [x] Display of further infos: Tags, recurring, flags, prios, ...
 - [x] Github actions, building, tests and linting
 - [x] Input hardening
-- [ ] recurring tasks handling
 - [x] Implement app logging for debugging
-
+- [ ] fix tests
+- [ ] default list should be the first in the list. not an extra env var
+- [ ] handle selction and highlighhting the same
+- [ ] update help pages
+- [ ] recurring tasks handling
 
 ## reminders cli
 

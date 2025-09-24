@@ -1,5 +1,6 @@
 # Reminders CLI Interface
 
+
 This document outlines the command-line interface for the `reminders-cli` tool.
 
 ## Usage

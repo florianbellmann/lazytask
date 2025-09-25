@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+from textual.widgets import Input
 
 from lazytask.domain.task import Task
 from lazytask.presentation.app import LazyTaskApp
@@ -33,7 +34,11 @@ async def create_task_in_manager(mock_task_manager: MockTaskManager):
     return task
 
 
-async def test_edit_due_date(app: LazyTaskApp, create_task_in_manager: Task):
+async def test_edit_due_date(app: LazyTaskApp, mock_task_manager: MockTaskManager):
+    task = await mock_task_manager.add_task(
+        "Test Task", due_date=datetime.date(2025, 1, 1)
+    )
+
     async with app.run_test() as pilot:
         await pilot.press("j")
         await pilot.press("e")
@@ -42,10 +47,7 @@ async def test_edit_due_date(app: LazyTaskApp, create_task_in_manager: Task):
         assert isinstance(edit_screen, EditScreen)
 
         # Check that the initial due date is displayed correctly
-        assert (
-            str(create_task_in_manager.due_date)
-            in edit_screen.get_due_date_label_text()
-        )
+        assert str(task.due_date) in edit_screen.get_due_date_label_text()
 
         # Click the "Edit Due Date" button
         await pilot.click("#edit-due-date")
@@ -66,3 +68,8 @@ async def test_edit_due_date(app: LazyTaskApp, create_task_in_manager: Task):
         # Click the "Save" button
         await pilot.click("#save")
         await pilot.pause()
+
+        # Check that the task was updated in the task manager
+        updated_task = await mock_task_manager.get_task(task.id)
+        assert updated_task is not None
+        assert updated_task.due_date == new_date

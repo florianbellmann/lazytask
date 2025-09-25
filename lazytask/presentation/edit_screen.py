@@ -11,7 +11,7 @@ from lazytask.container import container
 from lazytask.application.use_cases import GetTasks, UpdateTask
 
 
-class EditScreen(ModalScreen[Task]):
+class EditScreen(ModalScreen[None]):
     """Screen to edit a task."""
 
     def __init__(
@@ -84,30 +84,20 @@ class EditScreen(ModalScreen[Task]):
             return
 
         if event.button.id == "save":
+            priority_str = self.query_one("#priority", Input).value
+            priority = int(priority_str) if priority_str else None
             updates = {
                 "description": self.query_one("#description", Input).value,
                 "tags": [
                     tag.strip()
                     for tag in self.query_one("#tags", Input).value.split(",")
                 ],
-                "priority": None,
+                "priority": priority,
                 "is_flagged": self.query_one("#flagged", Switch).value,
                 "due_date": self._task.due_date,
             }
-            priority_str = self.query_one("#priority", Input).value
-            if priority_str:
-                try:
-                    updates["priority"] = int(priority_str)
-                except ValueError:
-                    self.app.notify(
-                        "Invalid priority. Please enter a number.",
-                        title="Error",
-                        severity="error",
-                    )
-                    return
-
             updated_task = await self.update_task_uc.execute(self._task.id, updates, self._list_name)
-            self.dismiss(updated_task)
+            self.dismiss()
         elif event.button.id == "edit-due-date":
 
             def on_date_selected(new_date: datetime.date | None):

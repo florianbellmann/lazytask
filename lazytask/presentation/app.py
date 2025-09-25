@@ -295,7 +295,7 @@ class LazyTaskApp(App):
         if selected_task_id:
             found_selected = False
             for i, item in enumerate(tasks_list_view.children):
-                if item.data.id == selected_task_id:
+                if cast(TaskListItem, item).data.id == selected_task_id:
                     tasks_list_view.index = i
                     found_selected = True
                     break
@@ -392,21 +392,18 @@ class LazyTaskApp(App):
                 await self.update_task_uc.execute(task.id, updates, self.current_list)
                 await self.update_tasks_list()
 
-    async def action_edit_task(self) -> Task | None:
+    def action_edit_task(self) -> None:
         """An action to edit a task."""
         tasks_list = self.query_one(ListView)
         if not tasks_list.highlighted_child:
-            return None
+            return
 
         task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
 
-        updated_task = await self.push_screen(
-            EditScreen(task_id=task.id, list_name=self.current_list)
+        self.push_screen(
+            EditScreen(task_id=task.id, list_name=self.current_list),
+            lambda _: asyncio.create_task(self.update_tasks_list()),
         )
-        if updated_task:
-            await self.update_tasks_list()
-            return updated_task
-        return None
 
     def action_edit_description(self) -> None:
         """An action to edit a task's description."""

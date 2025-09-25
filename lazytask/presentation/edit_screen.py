@@ -106,8 +106,8 @@ class EditScreen(ModalScreen[Task]):
                     )
                     return
 
-            await self.update_task_uc.execute(self._task.id, updates, self._list_name)
-            self.dismiss()
+            updated_task = await self.update_task_uc.execute(self._task.id, updates, self._list_name)
+            self.dismiss(updated_task)
         elif event.button.id == "edit-due-date":
 
             def on_date_selected(new_date: datetime.date | None):

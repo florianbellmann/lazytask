@@ -63,15 +63,15 @@ class LazyTaskApp(App):
     LOGGING = True
 
     BINDINGS = [
-        ("d", "toggle_dark", "Toggle dark mode"),
+        ("d", "edit_date", "Edit date"),
         ("a", "add_task", "Add task"),
         ("c", "complete_task", "Complete task"),
-        ("s", "switch_list", "Switch list"),
-        ("e", "edit_date", "Edit date"),
+        ("s", "edit_description", "Edit description"),
+        ("ctrl+e", "edit_date", "Edit date"),
         ("t", "move_to_tomorrow", "Move to tomorrow"),
         ("m", "move_to_next_monday", "Move to next monday"),
         ("w", "move_to_next_weekend", "Move to next weekend"),
-        ("meta+e", "edit_task", "Edit task"),
+        ("e", "edit_task", "Edit task"),
         ("ctrl+d", "toggle_overdue", "Toggle Overdue"),
         ("ctrl+c", "toggle_completed", "Toggle Completed"),
         ("ctrl+r", "refresh", "Refresh"),
@@ -83,7 +83,7 @@ class LazyTaskApp(App):
         ("k", "cursor_up", "Cursor Up"),
         ("g", "go_to_top", "Go to top"),
         ("G", "go_to_bottom", "Go to bottom"),
-        ("ctrl+b", "edit_description", "Edit description"),
+        ("b", "switch_list", "Switch list"),
         ("escape", "clear_filter", "Clear filter"),
         ("q", "quit", "Quit"),
         ("1", "show_all_tasks", "All Tasks"),
@@ -95,6 +95,7 @@ class LazyTaskApp(App):
 
     def __init__(self):
         super().__init__()
+        self.dark = True
         self.add_task_uc = container.get(AddTask)
         self.get_tasks_uc = container.get(GetTasks)
         self.complete_task_uc = container.get(CompleteTask)
@@ -166,6 +167,7 @@ class LazyTaskApp(App):
     async def switch_list(self, list_name: str):
         self.current_list = list_name
         self.filter_query = ""
+        self.query_one(ListView).clear()
         await self.update_tasks_list(preserve_selection=False)
 
     async def on_key(self, event: events.Key) -> None:
@@ -173,6 +175,7 @@ class LazyTaskApp(App):
             event.key
             in [
                 "c",
+                "d",
                 "e",
                 "t",
                 "m",
@@ -294,7 +297,7 @@ class LazyTaskApp(App):
                 details.append(f"prio: {task.priority}")
             if task.is_flagged:
                 details.append("flagged")
-            details_str = f" ({','.join(details)})" if details else ""
+            details_str = f" ({', '.join(details)})" if details else ""
 
             list_item = TaskListItem(task)
             tasks_list_view.append(list_item)
@@ -332,7 +335,8 @@ class LazyTaskApp(App):
         def on_submit(list_name: str | None) -> None:
             if list_name:
                 self.current_list = list_name
-                asyncio.create_task(self.update_tasks_list())
+                self.query_one(ListView).clear()
+                asyncio.create_task(self.update_tasks_list(preserve_selection=False))
 
         self.push_screen(TextInputModal(prompt="Switch to list:"), on_submit)
 
@@ -405,10 +409,11 @@ class LazyTaskApp(App):
         if tasks_list.highlighted_child:
             task: Task = tasks_list.highlighted_child.data
 
-            await self.push_screen(
+            updated_task = await self.push_screen(
                 EditScreen(task_id=task.id, list_name=self.current_list)
             )
-            await self.update_tasks_list()
+            if updated_task:
+                await self.update_tasks_list()
 
     def action_edit_description(self) -> None:
         """An action to edit a task's description."""
@@ -526,45 +531,19 @@ class LazyTaskApp(App):
             if task:
                 current_index = tasks_list.index
 
-                task_below_id = None
-                if (
-                    current_index is not None
-                    and current_index < len(tasks_list.children) - 1
-                ):
-                    task_below_id = tasks_list.children[current_index + 1].data.id
-
-                task_above_id = None
-                if current_index is not None and current_index > 0:
-                    task_above_id = tasks_list.children[current_index - 1].data.id
-
                 async with self.show_loading():
                     await self.complete_task_uc.execute(task.id, self.current_list)
-                    await self.update_tasks_list(preserve_selection=False)
+                    await self.update_tasks_list(preserve_selection=True)
 
-                new_index = None
-                if task_below_id:
-                    for i, item in enumerate(tasks_list.children):
-                        if item.data.id == task_below_id:
-                            new_index = i
-                            break
-
-                if new_index is None and task_above_id:
-                    for i, item in enumerate(tasks_list.children):
-                        if item.data.id == task_above_id:
-                            new_index = i
-                            break
-
-                if new_index is not None:
-                    tasks_list.index = new_index
-                elif len(tasks_list.children) > 0:
-                    tasks_list.index = 0
-                else:
-                    tasks_list.index = None
-                tasks_list.refresh()
+                if current_index is not None:
+                    if current_index < len(tasks_list.children):
+                        tasks_list.index = current_index
+                    else:
+                        tasks_list.index = len(tasks_list.children) - 1
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
-        self.app.dark = not self.app.dark
+        self.dark = not self.dark
 
 
 if __name__ == "__main__":

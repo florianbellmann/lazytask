@@ -476,8 +476,12 @@ class LazyTaskApp(App):
             and tasks_list.index < len(tasks_list.children) - 1
         ):
             tasks_list.index += 1
-        if tasks_list.highlighted_child and isinstance(tasks_list.highlighted_child, TaskListItem):
-            highlighted_task_item: TaskListItem = cast(TaskListItem, tasks_list.highlighted_child)
+        if tasks_list.highlighted_child and isinstance(
+            tasks_list.highlighted_child, TaskListItem
+        ):
+            highlighted_task_item: TaskListItem = cast(
+                TaskListItem, tasks_list.highlighted_child
+            )
             self.query_one(TaskDetail).update_task(highlighted_task_item.data)
 
     def action_cursor_up(self) -> None:
@@ -487,24 +491,36 @@ class LazyTaskApp(App):
             tasks_list.index = 0
         elif tasks_list.index is not None and tasks_list.index > 0:
             tasks_list.index -= 1
-        if tasks_list.highlighted_child and isinstance(tasks_list.highlighted_child, TaskListItem):
-            highlighted_task_item: TaskListItem = cast(TaskListItem, tasks_list.highlighted_child)
+        if tasks_list.highlighted_child and isinstance(
+            tasks_list.highlighted_child, TaskListItem
+        ):
+            highlighted_task_item: TaskListItem = cast(
+                TaskListItem, tasks_list.highlighted_child
+            )
             self.query_one(TaskDetail).update_task(highlighted_task_item.data)
 
     def action_go_to_top(self) -> None:
         """Go to the top of the list."""
         tasks_list = self.query_one(ListView)
         tasks_list.index = 0
-        if tasks_list.highlighted_child and isinstance(tasks_list.highlighted_child, TaskListItem):
-            highlighted_task_item: TaskListItem = cast(TaskListItem, tasks_list.highlighted_child)
+        if tasks_list.highlighted_child and isinstance(
+            tasks_list.highlighted_child, TaskListItem
+        ):
+            highlighted_task_item: TaskListItem = cast(
+                TaskListItem, tasks_list.highlighted_child
+            )
             self.query_one(TaskDetail).update_task(highlighted_task_item.data)
 
     def action_go_to_bottom(self) -> None:
         """Go to the bottom of the list."""
         tasks_list = self.query_one(ListView)
         tasks_list.index = len(tasks_list.children) - 1
-        if tasks_list.highlighted_child and isinstance(tasks_list.highlighted_child, TaskListItem):
-            highlighted_task_item: TaskListItem = cast(TaskListItem, tasks_list.highlighted_child)
+        if tasks_list.highlighted_child and isinstance(
+            tasks_list.highlighted_child, TaskListItem
+        ):
+            highlighted_task_item: TaskListItem = cast(
+                TaskListItem, tasks_list.highlighted_child
+            )
             self.query_one(TaskDetail).update_task(highlighted_task_item.data)
 
     async def action_complete_task(self) -> None:

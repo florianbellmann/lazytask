@@ -193,11 +193,19 @@ class LazyTaskApp(App):
                     self.current_list = self.available_lists[list_index]
                     await self.update_tasks_list(preserve_selection=False)
 
-    async def on_list_view_selected(self, event: ListView.Selected):
+    def _update_task_detail(self, item: ListItem | None) -> None:
+        if isinstance(item, TaskListItem):
+            self.query_one(TaskDetail).update_task(item.data)
+        else:
+            self.query_one(TaskDetail).update_task(None)
+
+    def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
+        """Called when a task is highlighted."""
+        self._update_task_detail(event.item)
+
+    async def on_list_view_selected(self, event: ListView.Selected) -> None:
         """Called when a task is selected."""
-        if isinstance(event.item, TaskListItem):
-            task: Task = event.item.data
-            self.query_one(TaskDetail).update_task(task)
+        self._update_task_detail(event.item)
 
     async def update_tasks_list(
         self,
@@ -479,13 +487,6 @@ class LazyTaskApp(App):
             and tasks_list.index < len(tasks_list.children) - 1
         ):
             tasks_list.index += 1
-        if tasks_list.highlighted_child and isinstance(
-            tasks_list.highlighted_child, TaskListItem
-        ):
-            highlighted_task_item: TaskListItem = cast(
-                TaskListItem, tasks_list.highlighted_child
-            )
-            self.query_one(TaskDetail).update_task(highlighted_task_item.data)
 
     def action_cursor_up(self) -> None:
         """Move cursor up in the list."""
@@ -494,55 +495,35 @@ class LazyTaskApp(App):
             tasks_list.index = 0
         elif tasks_list.index is not None and tasks_list.index > 0:
             tasks_list.index -= 1
-        if tasks_list.highlighted_child and isinstance(
-            tasks_list.highlighted_child, TaskListItem
-        ):
-            highlighted_task_item: TaskListItem = cast(
-                TaskListItem, tasks_list.highlighted_child
-            )
-            self.query_one(TaskDetail).update_task(highlighted_task_item.data)
 
     def action_go_to_top(self) -> None:
         """Go to the top of the list."""
         tasks_list = self.query_one(ListView)
         tasks_list.index = 0
-        if tasks_list.highlighted_child and isinstance(
-            tasks_list.highlighted_child, TaskListItem
-        ):
-            highlighted_task_item: TaskListItem = cast(
-                TaskListItem, tasks_list.highlighted_child
-            )
-            self.query_one(TaskDetail).update_task(highlighted_task_item.data)
 
     def action_go_to_bottom(self) -> None:
         """Go to the bottom of the list."""
         tasks_list = self.query_one(ListView)
         tasks_list.index = len(tasks_list.children) - 1
-        if tasks_list.highlighted_child and isinstance(
-            tasks_list.highlighted_child, TaskListItem
-        ):
-            highlighted_task_item: TaskListItem = cast(
-                TaskListItem, tasks_list.highlighted_child
-            )
-            self.query_one(TaskDetail).update_task(highlighted_task_item.data)
 
     async def action_complete_task(self) -> None:
         """An action to complete a task."""
         tasks_list = self.query_one(ListView)
         if tasks_list.highlighted_child:
+            current_index = tasks_list.index
             task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
-            if task:
-                current_index = tasks_list.index
 
-                async with self.show_loading():
-                    await self.complete_task_uc.execute(task.id, self.current_list)
-                    await self.update_tasks_list(preserve_selection=False)
+            async with self.show_loading():
+                await self.complete_task_uc.execute(task.id, self.current_list)
+                await self.update_tasks_list(preserve_selection=False)
 
-                if current_index is not None:
-                    if current_index < len(tasks_list.children):
-                        tasks_list.index = current_index
-                    else:
-                        tasks_list.index = len(tasks_list.children) - 1
+            if current_index is not None:
+                if len(tasks_list.children) == 0:
+                    tasks_list.index = None
+                elif current_index < len(tasks_list.children):
+                    tasks_list.index = current_index
+                else:
+                    tasks_list.index = len(tasks_list.children) - 1
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""

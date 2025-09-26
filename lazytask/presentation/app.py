@@ -221,7 +221,9 @@ class LazyTaskApp(App):
         tasks_list_view = self.query_one(ListView)
         selected_task_id = None
         if preserve_selection and tasks_list_view.highlighted_child:
-            selected_task_id = cast(TaskListItem, tasks_list_view.highlighted_child).data.id
+            selected_task_id = cast(
+                TaskListItem, tasks_list_view.highlighted_child
+            ).data.id
 
         if newly_added_task_id:
             selected_task_id = newly_added_task_id

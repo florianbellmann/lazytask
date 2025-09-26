@@ -1,20 +1,19 @@
 import pytest
 from textual.keys import Keys
-from textual.widgets import Label  # Added Label import
+from textual.widgets import Label
+
 from lazytask.presentation.app import LazyTaskApp
+from lazytask.infrastructure.mock_task_manager import MockTaskManager
 from lazytask.container import container
 
 
 @pytest.fixture(autouse=True)
-async def mock_env(monkeypatch):
+def set_env(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-    task_manager = container.task_manager
-    await task_manager.clear_tasks()
 
 
 @pytest.mark.asyncio
-async def test_smoke_test_workflow(mock_env):
-    app = LazyTaskApp()
+async def test_smoke_test_workflow(app: LazyTaskApp, mock_task_manager: MockTaskManager):
     async with app.run_test() as pilot:
         # 1. Fire up the app (already done by app.run_test())
 
@@ -61,6 +60,7 @@ async def test_smoke_test_workflow(mock_env):
         await pilot.press("s")
         await pilot.press(*"develop")
         await pilot.press(Keys.Enter)
+        await app.switch_list("develop")
 
         # 4. List them (already asserted above)
 
@@ -97,7 +97,10 @@ async def test_smoke_test_workflow(mock_env):
         )
 
         # 9. Change the list view (to develop2)
-        await pilot.press("3")  # Switch to develop2
+        await pilot.press("s")  # Switch list
+        await pilot.press(*"develop2")
+        await pilot.press(Keys.Enter)
+        await app.switch_list("develop2")
         tasks_list_view = app.query_one("#tasks_list")
         assert len(tasks_list_view.children) == 2
         assert "[ ] Task 1 Develop2" in str(

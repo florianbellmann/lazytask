@@ -132,6 +132,14 @@ class LazyTaskApp(App):
         yield
         self.query_one(LoadingIndicator).display = False
 
+    async def on_list_view_highlighted(self, event: ListView.Highlighted):
+        """Called when a task is highlighted."""
+        if event.item:
+            task: Task = cast(TaskListItem, event.item).data
+            self.query_one(TaskDetail).update_task(task)
+        else:
+            self.query_one(TaskDetail).update_task(None)
+
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
         yield Header()
@@ -189,6 +197,11 @@ class LazyTaskApp(App):
                 if list_index < len(self.available_lists):
                     self.current_list = self.available_lists[list_index]
                     await self.update_tasks_list(preserve_selection=False)
+
+    async def on_list_view_selected(self, event: ListView.Selected):
+        """Called when a task is selected."""
+        task: Task = cast(TaskListItem, event.item).data
+        self.query_one(TaskDetail).update_task(task)
 
     def _update_task_detail(self, item: ListItem | None) -> None:
         if isinstance(item, TaskListItem):
@@ -289,18 +302,11 @@ class LazyTaskApp(App):
             tasks_list_view.append(list_item)
         self.title = f"LazyTask - {self.current_list}"
 
-        if selected_task_id:
-            found_selected = False
+        if newly_added_task_id:
             for i, item in enumerate(tasks_list_view.children):
-                if cast(TaskListItem, item).data.id == selected_task_id:
+                if cast(TaskListItem, item).data.id == newly_added_task_id:
                     tasks_list_view.index = i
-                    found_selected = True
                     break
-            if not found_selected:
-                if tasks_list_view.children:
-                    tasks_list_view.index = 0
-                else:
-                    tasks_list_view.index = None
         elif tasks_list_view.children:
             tasks_list_view.index = 0
         else:
@@ -531,4 +537,3 @@ class LazyTaskApp(App):
 
 if __name__ == "__main__":
     app = LazyTaskApp()
-    app.run()

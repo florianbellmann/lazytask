@@ -106,6 +106,11 @@ class MockTaskManager(TaskManager):
             tasks = [task for task in tasks if not task.completed]
         return tasks
 
+    async def get_task(self, task_id: str, list_name: str = "develop") -> Optional[Task]:
+        if list_name in self._tasks and task_id in self._tasks[list_name]:
+            return self._tasks[list_name][task_id]
+        return None
+
     async def get_lists(self) -> List[str]:
         return list(self._tasks.keys())
 

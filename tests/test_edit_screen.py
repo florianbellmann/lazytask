@@ -10,28 +10,9 @@ from lazytask.presentation.date_picker_screen import DatePickerScreen
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
 
-@pytest.fixture
-def mock_task_manager() -> MockTaskManager:
-    return MockTaskManager()
-
-
-@pytest.fixture
-def app(mock_task_manager: MockTaskManager, monkeypatch) -> LazyTaskApp:
+@pytest.fixture(autouse=True)
+def set_env(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
-    app = LazyTaskApp()
-    app.get_tasks_uc.task_manager = mock_task_manager
-    app.update_task_uc.task_manager = mock_task_manager
-    app.add_task_uc.task_manager = mock_task_manager
-    return app
-
-
-@pytest.fixture
-async def create_task_in_manager(mock_task_manager: MockTaskManager):
-    task = await mock_task_manager.add_task(
-        "Test Task", due_date=datetime.date(2025, 1, 1)
-    )
-    return task
 
 
 async def test_edit_due_date(app: LazyTaskApp, mock_task_manager: MockTaskManager):

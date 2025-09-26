@@ -195,8 +195,9 @@ class LazyTaskApp(App):
 
     async def on_list_view_selected(self, event: ListView.Selected):
         """Called when a task is selected."""
-        task: Task = cast(TaskListItem, event.item).data
-        self.query_one(TaskDetail).update_task(task)
+        if isinstance(event.item, TaskListItem):
+            task: Task = event.item.data
+            self.query_one(TaskDetail).update_task(task)
 
     async def update_tasks_list(
         self,
@@ -212,7 +213,7 @@ class LazyTaskApp(App):
         tasks_list_view = self.query_one(ListView)
         selected_task_id = None
         if preserve_selection and tasks_list_view.highlighted_child:
-            selected_task_id = tasks_list_view.highlighted_child.data.id
+            selected_task_id = cast(TaskListItem, tasks_list_view.highlighted_child).data.id
 
         if newly_added_task_id:
             selected_task_id = newly_added_task_id
@@ -387,13 +388,15 @@ class LazyTaskApp(App):
         if not tasks_list.highlighted_child:
             return
 
-            def on_close(updated_task: Task | None) -> None:
-                if updated_task:
-                    asyncio.create_task(self.update_tasks_list())
+        task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
 
-            self.push_screen(
-                EditScreen(task_id=task.id, list_name=self.current_list), on_close
-            )
+        def on_close(updated_task: Task | None) -> None:
+            if updated_task:
+                asyncio.create_task(self.update_tasks_list())
+
+        self.push_screen(
+            EditScreen(task_id=task.id, list_name=self.current_list), on_close
+        )
 
     def action_edit_description(self) -> None:
         """An action to edit a task's description."""

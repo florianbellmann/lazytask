@@ -73,11 +73,10 @@ Keep a checklist of what you did and what your status is. So next time we can co
 - [x] Github actions, building, tests and linting
 - [x] Input hardening
 - [x] Implement app logging for debugging
+- [x] default list should be the first in the list. not an extra env var
 - [ ] fix tests
-- [ ] run tests in parallel?
-- [ ] default list should be the first in the list. not an extra env var
 - [ ] handle selction and highlighhting the same
-- [ ] update help pages
+- [ ] change keybindings update help pages
 - [ ] recurring tasks handling
 ## reminders cli
 

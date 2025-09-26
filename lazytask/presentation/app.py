@@ -106,22 +106,15 @@ class LazyTaskApp(App):
         self.sort_reverse = False
 
         lists_str = os.environ.get("LAZYTASK_LISTS")
-        default_list = os.environ.get("LAZYTASK_DEFAULT_LIST")
 
         if lists_str is None:
             raise ValueError("LAZYTASK_LISTS environment variable not set")
-        if default_list is None:
-            raise ValueError("LAZYTASK_DEFAULT_LIST environment variable not set")
 
         if not lists_str.strip():
             raise ValueError("LAZYTASK_LISTS must not be empty")
 
         self.available_lists = [name.strip() for name in lists_str.split(",")]
-        if default_list not in self.available_lists:
-            raise ValueError(
-                f"LAZYTASK_DEFAULT_LIST '{default_list}' not in LAZYTASK_LISTS"
-            )
-        self.current_list = default_list
+        self.current_list = self.available_lists[0]
 
         self.title = f"LazyTask - {self.current_list}"
         self.show_overdue_only = False
@@ -208,6 +201,25 @@ class LazyTaskApp(App):
                     self.current_list = self.available_lists[list_index]
                     await self.update_tasks_list(preserve_selection=False)
 
+    async def on_list_view_selected(self, event: ListView.Selected):
+        """Called when a task is selected."""
+        task: Task = cast(TaskListItem, event.item).data
+        self.query_one(TaskDetail).update_task(task)
+
+    def _update_task_detail(self, item: ListItem | None) -> None:
+        if isinstance(item, TaskListItem):
+            self.query_one(TaskDetail).update_task(item.data)
+        else:
+            self.query_one(TaskDetail).update_task(None)
+
+    def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
+        """Called when a task is highlighted."""
+        self._update_task_detail(event.item)
+
+    async def on_list_view_selected(self, event: ListView.Selected) -> None:
+        """Called when a task is selected."""
+        self._update_task_detail(event.item)
+
     async def update_tasks_list(
         self,
         filter_query: str | None = None,
@@ -220,16 +232,12 @@ class LazyTaskApp(App):
 
         self.query_one(ListTabs).update_lists(self.available_lists, self.current_list)
         tasks_list_view = self.query_one(ListView)
-        selected_task_id: str | None = None
+        selected_task_id = None
+        if preserve_selection and tasks_list_view.highlighted_child:
+            selected_task_id = cast(TaskListItem, tasks_list_view.highlighted_child).data.id
+
         if newly_added_task_id:
             selected_task_id = newly_added_task_id
-            preserve_selection = True  # Ensure we try to select the new task
-        elif preserve_selection:
-            selected_task_id = (
-                cast(TaskListItem, tasks_list_view.highlighted_child).data.id
-                if tasks_list_view.highlighted_child
-                else None
-            )
         tasks_list_view = self.query_one(ListView)
         tasks_list_view.clear()
         async with self.show_loading():
@@ -305,6 +313,11 @@ class LazyTaskApp(App):
         else:
             tasks_list_view.index = None
 
+        if tasks_list_view.index is not None and tasks_list_view.index >= len(
+            tasks_list_view.children
+        ):
+            tasks_list_view.index = len(tasks_list_view.children) - 1
+
     def action_add_task(self) -> None:
         """An action to add a task."""
 
@@ -334,15 +347,10 @@ class LazyTaskApp(App):
             def on_date_selected(new_date: datetime.date | None) -> None:
                 if new_date:
                     updates = {"due_date": new_date}
-
-                    async def update_task_async() -> None:
-                        async with self.show_loading():
-                            await self.update_task_uc.execute(
-                                task.id, updates, self.current_list
-                            )
-                            await self.update_tasks_list()
-
-                    asyncio.create_task(update_task_async())
+                    asyncio.create_task(
+                        self.update_task_uc.execute(task.id, updates, self.current_list)
+                    )
+                    asyncio.create_task(self.update_tasks_list())
 
             self.push_screen(
                 DatePickerScreen(initial_date=task.due_date), on_date_selected
@@ -396,9 +404,12 @@ class LazyTaskApp(App):
 
         task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
 
+        def on_close(updated_task: Task | None) -> None:
+            if updated_task:
+                asyncio.create_task(self.update_tasks_list())
+
         self.push_screen(
-            EditScreen(task_id=task.id, list_name=self.current_list),
-            lambda _: asyncio.create_task(self.update_tasks_list()),
+            EditScreen(task_id=task.id, list_name=self.current_list), on_close
         )
 
     def action_edit_description(self) -> None:
@@ -505,19 +516,20 @@ class LazyTaskApp(App):
         """An action to complete a task."""
         tasks_list = self.query_one(ListView)
         if tasks_list.highlighted_child:
+            current_index = tasks_list.index
             task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
-            if task:
-                current_index = tasks_list.index
 
-                async with self.show_loading():
-                    await self.complete_task_uc.execute(task.id, self.current_list)
-                    await self.update_tasks_list(preserve_selection=True)
+            async with self.show_loading():
+                await self.complete_task_uc.execute(task.id, self.current_list)
+                await self.update_tasks_list(preserve_selection=False)
 
-                if current_index is not None:
-                    if current_index < len(tasks_list.children):
-                        tasks_list.index = current_index
-                    else:
-                        tasks_list.index = len(tasks_list.children) - 1
+            if current_index is not None:
+                if len(tasks_list.children) == 0:
+                    tasks_list.index = None
+                elif current_index < len(tasks_list.children):
+                    tasks_list.index = current_index
+                else:
+                    tasks_list.index = len(tasks_list.children) - 1
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
@@ -526,4 +538,3 @@ class LazyTaskApp(App):
 
 if __name__ == "__main__":
     app = LazyTaskApp()
-    app.run()

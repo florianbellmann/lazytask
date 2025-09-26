@@ -4,6 +4,7 @@ from textual.widgets import Label
 
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
+from lazytask.container import container
 
 
 @pytest.fixture(autouse=True)

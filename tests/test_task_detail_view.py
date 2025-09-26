@@ -7,7 +7,6 @@ from lazytask.container import container
 @pytest.mark.asyncio
 async def test_task_detail_shows_all_fields(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """
     The TaskDetail widget should display all relevant fields of a Task.
     """

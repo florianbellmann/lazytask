@@ -11,7 +11,6 @@ from lazytask.domain.task import Task
 @pytest.fixture(autouse=True)
 def set_env(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
 
 
 async def test_go_to_top():
@@ -65,7 +64,6 @@ async def test_go_to_bottom():
 @pytest.mark.asyncio
 async def test_navigation_keybindings(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test the navigation keybindings 'j' and 'k'."""
     app = LazyTaskApp()
     tasks = [

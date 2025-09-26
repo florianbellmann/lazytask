@@ -1,9 +1,7 @@
 import datetime
 
 import pytest
-from textual.widgets import Input
 
-from lazytask.domain.task import Task
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.presentation.edit_screen import EditScreen
 from lazytask.presentation.date_picker_screen import DatePickerScreen
@@ -50,7 +48,10 @@ async def test_edit_due_date(app: LazyTaskApp, mock_task_manager: MockTaskManage
         await pilot.click("#save")
         await pilot.pause()
 
-        # Check that the task was updated in the task manager
-        updated_task = await mock_task_manager.get_task(task.id)
+        # Verify the task's due date is updated in the task manager
+        tasks = await app.get_tasks_uc.task_manager.get_tasks()
+        updated_task = next(
+            (t for t in tasks if t.id == create_task_in_manager.id), None
+        )
         assert updated_task is not None
         assert updated_task.due_date == new_date

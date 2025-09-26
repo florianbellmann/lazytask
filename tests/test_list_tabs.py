@@ -7,7 +7,6 @@ from lazytask.presentation.list_tabs import ListTabs
 
 async def test_list_tabs_from_config(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "list1,list2,list3")
-    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "list2")
     app = LazyTaskApp()
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -16,13 +15,12 @@ async def test_list_tabs_from_config(monkeypatch):
         assert "list1" in rendered_text
         assert "list2" in rendered_text
         assert "list3" in rendered_text
-        assert app.current_list == "list2"
+        assert app.current_list == "list1"
 
 
 @pytest.mark.asyncio
 async def test_list_tabs_display(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2,inbox,work")
-    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test that the list tabs are displayed and updated correctly."""
     app = LazyTaskApp()
 

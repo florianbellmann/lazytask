@@ -15,7 +15,6 @@ async def test_move_to_tomorrow(monkeypatch):
 @pytest.mark.asyncio
 async def test_move_to_next_monday_hotkey(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test the 'm' keybinding for moving a task to next Monday."""
     app = LazyTaskApp()
 
@@ -48,7 +47,6 @@ async def test_move_to_next_monday_hotkey(monkeypatch):
 @pytest.mark.asyncio
 async def test_move_to_next_weekend_hotkey(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     """Test the 'w' keybinding for moving a task to next weekend."""
     app = LazyTaskApp()
 

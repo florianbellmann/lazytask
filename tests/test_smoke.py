@@ -2,12 +2,14 @@ import pytest
 from textual.keys import Keys
 from textual.widgets import Label  # Added Label import
 from lazytask.presentation.app import LazyTaskApp
+from lazytask.container import container
 
 
-@pytest.fixture
-def mock_env(monkeypatch):
+@pytest.fixture(autouse=True)
+async def mock_env(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
+    task_manager = container.task_manager
+    await task_manager.clear_tasks()
 
 
 @pytest.mark.asyncio

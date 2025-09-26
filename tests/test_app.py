@@ -5,7 +5,6 @@ from lazytask.presentation.app import LazyTaskApp
 @pytest.fixture(autouse=True)
 def set_env(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
 
 
 async def test_app_starts_without_crashes():

@@ -17,7 +17,6 @@ def mock_task_manager() -> MockTaskManager:
 @pytest.fixture
 def app(mock_task_manager: MockTaskManager, monkeypatch) -> LazyTaskApp:
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     app = LazyTaskApp()
     app.get_tasks_uc.task_manager = mock_task_manager
     app.update_task_uc.task_manager = mock_task_manager
@@ -66,3 +65,9 @@ async def test_edit_due_date(app: LazyTaskApp, create_task_in_manager: Task):
         # Click the "Save" button
         await pilot.click("#save")
         await pilot.pause()
+
+        # Verify the task's due date is updated in the task manager
+        tasks = await app.get_tasks_uc.task_manager.get_tasks()
+        updated_task = next((t for t in tasks if t.id == create_task_in_manager.id), None)
+        assert updated_task is not None
+        assert updated_task.due_date == new_date

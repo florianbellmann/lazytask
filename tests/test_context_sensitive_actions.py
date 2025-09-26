@@ -10,7 +10,6 @@ from lazytask.domain.task import Task
 @pytest.fixture
 def app(monkeypatch) -> LazyTaskApp:
     monkeypatch.setenv("LAZYTASK_LISTS", "develop ,develop2")
-    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
     # Mock the use case dependencies
     app = LazyTaskApp()
     app.add_task_uc = AsyncMock()

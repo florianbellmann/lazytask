@@ -2,7 +2,7 @@ run:
 	uv run lazytask/__main__.py
 
 dev: 
-  LAZYTASK_DEFAULT_LIST="develop" LAZYTASK_LISTS="develop,develop2" uv run python lazytask
+  LAZYTASK_LISTS="develop,develop2" uv run python lazytask
    
 dev-watch:
   watchexec --exts py --restart "just dev"

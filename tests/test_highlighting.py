@@ -4,9 +4,10 @@ from lazytask.container import container
 
 
 @pytest.fixture(autouse=True)
-def set_env(monkeypatch):
+async def set_env(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-    monkeypatch.setenv("LAZYTASK_DEFAULT_LIST", "develop")
+    task_manager = container.task_manager
+    await task_manager.clear_tasks()
 
 
 async def test_navigation_j_k_changes_highlight_and_selection():

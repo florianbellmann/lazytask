@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 from textual.app import ComposeResult
@@ -29,7 +30,10 @@ class EditScreen(ModalScreen[Task]):
         self.get_tasks_uc = container.get(GetTasks)
         self.update_task_uc = container.get(UpdateTask)
 
-    async def on_mount(self) -> None:
+    def on_mount(self) -> None:
+        asyncio.create_task(self.load_task())
+
+    async def load_task(self) -> None:
         tasks = await self.get_tasks_uc.execute(self._list_name, include_completed=True)
         self._task = next((t for t in tasks if t.id == self._task_id), None)
         if not self._task:
@@ -106,11 +110,13 @@ class EditScreen(ModalScreen[Task]):
                     )
                     return
 
-            updated_task = await self.update_task_uc.execute(self._task.id, updates, self._list_name)
+            updated_task = await self.update_task_uc.execute(
+                self._task.id, updates, self._list_name
+            )
             self.dismiss(updated_task)
         elif event.button.id == "edit-due-date":
 
-            def on_date_selected(new_date: datetime.date | None):
+            def on_date_selected(new_date: datetime.date | None) -> None:
                 if self._task:
                     self._task.due_date = new_date
                     self.query_one("#due-date-label", Label).update(

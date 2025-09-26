@@ -74,30 +74,27 @@ Keep a checklist of what you did and what your status is. So next time we can co
 - [x] Input hardening
 - [x] Implement app logging for debugging
 - [x] default list should be the first in the list. not an extra env var
-- [ ] fix tests
-- [ ] handle selction and highlighhting the same
+- [x] handle selction and highlighhting the same
 - [ ] change keybindings update help pages
+- [ ] fix tests
 - [ ] recurring tasks handling
+
 ## reminders cli
 
 See ./reminders-cli-interface.md
-
 
 ### Example repos that I like
 
 - Lazygit
 - Lazydocker
 
-
 ### learnings about textual
 
-*   **Textual Async Testing:**
-    *   Use `App.run_test()` for headless execution and to get a `Pilot` object.
-    *   The `Pilot` object is crucial for simulating user interactions (e.g., `pilot.press()`, `pilot.click()`).
-    *   Tests involving Textual applications should be `async` and use `pytest-asyncio`.
-    *   Assertions verify the application's state after interactions.
-    *   Avoid directly calling app methods that modify UI state; instead, simulate user input via the `Pilot` to trigger those changes.
-    *   `ListView.index = None` is used to clear the highlight, as `clear_highlight()` is not a public method.
-    *   When a screen is dismissed, the result is passed to the `dismiss` method, and it can be accessed via `screen.result` if the screen is defined with a return type.
-
-
+- **Textual Async Testing:**
+  - Use `App.run_test()` for headless execution and to get a `Pilot` object.
+  - The `Pilot` object is crucial for simulating user interactions (e.g., `pilot.press()`, `pilot.click()`).
+  - Tests involving Textual applications should be `async` and use `pytest-asyncio`.
+  - Assertions verify the application's state after interactions.
+  - Avoid directly calling app methods that modify UI state; instead, simulate user input via the `Pilot` to trigger those changes.
+  - `ListView.index = None` is used to clear the highlight, as `clear_highlight()` is not a public method.
+  - When a screen is dismissed, the result is passed to the `dismiss` method, and it can be accessed via `screen.result` if the screen is defined with a return type.

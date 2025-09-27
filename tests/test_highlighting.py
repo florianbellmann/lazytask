@@ -3,11 +3,6 @@ from lazytask.presentation.app import LazyTaskApp
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
 
-@pytest.fixture(autouse=True)
-def set_env(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-
-
 async def test_navigation_j_k_changes_highlight_and_selection(
     app: LazyTaskApp, mock_task_manager: MockTaskManager
 ):
@@ -15,12 +10,15 @@ async def test_navigation_j_k_changes_highlight_and_selection(
     Using 'J' moves the highlight/selection down one item; using 'K' moves it up one item.
     Both highlight and selection change together and remain in sync.
     """
+    await mock_task_manager.clear_tasks()
     await mock_task_manager.add_task("task 1")
     await mock_task_manager.add_task("task 2")
     await mock_task_manager.add_task("task 3")
 
     async with app.run_test() as pilot:
+        await app.update_tasks_list()
         tasks_list = app.query_one("ListView")
+        await pilot.pause()
         assert tasks_list.index is None  # Nothing selected initially
 
         # Press 'j' to select the first item
@@ -45,11 +43,14 @@ async def test_highlight_always_matches_selection(
     """
     The highlighted task is always the selected task; they never diverge.
     """
+    await mock_task_manager.clear_tasks()
     await mock_task_manager.add_task("task 1")
     await mock_task_manager.add_task("task 2")
 
     async with app.run_test() as pilot:
+        await app.update_tasks_list()
         tasks_list = app.query_one("ListView")
+        await pilot.pause()
         assert tasks_list.index is None
         assert tasks_list.highlighted_child is None
 
@@ -70,11 +71,14 @@ async def test_selection_and_highlight_reset_to_first_on_list_switch(
     """
     When switching to another list, set highlight/selection to the first item.
     """
+    await mock_task_manager.clear_tasks()
     await mock_task_manager.add_task("task 1", list_name="develop")
     await mock_task_manager.add_task("task 2", list_name="develop")
     await mock_task_manager.add_task("task 3", list_name="develop2")
 
     async with app.run_test() as pilot:
+        await app.update_tasks_list()
+        await pilot.pause()
         tasks_list = app.query_one("ListView")
 
         # select second task in 'develop'
@@ -100,52 +104,54 @@ async def test_selection_after_completing_task(
       - Otherwise select/highlight the previous task (above), if any.
       - If neither exists (list becomes empty), select/highlight nothing.
     """
-    # Case 1: complete task in the middle
-    await mock_task_manager.clear_tasks()
-    await mock_task_manager.add_task("task 1")
-    await mock_task_manager.add_task("task 2")
-    await mock_task_manager.add_task("task 3")
-
     async with app.run_test() as pilot:
+        # Case 1: complete task in the middle
+        await mock_task_manager.clear_tasks()
+        task1 = await mock_task_manager.add_task("task 1")
+        task2 = await mock_task_manager.add_task("task 2")
+        task3 = await mock_task_manager.add_task("task 3")
+        await app.update_tasks_list()
+        await pilot.pause()
+
         tasks_list = app.query_one("ListView")
         await pilot.press("j")  # select task 1
         await pilot.press("j")  # select task 2
         await pilot.pause()
-        assert tasks_list.highlighted_child.data.title == "task 2"
+        assert tasks_list.highlighted_child.data.id == task2.id
 
         await pilot.press("c")  # complete task 2
-        await pilot.pause(0.5)
-        await pilot.pause(0.5)
-        assert tasks_list.index == 0  # task 1 is now at index 0
-        assert tasks_list.children[tasks_list.index].data.title == "task 3"
+        await pilot.pause()
+        assert tasks_list.index == 1
+        assert tasks_list.children[tasks_list.index].data.id == task3.id
 
-    # Case 2: complete last task
-    await mock_task_manager.clear_tasks()
-    await mock_task_manager.add_task("task 1")
-    await mock_task_manager.add_task("task 2")
+        # Case 2: complete last task
+        await mock_task_manager.clear_tasks()
+        task1 = await mock_task_manager.add_task("task 1")
+        task2 = await mock_task_manager.add_task("task 2")
+        await app.update_tasks_list()
+        await pilot.pause()
 
-    async with app.run_test() as pilot:
         tasks_list = app.query_one("ListView")
         await pilot.press("j")
         await pilot.press("j")
         await pilot.pause()
-        assert tasks_list.highlighted_child.data.title == "task 2"
+        assert tasks_list.highlighted_child.data.id == task2.id
 
         await pilot.press("c")  # complete task 2
         await pilot.pause()
+        assert tasks_list.index == 0
+        assert tasks_list.children[tasks_list.index].data.id == task1.id
+
+        # Case 3: complete only task
+        await mock_task_manager.clear_tasks()
+        task1 = await mock_task_manager.add_task("task 1")
+        await app.update_tasks_list()
         await pilot.pause()
-        assert tasks_list.index == 0  # task 1 is now at index 0
-        assert tasks_list.children[tasks_list.index].data.title == "task 1"
 
-    # Case 3: complete only task
-    await mock_task_manager.clear_tasks()
-    await mock_task_manager.add_task("task 1")
-
-    async with app.run_test() as pilot:
         tasks_list = app.query_one("ListView")
         await pilot.press("j")
         await pilot.pause()
-        assert tasks_list.highlighted_child.data.title == "task 1"
+        assert tasks_list.highlighted_child.data.id == task1.id
 
         await pilot.press("c")  # complete task 1
         await pilot.pause()
@@ -159,9 +165,12 @@ async def test_selection_and_highlight_move_to_new_task_after_adding(
     """
     After adding a new task, highlight/select the newly added task.
     """
+    await mock_task_manager.clear_tasks()
     await mock_task_manager.add_task("task 1")
 
     async with app.run_test() as pilot:
+        await app.update_tasks_list()
+        await pilot.pause()
         tasks_list = app.query_one("ListView")
         await pilot.press("j")
         await pilot.pause()
@@ -173,7 +182,6 @@ async def test_selection_and_highlight_move_to_new_task_after_adding(
         await pilot.press("s")
         await pilot.press("t")
         await pilot.press("enter")
-        await pilot.pause()
         await pilot.pause()
 
         assert len(tasks_list.children) == 2
@@ -190,11 +198,14 @@ async def test_filtering_keeps_current_selection_unless_filtered_out_then_first_
       - If it no longer matches, select/highlight the first item in the filtered list.
       - If the filtered list is empty, select/highlight nothing.
     """
+    await mock_task_manager.clear_tasks()
     await mock_task_manager.add_task("apple")
     await mock_task_manager.add_task("banana")
     await mock_task_manager.add_task("apricot")
 
     async with app.run_test() as pilot:
+        await app.update_tasks_list()
+        await pilot.pause()
         tasks_list = app.query_one("ListView")
 
         # Select "banana"
@@ -240,11 +251,14 @@ async def test_reselect_previous_task_after_completion(
     app: LazyTaskApp, mock_task_manager: MockTaskManager
 ):
     """Test that the same index is selected after a task is completed."""
+    await mock_task_manager.clear_tasks()
     task1 = await mock_task_manager.add_task("task 1")
     task2 = await mock_task_manager.add_task("task 2")
     task3 = await mock_task_manager.add_task("task 3")
 
     async with app.run_test() as pilot:
+        await app.update_tasks_list()
+        await pilot.pause()
         tasks_list = app.query_one("ListView")
 
         # Select a task in the middle of the list.
@@ -257,7 +271,6 @@ async def test_reselect_previous_task_after_completion(
 
         # Simulate the user pressing 'c' to complete the task.
         await pilot.press("c")
-        await pilot.pause()
         await pilot.pause()
 
         # Re-query the ListView to get the new instance

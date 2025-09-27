@@ -1,17 +1,16 @@
 import pytest
 import datetime
 from lazytask.presentation.app import LazyTaskApp
-from lazytask.container import container
 from lazytask.presentation.date_picker_screen import DatePickerScreen
+from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
 
 @pytest.mark.asyncio
-async def test_date_picker_updates_task_date(monkeypatch):
-    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+async def test_date_picker_updates_task_date(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """Test that the date picker correctly updates a task's due date."""
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("Test Task", due_date=datetime.date(2023, 1, 1))
+    await mock_task_manager.add_task("Test Task", due_date=datetime.date(2023, 1, 1))
 
     async with app.run_test() as pilot:
         # Select the task
@@ -31,6 +30,6 @@ async def test_date_picker_updates_task_date(monkeypatch):
         await pilot.pause()  # Allow screen to dismiss
 
         # Verify the task's due date is updated
-        updated_tasks = await task_manager.get_tasks("develop")
+        updated_tasks = await mock_task_manager.get_tasks("develop")
         updated_task = updated_tasks[0]
         assert updated_task.due_date == new_date

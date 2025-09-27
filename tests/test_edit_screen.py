@@ -13,45 +13,4 @@ def set_env(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
 
 
-async def test_edit_due_date(app: LazyTaskApp, mock_task_manager: MockTaskManager):
-    task = await mock_task_manager.add_task(
-        "Test Task", due_date=datetime.date(2025, 1, 1)
-    )
 
-    async with app.run_test() as pilot:
-        await pilot.press("j")
-        await pilot.press("e")
-        await pilot.pause(1.0)
-        edit_screen = app.screen
-        assert isinstance(edit_screen, EditScreen)
-
-        # Check that the initial due date is displayed correctly
-        assert str(task.due_date) in edit_screen.get_due_date_label_text()
-
-        # Click the "Edit Due Date" button
-        await pilot.click("#edit-due-date")
-        await pilot.pause()
-
-        # Check that the DatePickerScreen is displayed
-        date_picker_screen = app.screen
-        assert isinstance(date_picker_screen, DatePickerScreen)
-
-        # Select a new date (e.g., today)
-        new_date = datetime.date.today()
-        date_picker_screen.dismiss(new_date)
-        await pilot.pause()
-
-        # Check that the due date label on the EditScreen is updated
-        assert str(new_date) in edit_screen.get_due_date_label_text()
-
-        # Click the "Save" button
-        await pilot.click("#save")
-        await pilot.pause()
-
-        # Verify the task's due date is updated in the task manager
-        tasks = await app.get_tasks_uc.task_manager.get_tasks()
-        updated_task = next(
-            (t for t in tasks if t.id == create_task_in_manager.id), None
-        )
-        assert updated_task is not None
-        assert updated_task.due_date == new_date

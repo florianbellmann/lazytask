@@ -1,37 +1,29 @@
 import pytest
 from lazytask.presentation.app import LazyTaskApp
-from lazytask.container import container
+from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
 
-@pytest.fixture(autouse=True)
-async def clear_tasks(monkeypatch):
-    monkeypatch.setenv("LAZYTASK_LISTS", "develop ,develop2")
-    task_manager = container.task_manager
-    await task_manager.clear_tasks()
-
-
-async def test_filtering_with_slash_button():
+async def test_filtering_with_slash_button(app: LazyTaskApp):
     """
     Verify that pressing the slash button (`/`) activates filtering
     and allows typing a filter string.
     """
-    app = LazyTaskApp()
     async with app.run_test() as pilot:
         await pilot.press("/")
         await pilot.pause()
         assert isinstance(pilot.app.screen, object)  # Check if a modal is open
 
 
-async def test_filtering_is_case_insensitive():
+async def test_filtering_is_case_insensitive(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """
     Verify that filtering matches tasks regardless of case.
     Example: typing 'foo' matches tasks named 'Foo' or 'FOO'.
     """
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("Task 1")
-    await task_manager.add_task("task 2")
-    await task_manager.add_task("TASK 3")
+    await mock_task_manager.add_task("Task 1")
+    await mock_task_manager.add_task("task 2")
+    await mock_task_manager.add_task("TASK 3")
 
     async with app.run_test() as pilot:
         await app.update_tasks_list(filter_query="task")
@@ -40,14 +32,14 @@ async def test_filtering_is_case_insensitive():
         assert len(tasks_list.children) == 3
 
 
-async def test_filtering_persists_after_completing_task():
+async def test_filtering_persists_after_completing_task(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """
     Verify that the active filter remains applied after a task is marked complete.
     """
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("Task 1")
-    await task_manager.add_task("Task 2")
+    await mock_task_manager.add_task("Task 1")
+    await mock_task_manager.add_task("Task 2")
 
     async with app.run_test() as pilot:
         await app.update_tasks_list(filter_query="Task")
@@ -62,13 +54,13 @@ async def test_filtering_persists_after_completing_task():
         assert len(tasks_list.children) == 1
 
 
-async def test_filtering_persists_after_adding_task():
+async def test_filtering_persists_after_adding_task(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """
     Verify that the active filter remains applied after adding a new task.
     """
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("Task 1")
+    await mock_task_manager.add_task("Task 1")
 
     async with app.run_test() as pilot:
         await app.update_tasks_list(filter_query="Task")
@@ -91,14 +83,14 @@ async def test_filtering_persists_after_adding_task():
         assert len(tasks_list.children) == 2
 
 
-async def test_escape_clears_filtering():
+async def test_escape_clears_filtering(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """
     Verify that pressing Escape clears the current filter text.
     """
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("Task 1")
-    await task_manager.add_task("Another task")
+    await mock_task_manager.add_task("Task 1")
+    await mock_task_manager.add_task("Another task")
 
     async with app.run_test() as pilot:
         await app.update_tasks_list(filter_query="Task")
@@ -112,15 +104,15 @@ async def test_escape_clears_filtering():
         assert len(tasks_list.children) == 2
 
 
-async def test_filtering_clears_when_switching_list():
+async def test_filtering_clears_when_switching_list(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """
     Verify that switching to a different list clears the current filter.
     """
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("Task 1", list_name="develop")
-    await task_manager.add_task("Another task", list_name="develop")
-    await task_manager.add_task("Task 2", list_name="develop2")
+    await mock_task_manager.add_task("Task 1", list_name="develop")
+    await mock_task_manager.add_task("Another task", list_name="develop")
+    await mock_task_manager.add_task("Task 2", list_name="develop2")
 
     async with app.run_test() as pilot:
         await app.update_tasks_list(filter_query="Task")
@@ -135,13 +127,13 @@ async def test_filtering_clears_when_switching_list():
         assert app.filter_query == ""
 
 
-async def test_filtering_clears_when_switching_to_all_list_mode():
+async def test_filtering_clears_when_switching_to_all_list_mode(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """
     Verify that switching to 'all lists' mode clears the current filter.
     """
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("Task 1", list_name="develop")
+    await mock_task_manager.add_task("Task 1", list_name="develop")
 
     async with app.run_test() as pilot:
         await app.update_tasks_list(filter_query="Task")

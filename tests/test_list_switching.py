@@ -23,6 +23,8 @@ async def test_switch_list_with_number_keys(monkeypatch):
     develop2_task = Task(id="4", title="Task in develop2")
 
     async def get_tasks_side_effect(list_name, include_completed=False):
+        if list_name == "all":
+            return [inbox_task, work_task, develop_task, develop2_task]
         if list_name == "inbox":
             return [inbox_task]
         if list_name == "work":
@@ -46,6 +48,19 @@ async def test_switch_list_with_number_keys(monkeypatch):
         list_view = app.query_one(ListView)
         assert len(list_view.children) == 1
         assert list_view.children[0].data.title == "Task in develop"
+
+        # Initially, it should be the default list
+        assert app.current_list == "develop"
+        list_view = app.query_one(ListView)
+        assert len(list_view.children) == 1
+        assert list_view.children[0].data.title == "Task in develop"
+
+        # Press '1' to switch to "All Tasks"
+        await pilot.press("1")
+        await pilot.pause()
+        assert app.current_list == "all"
+        list_view = app.query_one(ListView)
+        assert len(list_view.children) == 4 # Assuming all tasks for "all" initially
 
         # Press '2' to switch to the first list 'develop'
         await pilot.press("2")

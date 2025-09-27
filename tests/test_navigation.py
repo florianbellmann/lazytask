@@ -1,27 +1,19 @@
 import pytest
 from textual.widgets import ListView
 from lazytask.presentation.app import LazyTaskApp
-from lazytask.container import container
-
+from lazytask.infrastructure.mock_task_manager import MockTaskManager
 from unittest.mock import AsyncMock
-
 from lazytask.domain.task import Task
 
 
-@pytest.fixture(autouse=True)
-def set_env(monkeypatch):
-    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-
-
-async def test_go_to_top():
+async def test_go_to_top(app: LazyTaskApp, mock_task_manager: MockTaskManager):
     """Test that 'g' moves the cursor to the top of the list."""
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("task 1")
-    await task_manager.add_task("task 2")
-    await task_manager.add_task("task 3")
+    await mock_task_manager.add_task("task 1")
+    await mock_task_manager.add_task("task 2")
+    await mock_task_manager.add_task("task 3")
 
     async with app.run_test() as pilot:
+        await pilot.pause(0.1)
         tasks_list = app.query_one("ListView")
 
         # Set the cursor to a position other than the top.
@@ -30,22 +22,21 @@ async def test_go_to_top():
         assert tasks_list.index == 1
 
         # Simulate the user pressing 'g'.
-        app.action_go_to_top()
+        await pilot.press("g")
         await pilot.pause(0.1)
 
         # Assert that the cursor is at the top of the list.
         assert tasks_list.index == 0
 
 
-async def test_go_to_bottom():
+async def test_go_to_bottom(app: LazyTaskApp, mock_task_manager: MockTaskManager):
     """Test that 'G' moves the cursor to the bottom of the list."""
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("task 1")
-    await task_manager.add_task("task 2")
-    await task_manager.add_task("task 3")
+    await mock_task_manager.add_task("task 1")
+    await mock_task_manager.add_task("task 2")
+    await mock_task_manager.add_task("task 3")
 
     async with app.run_test() as pilot:
+        await pilot.pause(0.1)
         tasks_list = app.query_one("ListView")
 
         # Set the cursor to a position other than the bottom.
@@ -54,7 +45,7 @@ async def test_go_to_bottom():
         assert tasks_list.index == 0
 
         # Simulate the user pressing 'G'.
-        app.action_go_to_bottom()
+        await pilot.press("G")
         await pilot.pause(0.1)
 
         # Assert that the cursor is at the bottom of the list.
@@ -62,10 +53,10 @@ async def test_go_to_bottom():
 
 
 @pytest.mark.asyncio
-async def test_navigation_keybindings(monkeypatch):
-    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+async def test_navigation_keybindings(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """Test the navigation keybindings 'j' and 'k'."""
-    app = LazyTaskApp()
     tasks = [
         Task(id="1", title="Task 1"),
         Task(id="2", title="Task 2"),
@@ -84,7 +75,6 @@ async def test_navigation_keybindings(monkeypatch):
         tasks_list.focus()
         await pilot.pause()
 
-        # Test 'j' for moving down
         # Test 'j' for moving down
         await pilot.press("j")
         await pilot.pause()

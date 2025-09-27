@@ -1,20 +1,22 @@
 import pytest
 from lazytask.presentation.app import LazyTaskApp, TaskListItem
-from lazytask.container import container
+from lazytask.infrastructure.mock_task_manager import MockTaskManager
 from typing import cast
 
 
 @pytest.mark.asyncio
-async def test_toggle_completed_tasks(monkeypatch):
-    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+async def test_toggle_completed_tasks(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """Test that toggling the completed tasks view works correctly."""
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("incomplete task")
-    completed_task = await task_manager.add_task("completed task")
-    await task_manager.complete_task(completed_task.id)
+    await mock_task_manager.clear_tasks()
+    await mock_task_manager.add_task("incomplete task")
+    completed_task = await mock_task_manager.add_task("completed task")
+    await mock_task_manager.complete_task(completed_task.id)
 
     async with app.run_test() as pilot:
+        await app.update_tasks_list()
+        await pilot.pause()
         tasks_list = app.query_one("ListView")
 
         # Initially, assert that only incomplete tasks are shown.
@@ -36,17 +38,17 @@ async def test_toggle_completed_tasks(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_completing_task_selects_next_one(monkeypatch):
-    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+async def test_completing_task_selects_next_one(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """Test that completing a task selects the next task in the list."""
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.clear_tasks()
-    await task_manager.add_task("task 1")
-    await task_manager.add_task("task 2")
-    await task_manager.add_task("task 3")
+    await mock_task_manager.clear_tasks()
+    await mock_task_manager.add_task("task 1")
+    await mock_task_manager.add_task("task 2")
+    await mock_task_manager.add_task("task 3")
 
     async with app.run_test() as pilot:
+        await app.update_tasks_list()
         tasks_list = app.query_one("ListView")
         await pilot.pause()
 

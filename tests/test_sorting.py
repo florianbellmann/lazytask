@@ -1,28 +1,23 @@
 import datetime
 import pytest
 from lazytask.presentation.app import LazyTaskApp
-from lazytask.container import container
+from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
 
-@pytest.fixture(autouse=True)
-def set_env(monkeypatch):
-    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-
-
-async def test_default_sort_due_date_oldest_first_selected_on_startup():
+async def test_default_sort_due_date_oldest_first_selected_on_startup(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """
     On startup:
       - The selected sort is 'due date ascending' (oldest first).
       - The visible list is sorted by due date from oldest to newest.
     """
-    app = LazyTaskApp()
     assert app.sort_by == "due_date"
     assert app.sort_reverse is False
 
-    task_manager = container.task_manager
-    await task_manager.add_task("task 1", due_date=datetime.date(2025, 1, 2))
-    await task_manager.add_task("task 2", due_date=datetime.date(2025, 1, 1))
-    await task_manager.add_task("task 3", due_date=datetime.date(2025, 1, 3))
+    await mock_task_manager.add_task("task 1", due_date=datetime.date(2025, 1, 2))
+    await mock_task_manager.add_task("task 2", due_date=datetime.date(2025, 1, 1))
+    await mock_task_manager.add_task("task 3", due_date=datetime.date(2025, 1, 3))
 
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -31,17 +26,17 @@ async def test_default_sort_due_date_oldest_first_selected_on_startup():
         assert rendered_tasks == ["task 2", "task 1", "task 3"]
 
 
-async def test_sort_due_date_descending_when_direction_reversed():
+async def test_sort_due_date_descending_when_direction_reversed(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """
     When switching the sort direction while on 'due date':
       - The list becomes sorted newest -> oldest.
       - Confirm it is strictly the reverse order of ascending-by-due-date.
     """
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("task 1", due_date=datetime.date(2025, 1, 2))
-    await task_manager.add_task("task 2", due_date=datetime.date(2025, 1, 1))
-    await task_manager.add_task("task 3", due_date=datetime.date(2025, 1, 3))
+    await mock_task_manager.add_task("task 1", due_date=datetime.date(2025, 1, 2))
+    await mock_task_manager.add_task("task 2", due_date=datetime.date(2025, 1, 1))
+    await mock_task_manager.add_task("task 3", due_date=datetime.date(2025, 1, 3))
 
     async with app.run_test() as pilot:
         await pilot.press("ctrl+i")  # reverse sort
@@ -53,17 +48,17 @@ async def test_sort_due_date_descending_when_direction_reversed():
         assert rendered_tasks == ["task 3", "task 1", "task 2"]
 
 
-async def test_sort_alphabetically_ascending():
+async def test_sort_alphabetically_ascending(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """
     When choosing alphabetical sort:
       - The list is sorted A -> Z by task title.
       - The selected sort reflects 'alphabetical ascending'.
     """
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("b task")
-    await task_manager.add_task("a task")
-    await task_manager.add_task("c task")
+    await mock_task_manager.add_task("b task")
+    await mock_task_manager.add_task("a task")
+    await mock_task_manager.add_task("c task")
 
     async with app.run_test() as pilot:
         # Default sort is by due_date. Press ctrl+o to switch to title sort.
@@ -76,18 +71,18 @@ async def test_sort_alphabetically_ascending():
         assert rendered_tasks == ["a task", "b task", "c task"]
 
 
-async def test_sort_alphabetically_descending():
+async def test_sort_alphabetically_descending(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """
     When choosing alphabetical sort reversed:
       - The list is sorted Z -> A by task title.
       - Confirm it is strictly the reverse order of alphabetical ascending.
       - The selected sort reflects 'alphabetical descending'.
     """
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("b task")
-    await task_manager.add_task("a task")
-    await task_manager.add_task("c task")
+    await mock_task_manager.add_task("b task")
+    await mock_task_manager.add_task("a task")
+    await mock_task_manager.add_task("c task")
 
     async with app.run_test() as pilot:
         await pilot.press("ctrl+o")  # sort by title
@@ -101,11 +96,10 @@ async def test_sort_alphabetically_descending():
         assert rendered_tasks == ["c task", "b task", "a task"]
 
 
-async def test_sort_cycle():
+async def test_sort_cycle(app: LazyTaskApp):
     """
     Choosing sort cycles through due_date, title, creation_date.
     """
-    app = LazyTaskApp()
     async with app.run_test() as pilot:
         assert app.sort_by == "due_date"
 
@@ -122,13 +116,13 @@ async def test_sort_cycle():
         assert app.sort_by == "due_date"
 
 
-async def test_sort_by_title_case_insensitive():
+async def test_sort_by_title_case_insensitive(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """Test that sorting by title is case-insensitive."""
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task("b task")
-    await task_manager.add_task("a task")
-    await task_manager.add_task("C task")
+    await mock_task_manager.add_task("b task")
+    await mock_task_manager.add_task("a task")
+    await mock_task_manager.add_task("C task")
 
     async with app.run_test() as pilot:
         await pilot.press("ctrl+o")  # sort by title
@@ -139,17 +133,17 @@ async def test_sort_by_title_case_insensitive():
         assert rendered_tasks == ["a task", "b task", "C task"]
 
 
-async def test_sort_by_creation_date():
+async def test_sort_by_creation_date(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """Test that sorting by creation date works."""
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    await task_manager.add_task(
+    await mock_task_manager.add_task(
         "task 1", creation_date=datetime.datetime(2025, 1, 1, 12, 0, 2)
     )
-    await task_manager.add_task(
+    await mock_task_manager.add_task(
         "task 2", creation_date=datetime.datetime(2025, 1, 1, 12, 0, 1)
     )
-    await task_manager.add_task(
+    await mock_task_manager.add_task(
         "task 3", creation_date=datetime.datetime(2025, 1, 1, 12, 0, 3)
     )
 

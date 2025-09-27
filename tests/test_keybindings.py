@@ -8,35 +8,24 @@ from textual.widgets import ListView
 
 
 async def test_tab_keybindings_from_config(monkeypatch):
-    monkeypatch.setenv(
-        "LAZYTASK_LISTS", "list1,list2 ,list3,list4, list5,list6,list7,list8 "
-    )
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2,list3,list4,list5")
     app = LazyTaskApp()
     async with app.run_test() as pilot:
+        await pilot.press("1")
+        await pilot.pause()
+        assert app.current_list == "all"
         await pilot.press("2")
         await pilot.pause()
-        assert app.current_list == "list1"
+        assert app.current_list == "develop"
         await pilot.press("3")
         await pilot.pause()
-        assert app.current_list == "list2"
+        assert app.current_list == "develop2"
         await pilot.press("4")
         await pilot.pause()
         assert app.current_list == "list3"
         await pilot.press("5")
         await pilot.pause()
         assert app.current_list == "list4"
-        await pilot.press("6")
-        await pilot.pause()
-        assert app.current_list == "list5"
-        await pilot.press("7")
-        await pilot.pause()
-        assert app.current_list == "list6"
-        await pilot.press("8")
-        await pilot.pause()
-        assert app.current_list == "list7"
-        await pilot.press("9")
-        await pilot.pause()
-        assert app.current_list == "list8"
 
 
 @pytest.mark.asyncio

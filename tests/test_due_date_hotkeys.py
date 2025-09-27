@@ -8,8 +8,30 @@ from lazytask.domain.task import Task
 
 @pytest.mark.asyncio
 async def test_move_to_tomorrow(monkeypatch):
-    # TODO: missing impl
-    pass
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    """Test the 't' keybinding for moving a task to tomorrow."""
+    app = LazyTaskApp()
+
+    mock_task = Task(id="1", title="Test Task")
+    app.get_tasks_uc.execute = AsyncMock(return_value=[mock_task])
+    app.update_task_uc.execute = AsyncMock()
+
+    tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+
+    async with app.run_test() as pilot:
+        await app.update_tasks_list()  # Manually update the list
+        await pilot.pause()
+
+        tasks_list = app.query_one("ListView")
+        tasks_list.index = 0
+        await pilot.pause()
+
+        await pilot.press("t")
+        await pilot.pause()
+
+        app.update_task_uc.execute.assert_called_once()
+        args, kwargs = app.update_task_uc.execute.call_args
+        assert args[1]["due_date"] == tomorrow
 
 
 @pytest.mark.asyncio
@@ -68,7 +90,7 @@ async def test_move_to_next_weekend_hotkey(monkeypatch):
         tasks_list.index = 0
         await pilot.pause()
 
-        await pilot.press("w")
+        await pilot.press("k")
         await pilot.pause()
 
         app.update_task_uc.execute.assert_called_once()

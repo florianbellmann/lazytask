@@ -1,18 +1,17 @@
 import datetime
 import pytest
 from lazytask.presentation.app import LazyTaskApp
-from lazytask.container import container
+from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
 
 @pytest.mark.asyncio
-async def test_task_detail_shows_all_fields(monkeypatch):
-    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+async def test_task_detail_shows_all_fields(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     """
     The TaskDetail widget should display all relevant fields of a Task.
     """
-    app = LazyTaskApp()
-    task_manager = container.task_manager
-    task = await task_manager.add_task(
+    task = await mock_task_manager.add_task(
         title="Test Task",
         list_name="develop",
         due_date=datetime.date(2025, 1, 1),
@@ -24,6 +23,7 @@ async def test_task_detail_shows_all_fields(monkeypatch):
     )
 
     async with app.run_test() as pilot:
+        await pilot.pause()
         await pilot.press("j")  # select the task
         await pilot.pause()
 
@@ -40,7 +40,7 @@ async def test_task_detail_shows_all_fields(monkeypatch):
         assert "Recurring: daily" in rendered_text
         assert "Status: Pending" in rendered_text
 
-        await task_manager.complete_task(task.id)
+        await mock_task_manager.complete_task(task.id)
         app.show_completed = True
         await app.update_tasks_list()
         await pilot.pause()

@@ -12,7 +12,8 @@ def mock_task_manager() -> MockTaskManager:
 
 
 @pytest.fixture
-async def app(mock_task_manager: MockTaskManager) -> LazyTaskApp:
+async def app(mock_task_manager: MockTaskManager, monkeypatch) -> LazyTaskApp:
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
     await mock_task_manager.clear_tasks()
-    return LazyTaskApp()
-
+    app = LazyTaskApp()
+    return app

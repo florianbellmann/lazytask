@@ -178,7 +178,7 @@ class LazyTaskApp(App):
                 "e",
                 "t",
                 "m",
-                "w",
+                "k",
                 "meta+e",
             ]
             and self.query_one(ListView).highlighted_child is None

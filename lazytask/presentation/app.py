@@ -70,7 +70,7 @@ class LazyTaskApp(App):
         ("e", "edit_description", "Edit description"),
         ("t", "move_to_tomorrow", "Move to tomorrow"),
         ("m", "move_to_next_monday", "Move to next monday"),
-        # ("k", "move_to_next_weekend", "Move to next weekend"),
+        ("w", "move_to_next_weekend", "Move to next weekend"),
         ("ctrl+d", "toggle_overdue", "Toggle Overdue"),
         ("ctrl+c", "toggle_completed", "Toggle Completed"),
         ("ctrl+r", "refresh", "Refresh"),
@@ -230,8 +230,11 @@ class LazyTaskApp(App):
         filter_query: str | None = None,
         preserve_selection: bool = True,
         newly_added_task_id: str | None = None,
+        completed_task_index: int | None = None,
     ):
         """Update the tasks list view."""
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            logging.info(f"update_tasks_list called with show_completed={self.show_completed}")
         if filter_query is not None:
             self.filter_query = filter_query
 
@@ -310,7 +313,21 @@ class LazyTaskApp(App):
             tasks_list_view.append(list_item)
         self.title = f"LazyTask - {self.current_list}"
 
-        if newly_added_task_id:
+        if completed_task_index is not None:
+            if os.environ.get("PYTEST_CURRENT_TEST"):
+                logging.info(f"completed_task_index: {completed_task_index}")
+                logging.info(f"len(tasks_list_view.children): {len(tasks_list_view.children)}")
+            if not tasks_list_view.children:
+                tasks_list_view.index = None
+            elif completed_task_index < len(tasks_list_view.children):
+                tasks_list_view.index = completed_task_index
+                if os.environ.get("PYTEST_CURRENT_TEST"):
+                    logging.info(f"index set to: {tasks_list_view.index}")
+            else:
+                tasks_list_view.index = completed_task_index - 1
+                if os.environ.get("PYTEST_CURRENT_TEST"):
+                    logging.info(f"index set to: {tasks_list_view.index}")
+        elif newly_added_task_id:
             for i, item in enumerate(tasks_list_view.children):
                 if cast(TaskListItem, item).data.id == newly_added_task_id:
                     tasks_list_view.index = i
@@ -456,7 +473,13 @@ class LazyTaskApp(App):
         """An action to filter tasks."""
 
         def on_submit(value: str | None) -> None:
-            asyncio.create_task(self.update_tasks_list(value or ""))
+            async def filter_and_select():
+                await self.update_tasks_list(value or "", preserve_selection=False)
+                tasks_list_view = self.query_one(ListView)
+                if tasks_list_view.children:
+                    tasks_list_view.index = 0
+
+            asyncio.create_task(filter_and_select())
 
         self.push_screen(TextInputModal(prompt="Filter tasks:"), on_submit)
 
@@ -534,15 +557,7 @@ class LazyTaskApp(App):
             task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
 
             await self.complete_task_uc.execute(task.id, self.current_list)
-            await self.update_tasks_list(preserve_selection=False)
-
-            if current_index is not None:
-                if not tasks_list.children:
-                    tasks_list.index = None
-                elif current_index < len(tasks_list.children):
-                    tasks_list.index = current_index
-                else:
-                    tasks_list.index = len(tasks_list.children) - 1
+            await self.update_tasks_list(completed_task_index=current_index)
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""

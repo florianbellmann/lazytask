@@ -90,7 +90,7 @@ async def test_move_to_next_weekend_hotkey(monkeypatch):
         tasks_list.index = 0
         await pilot.pause()
 
-        await pilot.press("k")
+        await pilot.press("w")
         await pilot.pause()
 
         app.update_task_uc.execute.assert_called_once()

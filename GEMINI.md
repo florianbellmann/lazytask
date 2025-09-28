@@ -18,6 +18,8 @@
 - Use existing test utilities/helpers
 - Tests should be deterministic
 
+- When adding logging during fixing tests. always add them in a way that they only get executed running pytest. then they can also stay in the code to help future test fixing
+
 **NEVER**:
 
 - Use `--no-verify` to bypass commit hooks

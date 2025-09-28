@@ -497,12 +497,10 @@ class LazyTaskApp(App):
     def action_cursor_up(self) -> None:
         """Move cursor up in the list."""
         tasks_list = self.query_one(ListView)
-        logging.info(f"action_cursor_up: index before: {tasks_list.index}")
         if tasks_list.index is None and tasks_list.children:
             tasks_list.index = 0
         elif tasks_list.index is not None and tasks_list.index > 0:
             tasks_list.index -= 1
-        logging.info(f"action_cursor_up: index after: {tasks_list.index}")
 
     def action_go_to_top(self) -> None:
         """Go to the top of the list."""

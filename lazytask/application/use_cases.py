@@ -9,7 +9,6 @@ class AddTask:
         self.task_manager = task_manager
 
     async def execute(self, title: str, list_name: str = "develop", **kwargs) -> Task:
-        logging.info(f"Adding task with title: {title}")
         return await self.task_manager.add_task(title, list_name, **kwargs)
 
 

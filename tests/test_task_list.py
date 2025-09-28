@@ -76,7 +76,7 @@ async def test_completing_task_selects_next_one(
 
         # Complete the now-second task
         await pilot.press("c")
-        await pilot.pause()
+        await pilot.pause(0.1)
 
         # Assert that there is 1 task left
         assert len(tasks_list.children) == 1

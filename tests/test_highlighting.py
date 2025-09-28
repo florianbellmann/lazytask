@@ -115,8 +115,7 @@ async def test_selection_after_completing_task(
         assert tasks_list.highlighted_child.data.title == "task 2"
 
         await pilot.press("c")  # complete task 2
-        await pilot.pause(0.5)
-        await pilot.pause(0.5)
+        await pilot.pause(0.1)
         assert tasks_list.index == 1  # task 3 is now at index 1
         assert tasks_list.children[tasks_list.index].data.title == "task 3"
 

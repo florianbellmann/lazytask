@@ -176,7 +176,9 @@ class LazyTaskApp(App):
 
     async def on_key(self, event: events.Key) -> None:
         if os.environ.get("PYTEST_CURRENT_TEST"):
-            logging.info(f"on_key: key: {event.key}, index: {self.query_one(ListView).index}")
+            logging.info(
+                f"on_key: key: {event.key}, index: {self.query_one(ListView).index}"
+            )
         if (
             event.key
             in [
@@ -185,7 +187,6 @@ class LazyTaskApp(App):
                 "e",
                 "t",
                 "m",
-                "meta+e",
             ]
             and self.query_one(ListView).index is None
         ):
@@ -234,12 +235,15 @@ class LazyTaskApp(App):
     ):
         """Update the tasks list view."""
         if os.environ.get("PYTEST_CURRENT_TEST"):
-            logging.info(f"update_tasks_list called with show_completed={self.show_completed}")
+            logging.info(
+                f"update_tasks_list called with show_completed={self.show_completed}"
+            )
         if filter_query is not None:
             self.filter_query = filter_query
 
         self.query_one(ListTabs).update_lists(self.available_lists, self.current_list)
         tasks_list_view = self.query_one(ListView)
+        print(f"taasks_list_view: {tasks_list_view}")
         selected_task_id = None
         if preserve_selection and tasks_list_view.highlighted_child:
             selected_task_id = cast(
@@ -316,14 +320,21 @@ class LazyTaskApp(App):
         if completed_task_index is not None:
             if os.environ.get("PYTEST_CURRENT_TEST"):
                 logging.info(f"completed_task_index: {completed_task_index}")
-                logging.info(f"len(tasks_list_view.children): {len(tasks_list_view.children)}")
+                logging.info(
+                    f"len(tasks_list_view.children): {len(tasks_list_view.children)}"
+                )
             if not tasks_list_view.children:
                 tasks_list_view.index = None
             elif completed_task_index < len(tasks_list_view.children):
                 tasks_list_view.index = completed_task_index
+                print(
+                    f"completed_task_index: {completed_task_index}, len: {len(tasks_list_view.children)}"
+                )
+                print(f" idx was smaller, index set to: {tasks_list_view.index}")
                 if os.environ.get("PYTEST_CURRENT_TEST"):
                     logging.info(f"index set to: {tasks_list_view.index}")
             else:
+                print(f"else branch, index set to: {len(tasks_list_view.children) - 1}")
                 tasks_list_view.index = completed_task_index - 1
                 if os.environ.get("PYTEST_CURRENT_TEST"):
                     logging.info(f"index set to: {tasks_list_view.index}")

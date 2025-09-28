@@ -83,6 +83,7 @@ Keep a checklist of what you did and what your status is. So next time we can co
 - [ ] recurring tasks handling
 - [ ] i need to be able to create a new task zhrough a singular prompt. mesning running a quick cli prompt for getting the title and confirming the creation. then the process stops. this should be independent from the normal main application. recurring tasks loading indicators
 - [ ] testing and bug fixes 
+- [ ] instead of using PYTEST_CURRENT_TEST env var. use logging.debug and enable that for the tests
 
 
 ## reminders cli

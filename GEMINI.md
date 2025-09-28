@@ -79,6 +79,10 @@ Keep a checklist of what you did and what your status is. So next time we can co
 - [x] default list should be the first in the list. not an extra env var
 - [x] handle selction and highlighhting the same
 - [x] change keybindings update help pages
+- [ ] task completion is not working
+- [ ] when switching lists, the selected index should always be reset to 1. meaning the first item in a list. this is also needed for switching to and
+from the all items view. fix this and cover it with tests
+- [ ] i need to be able to move tasks to other lists. implement this feature with the hotkey y to choose a list to move to. cover it with tests
 - [ ] fix tests
 - [ ] recurring tasks handling
 - [ ] i need to be able to create a new task zhrough a singular prompt. mesning running a quick cli prompt for getting the title and confirming the creation. then the process stops. this should be independent from the normal main application. recurring tasks loading indicators

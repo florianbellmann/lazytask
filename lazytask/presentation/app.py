@@ -168,6 +168,8 @@ class LazyTaskApp(App):
         self.filter_query = ""
         self.query_one(ListView).clear()
         await self.update_tasks_list(preserve_selection=False)
+        if self.query_one(ListView).children:
+            self.query_one(ListView).index = 0
 
     async def on_key(self, event: events.Key) -> None:
         if (
@@ -293,7 +295,7 @@ class LazyTaskApp(App):
             if task.tags:
                 details.append(f"tags: {','.join(task.tags)}")
             if task.priority:
-                details.append(f"prio: {task.priority}")
+                details.append(f"prio: {self.data.priority}")
             if task.is_flagged:
                 details.append("flagged")
             details_str = f" ({', '.join(details)})" if details else ""
@@ -307,8 +309,7 @@ class LazyTaskApp(App):
                 if cast(TaskListItem, item).data.id == newly_added_task_id:
                     tasks_list_view.index = i
                     break
-        elif tasks_list_view.children:
-            tasks_list_view.index = 0
+
         else:
             tasks_list_view.index = None
 
@@ -518,12 +519,11 @@ class LazyTaskApp(App):
             current_index = tasks_list.index
             task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
 
-            async with self.show_loading():
-                await self.complete_task_uc.execute(task.id, self.current_list)
-                await self.update_tasks_list(preserve_selection=False)
+            await self.complete_task_uc.execute(task.id, self.current_list)
+            await self.update_tasks_list(preserve_selection=False)
 
             if current_index is not None:
-                if len(tasks_list.children) == 0:
+                if not tasks_list.children:
                     tasks_list.index = None
                 elif current_index < len(tasks_list.children):
                     tasks_list.index = current_index

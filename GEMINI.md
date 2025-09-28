@@ -80,14 +80,8 @@ Keep a checklist of what you did and what your status is. So next time we can co
 - [x] change keybindings update help pages
 - [ ] fix tests
 - [ ] recurring tasks handling
-i need to be able to create a new task zhrough a singular prompt. mesning running a quick cli prompt for getting the title and confirming the creation. then the process stops. this should be independent from the normal main application. 
-recurring tasks 
-loading indicators
-
-Well, at this stage I now need to give the app a proper harness with myPyRough check format and then a lot of tests. So my next approach would be a kind of TDD style workflow, where I define out all of the tests that I want to see and all of the features that I want the app to have, and then slowly but steady get it to where it needs to be. This is a bit more tedious to do on the phone, so I think I can can do the vibe coding continuing on the phone when I have the harness. So for now I will leave it as is. I made some good progress and also some some learnings on what I can do, what I should do, but that's it for now.
-
-
-testing and bug fixes 
+- [ ] i need to be able to create a new task zhrough a singular prompt. mesning running a quick cli prompt for getting the title and confirming the creation. then the process stops. this should be independent from the normal main application. recurring tasks loading indicators
+- [ ] testing and bug fixes 
 
 
 ## reminders cli

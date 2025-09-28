@@ -70,7 +70,7 @@ class LazyTaskApp(App):
         ("e", "edit_description", "Edit description"),
         ("t", "move_to_tomorrow", "Move to tomorrow"),
         ("m", "move_to_next_monday", "Move to next monday"),
-        ("k", "move_to_next_weekend", "Move to next weekend"),
+        # ("k", "move_to_next_weekend", "Move to next weekend"),
         ("ctrl+d", "toggle_overdue", "Toggle Overdue"),
         ("ctrl+c", "toggle_completed", "Toggle Completed"),
         ("ctrl+r", "refresh", "Refresh"),
@@ -155,7 +155,10 @@ class LazyTaskApp(App):
 
     async def on_mount(self) -> None:
         """Called when the app is mounted."""
-        if self.LOGGING:
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            print("on_mount called")
+            logging.basicConfig(filename="lazytask.log", level=logging.INFO, force=True)
+        elif self.LOGGING:
             logging.basicConfig(filename="lazytask.log", level=logging.INFO)
         if not self.available_lists:
             self.available_lists = await self.get_lists_uc.execute()
@@ -172,6 +175,8 @@ class LazyTaskApp(App):
             self.query_one(ListView).index = 0
 
     async def on_key(self, event: events.Key) -> None:
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            logging.info(f"on_key: key: {event.key}, index: {self.query_one(ListView).index}")
         if (
             event.key
             in [
@@ -180,11 +185,12 @@ class LazyTaskApp(App):
                 "e",
                 "t",
                 "m",
-                "k",
                 "meta+e",
             ]
             and self.query_one(ListView).index is None
         ):
+            if os.environ.get("PYTEST_CURRENT_TEST"):
+                logging.info("on_key: preventing default")
             event.prevent_default()
             return
 
@@ -486,6 +492,8 @@ class LazyTaskApp(App):
     def action_cursor_down(self) -> None:
         """Move cursor down in the list."""
         tasks_list = self.query_one(ListView)
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            logging.info(f"cursor_down: index before: {tasks_list.index}")
         if tasks_list.index is None and tasks_list.children:
             tasks_list.index = 0
         elif (
@@ -493,14 +501,20 @@ class LazyTaskApp(App):
             and tasks_list.index < len(tasks_list.children) - 1
         ):
             tasks_list.index += 1
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            logging.info(f"cursor_down: index after: {tasks_list.index}")
 
     def action_cursor_up(self) -> None:
         """Move cursor up in the list."""
         tasks_list = self.query_one(ListView)
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            logging.info(f"cursor_up: index before: {tasks_list.index}")
         if tasks_list.index is None and tasks_list.children:
             tasks_list.index = 0
         elif tasks_list.index is not None and tasks_list.index > 0:
             tasks_list.index -= 1
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            logging.info(f"cursor_up: index after: {tasks_list.index}")
 
     def action_go_to_top(self) -> None:
         """Go to the top of the list."""

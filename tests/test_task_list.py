@@ -57,6 +57,7 @@ async def test_completing_task_selects_next_one(
 
         # Select the second task
         await pilot.press("j")
+        await pilot.press("j")
         await pilot.pause()
         assert tasks_list.index == 1
 

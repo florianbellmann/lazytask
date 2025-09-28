@@ -183,7 +183,7 @@ class LazyTaskApp(App):
                 "k",
                 "meta+e",
             ]
-            and self.query_one(ListView).highlighted_child is None
+            and self.query_one(ListView).index is None
         ):
             event.prevent_default()
             return
@@ -295,7 +295,7 @@ class LazyTaskApp(App):
             if task.tags:
                 details.append(f"tags: {','.join(task.tags)}")
             if task.priority:
-                details.append(f"prio: {self.data.priority}")
+                details.append(f"prio: {task.priority}")
             if task.is_flagged:
                 details.append("flagged")
             details_str = f" ({', '.join(details)})" if details else ""
@@ -497,10 +497,12 @@ class LazyTaskApp(App):
     def action_cursor_up(self) -> None:
         """Move cursor up in the list."""
         tasks_list = self.query_one(ListView)
+        logging.info(f"action_cursor_up: index before: {tasks_list.index}")
         if tasks_list.index is None and tasks_list.children:
             tasks_list.index = 0
         elif tasks_list.index is not None and tasks_list.index > 0:
             tasks_list.index -= 1
+        logging.info(f"action_cursor_up: index after: {tasks_list.index}")
 
     def action_go_to_top(self) -> None:
         """Go to the top of the list."""

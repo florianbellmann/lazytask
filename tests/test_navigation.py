@@ -78,6 +78,10 @@ async def test_navigation_keybindings(
         # Test 'j' for moving down
         await pilot.press("j")
         await pilot.pause()
+        assert tasks_list.index == 0
+
+        await pilot.press("j")
+        await pilot.pause()
         assert tasks_list.index == 1
 
         # Test 'k' for moving up

@@ -16,10 +16,10 @@ class HelpScreen(ModalScreen):
             text = []
             for binding in bindings:
                 if isinstance(binding, Binding):
-                    text.append(f"{binding.key.upper()}: {binding.description}")
+                    text.append(f"{binding.key}: {binding.description}")
                 else:
                     key, action, description = cast(Tuple[str, str, str], binding)
-                    text.append(f"{key.upper()}: {description}")
+                    text.append(f"{key}: {description}")
             yield Static("\n".join(text), id="help-text")
         else:
             yield Static("No help available.", id="help-text")

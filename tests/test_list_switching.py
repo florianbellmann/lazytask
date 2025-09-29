@@ -93,3 +93,65 @@ async def test_switch_list_with_number_keys(monkeypatch):
         list_view = app.query_one(ListView)
         assert len(list_view.children) == 1
         assert list_view.children[0].data.title == "Task in work"
+
+
+@pytest.mark.asyncio
+async def test_list_switching_resets_index(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    """Test that switching lists resets the highlighted index to 0."""
+    app = LazyTaskApp()
+
+    mock_get_tasks_uc = MagicMock()
+    develop_tasks = [Task(id=f"{i}", title=f"Task {i}") for i in range(5)]
+    develop2_tasks = [Task(id=f"d2_{i}", title=f"Task d2 {i}") for i in range(3)]
+
+    async def get_tasks_side_effect(list_name, include_completed=False):
+        if list_name == "develop":
+            return develop_tasks
+        if list_name == "develop2":
+            return develop2_tasks
+        if list_name == "all":
+            return develop_tasks + develop2_tasks
+        return []
+
+    mock_get_tasks_uc.execute = AsyncMock(side_effect=get_tasks_side_effect)
+    app.get_tasks_uc = mock_get_tasks_uc
+
+    async with app.run_test() as pilot:
+        await pilot.pause()
+
+        # Check that we are on the develop list
+        assert app.current_list == "develop"
+        list_view = app.query_one(ListView)
+        assert len(list_view.children) == 5
+
+        # Move down to the 3rd item (index 2)
+        await pilot.press("j")
+        await pilot.pause()
+        await pilot.press("j")
+        await pilot.pause()
+        assert list_view.index == 2
+
+        # Switch to the 'develop2' list
+        await pilot.press("3")
+        await pilot.pause()
+
+        # Check that the index is reset to 0
+        assert app.current_list == "develop2"
+        list_view = app.query_one(ListView)
+        assert len(list_view.children) == 3
+        assert list_view.index == 0
+
+        # Move down to the 2nd item (index 1)
+        await pilot.press("j")
+        assert list_view.index == 1
+
+        # Switch to the 'all' view
+        await pilot.press("1")
+        await pilot.pause()
+
+        # Check that the index is reset to 0
+        assert app.current_list == "all"
+        list_view = app.query_one(ListView)
+        assert len(list_view.children) == 8
+        assert list_view.index == 0

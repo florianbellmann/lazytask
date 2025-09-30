@@ -126,10 +126,9 @@ async def test_list_switching_resets_index(monkeypatch):
         assert len(list_view.children) == 5
 
         # Move down to the 3rd item (index 2)
+        list_view.focus()
         await pilot.press("j")
-        await pilot.pause()
         await pilot.press("j")
-        await pilot.pause()
         assert list_view.index == 2
 
         # Switch to the 'develop2' list

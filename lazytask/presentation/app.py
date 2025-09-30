@@ -323,7 +323,8 @@ class LazyTaskApp(App):
             if num_tasks == 0:
                 tasks_list_view.index = None
             else:
-                tasks_list_view.index = min(completed_task_index, num_tasks - 1)
+                new_index = min(completed_task_index, num_tasks - 1)
+                tasks_list_view.index = new_index
         elif newly_added_task_id:
             for i, item in enumerate(tasks_list_view.children):
                 if cast(TaskListItem, item).data.id == newly_added_task_id:
@@ -497,6 +498,8 @@ class LazyTaskApp(App):
                 tasks_list_view = self.query_one(ListView)
                 if tasks_list_view.children:
                     tasks_list_view.index = 0
+                else:
+                    tasks_list_view.index = None
 
             asyncio.create_task(filter_and_select())
 

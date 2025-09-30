@@ -176,6 +176,8 @@ async def test_selection_and_highlight_move_to_new_task_after_adding(
         await pilot.pause()
         await pilot.pause()
 
+        tasks_list.refresh()
+
         assert len(tasks_list.children) == 2
         assert tasks_list.index == 1
         assert tasks_list.highlighted_child.data.title == "test"

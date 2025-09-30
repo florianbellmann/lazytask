@@ -129,6 +129,7 @@ async def test_list_switching_resets_index(monkeypatch):
         list_view.focus()
         await pilot.press("j")
         await pilot.press("j")
+        await pilot.press("j")
         assert list_view.index == 2
 
         # Switch to the 'develop2' list

@@ -256,3 +256,16 @@ class MockTaskManager(TaskManager):
             self._save_tasks()
             return task
         return None
+
+    async def move_task(
+        self, task_id: str, from_list: str, to_list: str
+    ) -> Optional[Task]:
+        if from_list in self._tasks and task_id in self._tasks[from_list]:
+            task = self._tasks[from_list].pop(task_id)
+            if to_list not in self._tasks:
+                self._tasks[to_list] = {}
+            self._tasks[to_list][task_id] = task
+            task.list_name = to_list
+            self._save_tasks()
+            return task
+        return None

@@ -5,6 +5,7 @@ from lazytask.application.use_cases import (
     CompleteTask,
     UpdateTask,
     GetLists,
+    MoveTask,
 )
 
 
@@ -23,6 +24,7 @@ class DependencyContainer:
         self.complete_task = CompleteTask(self.task_manager)
         self.update_task = UpdateTask(self.task_manager)
         self.get_lists = GetLists(self.task_manager)
+        self.move_task = MoveTask(self.task_manager)
 
     def get(self, use_case):
         if use_case == AddTask:
@@ -35,6 +37,8 @@ class DependencyContainer:
             return self.update_task
         if use_case == GetLists:
             return self.get_lists
+        if use_case == MoveTask:
+            return self.move_task
 
 
 container = DependencyContainer()

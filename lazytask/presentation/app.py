@@ -17,6 +17,7 @@ from lazytask.application.use_cases import (
     CompleteTask,
     UpdateTask,
     GetLists,
+    MoveTask,
 )
 from lazytask.presentation.edit_screen import EditScreen
 from lazytask.presentation.help_screen import HelpScreen
@@ -24,6 +25,7 @@ from lazytask.presentation.list_tabs import ListTabs
 from lazytask.presentation.task_detail import TaskDetail
 from lazytask.presentation.text_input_modal import TextInputModal
 from .date_picker_screen import DatePickerScreen
+from .select_list_screen import SelectListScreen
 from lazytask.container import container
 
 
@@ -64,6 +66,7 @@ class LazyTaskApp(App):
     LOGGING = True
 
     BINDINGS = [
+        ("y", "move_task", "Move task"),
         ("d", "edit_date", "Edit date"),
         ("a", "add_task", "Add task"),
         ("c", "complete_task", "Complete task"),
@@ -99,6 +102,7 @@ class LazyTaskApp(App):
         self.complete_task_uc = container.get(CompleteTask)
         self.update_task_uc = container.get(UpdateTask)
         self.get_lists_uc = container.get(GetLists)
+        self.move_task_uc = container.get(MoveTask)
         self.sort_by = "due_date"
         self.sort_reverse = False
 
@@ -196,16 +200,13 @@ class LazyTaskApp(App):
             return
 
         if event.key.isdigit():
-            self.filter_query = ""
             digit = int(event.key)
             if digit == 1:
-                self.current_list = "all"
-                await self.update_tasks_list(preserve_selection=False)
+                await self.switch_list("all")
             elif 2 <= digit <= 9:
                 list_index = digit - 2
                 if list_index < len(self.available_lists):
-                    self.current_list = self.available_lists[list_index]
-                    await self.update_tasks_list(preserve_selection=False)
+                    await self.switch_list(self.available_lists[list_index])
 
     async def on_list_view_selected(self, event: ListView.Selected):
         """Called when a task is selected."""
@@ -318,26 +319,11 @@ class LazyTaskApp(App):
         self.title = f"LazyTask - {self.current_list}"
 
         if completed_task_index is not None:
-            if os.environ.get("PYTEST_CURRENT_TEST"):
-                logging.info(f"completed_task_index: {completed_task_index}")
-                logging.info(
-                    f"len(tasks_list_view.children): {len(tasks_list_view.children)}"
-                )
-            if not tasks_list_view.children:
+            num_tasks = len(tasks_list_view.children)
+            if num_tasks == 0:
                 tasks_list_view.index = None
-            elif completed_task_index < len(tasks_list_view.children):
-                tasks_list_view.index = completed_task_index
-                print(
-                    f"completed_task_index: {completed_task_index}, len: {len(tasks_list_view.children)}"
-                )
-                print(f" idx was smaller, index set to: {tasks_list_view.index}")
-                if os.environ.get("PYTEST_CURRENT_TEST"):
-                    logging.info(f"index set to: {tasks_list_view.index}")
             else:
-                print(f"else branch, index set to: {len(tasks_list_view.children) - 1}")
-                tasks_list_view.index = completed_task_index - 1
-                if os.environ.get("PYTEST_CURRENT_TEST"):
-                    logging.info(f"index set to: {tasks_list_view.index}")
+                tasks_list_view.index = min(completed_task_index, num_tasks - 1)
         elif newly_added_task_id:
             for i, item in enumerate(tasks_list_view.children):
                 if cast(TaskListItem, item).data.id == newly_added_task_id:
@@ -446,6 +432,28 @@ class LazyTaskApp(App):
             EditScreen(task_id=task.id, list_name=self.current_list), on_close
         )
 
+    def action_move_task(self) -> None:
+        """An action to move a task to another list."""
+        tasks_list = self.query_one(ListView)
+        if tasks_list.highlighted_child:
+            task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
+
+            def on_list_selected(list_name: str | None) -> None:
+                if list_name:
+                    asyncio.create_task(self.move_task(task, list_name))
+
+            self.push_screen(
+                SelectListScreen(
+                    lists=[l for l in self.available_lists if l != self.current_list]
+                ),
+                on_list_selected,
+            )
+
+    async def move_task(self, task: Task, to_list: str):
+        """Move a task to another list."""
+        async with self.show_loading():
+            await self.move_task_uc.execute(task.id, self.current_list, to_list)
+            await self.update_tasks_list()
     def action_edit_description(self) -> None:
         """An action to edit a task's description."""
         tasks_list = self.query_one(ListView)

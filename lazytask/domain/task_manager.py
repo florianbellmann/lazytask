@@ -109,3 +109,10 @@ class TaskManager(ABC):
     ) -> Optional[Task]:
         """Sets the recurring rule for a task."""
         pass
+
+    @abstractmethod
+    async def move_task(
+        self, task_id: str, from_list: str, to_list: str
+    ) -> Optional[Task]:
+        """Moves a task from one list to another."""
+        pass

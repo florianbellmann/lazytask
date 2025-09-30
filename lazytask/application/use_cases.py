@@ -49,3 +49,13 @@ class GetLists:
 
     async def execute(self) -> List[str]:
         return await self.task_manager.get_lists()
+
+
+class MoveTask:
+    def __init__(self, task_manager: TaskManager):
+        self.task_manager = task_manager
+
+    async def execute(
+        self, task_id: str, from_list: str, to_list: str
+    ) -> Optional[Task]:
+        return await self.task_manager.move_task(task_id, from_list, to_list)

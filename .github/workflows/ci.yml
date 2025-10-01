@@ -23,14 +23,17 @@ jobs:
         pip install uv
         uv sync --all-extras
 
-    - name: Lint with ruff
-      run: uv run mypy . 
+    - name: Install just
+      uses: extractions/setup-just@v1
 
-    - name: Lint with ruff
-      run: uv run ruff check .
+    - name: Test
+      run: just test
 
-    - name: Format with ruff
-      run: uv run ruff format .
+    - name: Lint
+      run: just lint
 
-    - name: Test with pytest
-      run: uv run pytest
+    - name: Format
+      run: just format
+
+    - name: Check
+      run: just check

@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import logging
 import os
+import sys
 from contextlib import asynccontextmanager
 from typing import cast
 
@@ -150,9 +151,9 @@ class LazyTaskApp(App):
 
     async def on_mount(self) -> None:
         """Called when the app is mounted."""
-        if os.environ.get("PYTEST_CURRENT_TEST"):
-            print("on_mount called")
-            logging.basicConfig(filename="lazytask.log", level=logging.INFO, force=True)
+        if "pytest" in sys.modules:
+            logging.basicConfig(filename="lazytask.log", level=logging.DEBUG, force=True)
+            logging.debug("on_mount called")
         elif self.LOGGING:
             logging.basicConfig(filename="lazytask.log", level=logging.INFO)
         if not self.available_lists:
@@ -172,10 +173,9 @@ class LazyTaskApp(App):
             self.query_one(ListView).index = 0
 
     async def on_key(self, event: events.Key) -> None:
-        if os.environ.get("PYTEST_CURRENT_TEST"):
-            logging.info(
-                f"on_key: key: {event.key}, index: {self.query_one(ListView).index}"
-            )
+        logging.debug(
+            f"on_key: key: {event.key}, index: {self.query_one(ListView).index}"
+        )
         if (
             event.key
             in [
@@ -187,8 +187,7 @@ class LazyTaskApp(App):
             ]
             and self.query_one(ListView).index is None
         ):
-            if os.environ.get("PYTEST_CURRENT_TEST"):
-                logging.info("on_key: preventing default")
+            logging.debug("on_key: preventing default")
             event.prevent_default()
             return
 
@@ -223,10 +222,9 @@ class LazyTaskApp(App):
         completed_task_index: int | None = None,
     ):
         """Update the tasks list view."""
-        if os.environ.get("PYTEST_CURRENT_TEST"):
-            logging.info(
-                f"update_tasks_list called with show_completed={self.show_completed}"
-            )
+        logging.debug(
+            f"update_tasks_list called with show_completed={self.show_completed}"
+        )
         if filter_query is not None:
             self.filter_query = filter_query
 
@@ -513,8 +511,7 @@ class LazyTaskApp(App):
     def action_cursor_down(self) -> None:
         """Move cursor down in the list."""
         tasks_list = self.query_one(ListView)
-        if os.environ.get("PYTEST_CURRENT_TEST"):
-            logging.info(f"cursor_down: index before: {tasks_list.index}")
+        logging.debug(f"cursor_down: index before: {tasks_list.index}")
         if tasks_list.index is None and tasks_list.children:
             tasks_list.index = 0
         elif (
@@ -522,20 +519,17 @@ class LazyTaskApp(App):
             and tasks_list.index < len(tasks_list.children) - 1
         ):
             tasks_list.index += 1
-        if os.environ.get("PYTEST_CURRENT_TEST"):
-            logging.info(f"cursor_down: index after: {tasks_list.index}")
+        logging.debug(f"cursor_down: index after: {tasks_list.index}")
 
     def action_cursor_up(self) -> None:
         """Move cursor up in the list."""
         tasks_list = self.query_one(ListView)
-        if os.environ.get("PYTEST_CURRENT_TEST"):
-            logging.info(f"cursor_up: index before: {tasks_list.index}")
+        logging.debug(f"cursor_up: index before: {tasks_list.index}")
         if tasks_list.index is None and tasks_list.children:
             tasks_list.index = 0
         elif tasks_list.index is not None and tasks_list.index > 0:
             tasks_list.index -= 1
-        if os.environ.get("PYTEST_CURRENT_TEST"):
-            logging.info(f"cursor_up: index after: {tasks_list.index}")
+        logging.debug(f"cursor_up: index after: {tasks_list.index}")
 
     def action_go_to_top(self) -> None:
         """Go to the top of the list."""

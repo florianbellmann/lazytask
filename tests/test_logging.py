@@ -17,7 +17,7 @@ def configure_logging():
     # Remove all existing handlers
     for handler in logging.getLogger().handlers[:]:
         logging.getLogger().removeHandler(handler)
-    logging.basicConfig(filename=LOG_FILE, level=logging.INFO, force=True)
+    logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, force=True)
 
 
 @pytest.fixture(autouse=True)
@@ -45,4 +45,4 @@ async def test_add_task_logs_message(task_manager):
     with open(LOG_FILE, "r") as f:
         log_output = f.read()
 
-    assert f"INFO:root:Adding task with title: {title}" in log_output
+    assert f"DEBUG:root:Adding task with title: {title}" in log_output

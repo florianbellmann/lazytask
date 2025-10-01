@@ -155,3 +155,63 @@ async def test_list_switching_resets_index(monkeypatch):
         list_view = app.query_one(ListView)
         assert len(list_view.children) == 8
         assert list_view.index == 0
+
+
+@pytest.mark.asyncio
+async def test_switching_lists_resets_selection(monkeypatch):
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
+    app = LazyTaskApp()
+
+    mock_get_tasks_uc = MagicMock()
+    develop_tasks = [Task(id=f"dev_{i}", title=f"Task {i}") for i in range(3)]
+    develop2_tasks = [Task(id=f"d2_{i}", title=f"Task d2 {i}") for i in range(2)]
+
+    async def get_tasks_side_effect(list_name, include_completed=False):
+        if list_name == "develop":
+            return develop_tasks
+        if list_name == "develop2":
+            return develop2_tasks
+        if list_name == "all":
+            return develop_tasks + develop2_tasks
+        return []
+
+    mock_get_tasks_uc.execute = AsyncMock(side_effect=get_tasks_side_effect)
+    app.get_tasks_uc = mock_get_tasks_uc
+
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        list_view = app.query_one(ListView)
+
+        # Initial state: develop list, 3 tasks
+        assert app.current_list == "develop"
+        assert len(list_view.children) == 3
+
+        # Select the second task (index 1)
+        list_view.index = 1
+        await pilot.pause()
+        assert list_view.index == 1
+
+        # Switch to develop2 list
+        await app.switch_list("develop2")
+        await pilot.pause()
+
+        # Check if index is reset to 0
+        assert app.current_list == "develop2"
+        assert len(list_view.children) == 2
+        assert list_view.index == 0, "Index should be reset to 0 after switching list"
+
+        # Select the last task (index 1)
+        list_view.index = 1
+        await pilot.pause()
+        assert list_view.index == 1
+
+        # Switch to all view
+        await app.switch_list("all")
+        await pilot.pause()
+
+        # Check if index is reset to 0
+        assert app.current_list == "all"
+        assert len(list_view.children) == 5
+        assert list_view.index == 0, (
+            "Index should be reset to 0 after switching to all view"
+        )

@@ -164,7 +164,9 @@ class LazyTaskApp(App):
     async def switch_list(self, list_name: str):
         self.current_list = list_name
         self.filter_query = ""
-        await self.query_one(ListView).clear()
+        list_view = self.query_one(ListView)
+        list_view.index = None
+        await list_view.clear()
         await self.update_tasks_list(preserve_selection=False)
         if self.query_one(ListView).children:
             self.query_one(ListView).index = 0

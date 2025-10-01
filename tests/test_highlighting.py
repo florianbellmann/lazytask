@@ -8,6 +8,14 @@ def set_env(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
 
 
+# INFO:
+# Passed test fixes through:
+# 1. Root cause: ListView.clear() is an async method that wasn't being awaited, causing old tasks to remain in the
+# ListView when new tasks were appended
+# 2. Fix: Added await to all three ListView.clear() calls in lazytask/presentation/app.py:243, 168, and consolidated the
+# third instance at line 339 to use the existing switch_list method which now properly awaits clear()
+
+
 async def test_navigation_j_k_changes_highlight_and_selection(
     app: LazyTaskApp, mock_task_manager: MockTaskManager
 ):

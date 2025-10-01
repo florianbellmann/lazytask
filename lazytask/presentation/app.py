@@ -136,14 +136,6 @@ class LazyTaskApp(App):
         yield
         self.query_one(LoadingIndicator).display = False
 
-    async def on_list_view_highlighted(self, event: ListView.Highlighted):
-        """Called when a task is highlighted."""
-        if event.item:
-            task: Task = cast(TaskListItem, event.item).data
-            self.query_one(TaskDetail).update_task(task)
-        else:
-            self.query_one(TaskDetail).update_task(None)
-
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
         yield Header()
@@ -173,7 +165,7 @@ class LazyTaskApp(App):
     async def switch_list(self, list_name: str):
         self.current_list = list_name
         self.filter_query = ""
-        self.query_one(ListView).clear()
+        await self.query_one(ListView).clear()
         await self.update_tasks_list(preserve_selection=False)
         if self.query_one(ListView).children:
             self.query_one(ListView).index = 0
@@ -208,11 +200,6 @@ class LazyTaskApp(App):
                 if list_index < len(self.available_lists):
                     await self.switch_list(self.available_lists[list_index])
 
-    async def on_list_view_selected(self, event: ListView.Selected):
-        """Called when a task is selected."""
-        task: Task = cast(TaskListItem, event.item).data
-        self.query_one(TaskDetail).update_task(task)
-
     def _update_task_detail(self, item: ListItem | None) -> None:
         if isinstance(item, TaskListItem):
             self.query_one(TaskDetail).update_task(item.data)
@@ -244,7 +231,6 @@ class LazyTaskApp(App):
 
         self.query_one(ListTabs).update_lists(self.available_lists, self.current_list)
         tasks_list_view = self.query_one(ListView)
-        print(f"taasks_list_view: {tasks_list_view}")
         selected_task_id = None
         if preserve_selection and tasks_list_view.highlighted_child:
             selected_task_id = cast(
@@ -254,7 +240,7 @@ class LazyTaskApp(App):
         if newly_added_task_id:
             selected_task_id = newly_added_task_id
         tasks_list_view = self.query_one(ListView)
-        tasks_list_view.clear()
+        await tasks_list_view.clear()
         async with self.show_loading():
             try:
                 if self.current_list == "all":
@@ -334,10 +320,6 @@ class LazyTaskApp(App):
         else:
             tasks_list_view.index = None
 
-        if tasks_list_view.index is not None and tasks_list_view.index >= len(
-            tasks_list_view.children
-        ):
-            tasks_list_view.index = len(tasks_list_view.children) - 1
 
     def action_add_task(self) -> None:
         """An action to add a task."""
@@ -353,9 +335,7 @@ class LazyTaskApp(App):
 
         def on_submit(list_name: str | None) -> None:
             if list_name:
-                self.current_list = list_name
-                self.query_one(ListView).clear()
-                asyncio.create_task(self.update_tasks_list(preserve_selection=False))
+                asyncio.create_task(self.switch_list(list_name))
 
         self.push_screen(TextInputModal(prompt="Switch to list:"), on_submit)
 

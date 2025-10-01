@@ -4,6 +4,13 @@ from lazytask.infrastructure.mock_task_manager import MockTaskManager
 from typing import cast
 from lazytask.container import container
 
+# INFO:
+# Passed test fixes through:
+# 1. Root cause: ListView.clear() is an async method that wasn't being awaited, causing old tasks to remain in the
+# ListView when new tasks were appended
+# 2. Fix: Added await to all three ListView.clear() calls in lazytask/presentation/app.py:243, 168, and consolidated the
+# third instance at line 339 to use the existing switch_list method which now properly awaits clear()
+
 
 @pytest.mark.asyncio
 async def test_toggle_completed_tasks(
@@ -43,6 +50,7 @@ async def test_completing_task_selects_next_one(
     app: LazyTaskApp, mock_task_manager: MockTaskManager
 ):
     """Test that completing a task selects the next task in the list."""
+    await mock_task_manager.clear_tasks()
     await mock_task_manager.add_task("task 1")
     await mock_task_manager.add_task("task 2")
     await mock_task_manager.add_task("task 3")
@@ -77,7 +85,7 @@ async def test_completing_task_selects_next_one(
 
         # Complete the now-second task
         await pilot.press("c")
-        await pilot.pause(0.1)
+        await pilot.pause()
 
         # Assert that there is 1 task left
         assert len(app.query("TaskListItem")) == 1

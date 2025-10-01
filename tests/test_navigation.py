@@ -1,9 +1,6 @@
 import pytest
-from textual.widgets import ListView
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
-from unittest.mock import AsyncMock
-from lazytask.domain.task import Task
 
 
 @pytest.fixture(autouse=True)

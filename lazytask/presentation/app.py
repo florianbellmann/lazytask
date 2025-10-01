@@ -320,7 +320,6 @@ class LazyTaskApp(App):
         else:
             tasks_list_view.index = None
 
-
     def action_add_task(self) -> None:
         """An action to add a task."""
 
@@ -435,6 +434,7 @@ class LazyTaskApp(App):
         async with self.show_loading():
             await self.move_task_uc.execute(task.id, self.current_list, to_list)
             await self.update_tasks_list()
+
     def action_edit_description(self) -> None:
         """An action to edit a task's description."""
         tasks_list = self.query_one(ListView)

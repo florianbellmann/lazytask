@@ -2,7 +2,6 @@ import pytest
 from lazytask.presentation.app import LazyTaskApp, TaskListItem
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 from typing import cast
-from lazytask.container import container
 
 # INFO:
 # Passed test fixes through:

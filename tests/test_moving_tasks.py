@@ -1,7 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 
-from lazytask.domain.task import Task
 from lazytask.presentation.app import LazyTaskApp
 from textual.widgets import ListView
 from lazytask.infrastructure.mock_task_manager import MockTaskManager

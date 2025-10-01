@@ -60,7 +60,7 @@ async def test_switch_list_with_number_keys(monkeypatch):
         await pilot.pause()
         assert app.current_list == "all"
         list_view = app.query_one(ListView)
-        assert len(list_view.children) == 4 # Assuming all tasks for "all" initially
+        assert len(list_view.children) == 4  # Assuming all tasks for "all" initially
 
         # Press '2' to switch to the first list 'develop'
         await pilot.press("2")

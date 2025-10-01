@@ -53,7 +53,7 @@ async def test_context_sensitive_actions(app: LazyTaskApp):
         # Select the task
         tasks_list = app.query_one("#tasks_list")
         tasks_list.index = 0
-        await pilot.pause() # Ensure UI updates
+        await pilot.pause()  # Ensure UI updates
 
         # Press keys for context-sensitive actions (task selected)
         await pilot.press("c")  # complete_task

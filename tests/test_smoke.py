@@ -7,7 +7,9 @@ from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
 
 @pytest.mark.asyncio
-async def test_smoke_test_workflow(app: LazyTaskApp, mock_task_manager: MockTaskManager):
+async def test_smoke_test_workflow(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     async with app.run_test() as pilot:
         await pilot.pause()
         # 1. Fire up the app (already done by app.run_test())

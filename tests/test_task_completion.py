@@ -1,7 +1,6 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
-from textual.pilot import Pilot
 
 from lazytask.domain.task import Task
 from lazytask.presentation.app import LazyTaskApp
@@ -9,15 +8,29 @@ from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
 
 @pytest.mark.asyncio
-async def test_complete_task(app: LazyTaskApp, mock_task_manager: MockTaskManager, monkeypatch):
+async def test_complete_task(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager, monkeypatch
+):
     """Test that completing a task works correctly."""
-    monkeypatch.setattr(mock_task_manager, "get_lists", AsyncMock(return_value=["develop", "develop2"]))
-    monkeypatch.setattr(mock_task_manager, "get_tasks", AsyncMock(side_effect=[
-        [Task(id="1", title="task 1")],  # Initial tasks
-        [],  # Tasks after completion
-        [Task(id="1", title="task 1", completed=True)],  # Tasks with completed
-    ]))
-    monkeypatch.setattr(mock_task_manager, "complete_task", AsyncMock(return_value=Task(id="1", title="task 1", completed=True)))
+    monkeypatch.setattr(
+        mock_task_manager, "get_lists", AsyncMock(return_value=["develop", "develop2"])
+    )
+    monkeypatch.setattr(
+        mock_task_manager,
+        "get_tasks",
+        AsyncMock(
+            side_effect=[
+                [Task(id="1", title="task 1")],  # Initial tasks
+                [],  # Tasks after completion
+                [Task(id="1", title="task 1", completed=True)],  # Tasks with completed
+            ]
+        ),
+    )
+    monkeypatch.setattr(
+        mock_task_manager,
+        "complete_task",
+        AsyncMock(return_value=Task(id="1", title="task 1", completed=True)),
+    )
 
     async with app.run_test() as pilot:
         await pilot.pause(0.1)

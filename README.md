@@ -1,6 +1,6 @@
 # <p>Lazytask</p>
 
-![Pipeline](https://github.com/florianbellmann/lazytask/actions/workflows/go.yml/badge.svg)
+![Pipeline](https://github.com/florianbellmann/lazytask/actions/workflows/ci.yml/badge.svg)
 
 Lazytask is a terminal task management interface inspired by [lazygit](https://github.com/jesseduffield/lazygit).
 

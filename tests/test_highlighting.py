@@ -250,7 +250,7 @@ async def test_reselect_previous_task_after_completion(
     app: LazyTaskApp, mock_task_manager: MockTaskManager
 ):
     """Test that the same index is selected after a task is completed."""
-    task1 = await mock_task_manager.add_task("task 1")
+    _ = await mock_task_manager.add_task("task 1")
     task2 = await mock_task_manager.add_task("task 2")
     task3 = await mock_task_manager.add_task("task 3")
 

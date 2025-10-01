@@ -230,14 +230,6 @@ class LazyTaskApp(App):
 
         self.query_one(ListTabs).update_lists(self.available_lists, self.current_list)
         tasks_list_view = self.query_one(ListView)
-        selected_task_id = None
-        if preserve_selection and tasks_list_view.highlighted_child:
-            selected_task_id = cast(
-                TaskListItem, tasks_list_view.highlighted_child
-            ).data.id
-
-        if newly_added_task_id:
-            selected_task_id = newly_added_task_id
         tasks_list_view = self.query_one(ListView)
         await tasks_list_view.clear()
         async with self.show_loading():
@@ -297,7 +289,6 @@ class LazyTaskApp(App):
                 details.append(f"prio: {task.priority}")
             if task.is_flagged:
                 details.append("flagged")
-            details_str = f" ({', '.join(details)})" if details else ""
 
             list_item = TaskListItem(task)
             tasks_list_view.append(list_item)
@@ -423,7 +414,11 @@ class LazyTaskApp(App):
 
             self.push_screen(
                 SelectListScreen(
-                    lists=[l for l in self.available_lists if l != self.current_list]
+                    lists=[
+                        list_name
+                        for list_name in self.available_lists
+                        if list_name != self.current_list
+                    ]
                 ),
                 on_list_selected,
             )

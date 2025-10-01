@@ -125,7 +125,6 @@ class LazyTaskApp(App):
     async def add_task(self, title: str):
         new_task = await self.add_task_uc.execute(title, self.current_list)
         await self.update_tasks_list(newly_added_task_id=new_task.id)
-        tasks_list_view = self.query_one(ListView)
 
     async def clear_tasks(self):
         await self.get_tasks_uc.task_manager.clear_tasks()

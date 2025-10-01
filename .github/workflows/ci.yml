@@ -26,8 +26,40 @@ jobs:
     - name: Install just
       uses: extractions/setup-just@v1
 
+  test:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install uv
+        uv sync --all-extras
+
+    - name: Install just
+      uses: extractions/setup-just@v1
+
     - name: Test
       run: just test
+
+  lint:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install uv
+        uv sync --all-extras
+
+    - name: Install just
+      uses: extractions/setup-just@v1
 
     - name: Lint
       run: just lint

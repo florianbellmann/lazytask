@@ -24,4 +24,9 @@ class DatePickerScreen(ModalScreen[datetime.date | None]):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "select_date":
             date_picker = self.query_one(DatePicker)
-            self.dismiss(date_picker.date)
+            # Convert pendulum date to standard datetime.date
+            pendulum_date = date_picker.date
+            python_date = datetime.date(
+                pendulum_date.year, pendulum_date.month, pendulum_date.day
+            )
+            self.dismiss(python_date)

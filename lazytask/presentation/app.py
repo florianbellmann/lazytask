@@ -125,7 +125,9 @@ class LazyTaskApp(App):
 
     async def add_task(self, title: str):
         # When viewing "all", add to the first available list
-        list_name = self.current_list if self.current_list != "all" else self.available_lists[0]
+        list_name = (
+            self.current_list if self.current_list != "all" else self.available_lists[0]
+        )
         new_task = await self.add_task_uc.execute(title, list_name)
         await self.update_tasks_list(newly_added_task_id=new_task.id)
 
@@ -154,7 +156,9 @@ class LazyTaskApp(App):
     async def on_mount(self) -> None:
         """Called when the app is mounted."""
         if "pytest" in sys.modules:
-            logging.basicConfig(filename="lazytask.log", level=logging.DEBUG, force=True)
+            logging.basicConfig(
+                filename="lazytask.log", level=logging.DEBUG, force=True
+            )
             logging.debug("on_mount called")
         elif self.LOGGING:
             logging.basicConfig(filename="lazytask.log", level=logging.INFO)

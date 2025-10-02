@@ -37,4 +37,3 @@ async def test_app_starts_in_all_view():
     async with app.run_test() as pilot:
         await pilot.pause()
         assert app.current_list == "all"
-

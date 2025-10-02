@@ -35,7 +35,9 @@ async def test_date_picker_updates_task_date(
 
         # Click the select button
         await pilot.click("#select_date")
-        await pilot.pause()
+
+        # Wait for the async task update to complete
+        await pilot.pause(0.5)
 
         # Verify the task's due date is updated
         updated_tasks = await mock_task_manager.get_tasks("develop")

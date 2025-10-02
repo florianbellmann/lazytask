@@ -77,7 +77,7 @@ async def test_filtering_persists_after_adding_task(
         await pilot.press("s")
         await pilot.press("k")
         await pilot.press("enter")
-        await pilot.pause()
+        await pilot.pause(0.2)
 
         assert len(tasks_list.children) == 2
 

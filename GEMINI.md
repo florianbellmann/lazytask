@@ -96,6 +96,7 @@ from the all items view. fix this and cover it with tests
   - [ ] i need to be able to add and edit multiline descriptions. fix this and cover it with a test
   - [ ] editing the date with d breaks the app. fix this and cover it with a test
   - [ ] . fix this and cover it with a test
+  - [ ] the lists are getting parsed with spaces. even some tests assert that
 - [ ] recurring tasks handling
 
 - [ ] i need to be able to create a new task zhrough a singular prompt. mesning running a quick cli prompt for getting the title and confirming the creation. then the process stops. this should be independent from the normal main application. recurring tasks loading indicators

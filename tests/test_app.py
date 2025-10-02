@@ -29,12 +29,12 @@ async def test_app_quits_on_q_press():
         assert app._exit
 
 
-async def test_app_starts_in_all_view(monkeypatch):
+async def test_app_starts_in_all_view():
     """
     Verify that the application starts in the "all" view.
     """
-    monkeypatch.setenv("LAZYTASK_START_VIEW", "all")
     app = LazyTaskApp()
     async with app.run_test() as pilot:
         await pilot.pause()
         assert app.current_list == "all"
+

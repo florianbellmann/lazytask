@@ -27,11 +27,11 @@ def test_app_requires_valid_lists(monkeypatch):
         LazyTaskApp()
 
 
-async def test_tabs_match_lists_and_first_is_selected_on_start(monkeypatch):
+async def test_tabs_match_lists_and_all_is_selected_on_start(monkeypatch):
     """
     Given a valid Lists env var:
       - The visible tabs correspond exactly to the names from Lists (in order).
-      - The first tab is selected on startup.
+      - The 'all' tab is selected on startup.
     """
     monkeypatch.setenv("LAZYTASK_LISTS", "work,home ,personal ")
     app = LazyTaskApp()
@@ -41,13 +41,14 @@ async def test_tabs_match_lists_and_first_is_selected_on_start(monkeypatch):
         assert "work" in str(tabs_text)
         assert "home" in str(tabs_text)
         assert "personal" in str(tabs_text)
+        assert "all" in str(tabs_text)
 
-        work_span_found = False
+        all_span_found = False
         for span in tabs_text.spans:
             if (
-                "work" in tabs_text.plain[span.start : span.end]
+                "all" in tabs_text.plain[span.start : span.end]
                 and "reverse" in span.style
             ):
-                work_span_found = True
+                all_span_found = True
                 break
-        assert work_span_found, "The 'work' tab should be rendered with reverse style."
+        assert all_span_found, "The 'all' tab should be rendered with reverse style."

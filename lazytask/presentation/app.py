@@ -116,12 +116,7 @@ class LazyTaskApp(App):
             raise ValueError("LAZYTASK_LISTS must not be empty")
 
         self.available_lists = [name.strip() for name in lists_str.split(",")]
-        start_view = os.environ.get("LAZYTASK_START_VIEW", "default")
-
-        if start_view == "all":
-            self.current_list = "all"
-        else:
-            self.current_list = self.available_lists[0]
+        self.current_list = "all"
 
         self.title = f"LazyTask - {self.current_list}"
         self.show_overdue_only = False

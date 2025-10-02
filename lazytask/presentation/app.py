@@ -124,7 +124,9 @@ class LazyTaskApp(App):
         self.filter_query = ""
 
     async def add_task(self, title: str):
-        new_task = await self.add_task_uc.execute(title, self.current_list)
+        # When viewing "all", add to the first available list
+        list_name = self.current_list if self.current_list != "all" else self.available_lists[0]
+        new_task = await self.add_task_uc.execute(title, list_name)
         await self.update_tasks_list(newly_added_task_id=new_task.id)
 
     async def clear_tasks(self):
@@ -338,7 +340,7 @@ class LazyTaskApp(App):
                 if new_date:
                     updates = {"due_date": new_date}
                     asyncio.create_task(
-                        self.update_task_uc.execute(task.id, updates, self.current_list)
+                        self.update_task_uc.execute(task.id, updates, task.list_name)
                     )
                     asyncio.create_task(self.update_tasks_list())
 
@@ -417,7 +419,7 @@ class LazyTaskApp(App):
                     lists=[
                         list_name
                         for list_name in self.available_lists
-                        if list_name != self.current_list
+                        if list_name != task.list_name
                     ]
                 ),
                 on_list_selected,
@@ -426,7 +428,7 @@ class LazyTaskApp(App):
     async def move_task(self, task: Task, to_list: str):
         """Move a task to another list."""
         async with self.show_loading():
-            await self.move_task_uc.execute(task.id, self.current_list, to_list)
+            await self.move_task_uc.execute(task.id, task.list_name, to_list)
             await self.update_tasks_list()
 
     def action_edit_description(self) -> None:
@@ -548,7 +550,7 @@ class LazyTaskApp(App):
             current_index = tasks_list.index
             task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
 
-            await self.complete_task_uc.execute(task.id, self.current_list)
+            await self.complete_task_uc.execute(task.id, task.list_name)
             await self.update_tasks_list(completed_task_index=current_index)
 
     def action_toggle_dark(self) -> None:

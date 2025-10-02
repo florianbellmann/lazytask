@@ -43,24 +43,10 @@ async def test_switch_list_with_number_keys(monkeypatch):
     async with app.run_test() as pilot:
         await pilot.pause()
 
-        # Initially, it should be the default list
-        assert app.current_list == "develop"
-        list_view = app.query_one(ListView)
-        assert len(list_view.children) == 1
-        assert list_view.children[0].data.title == "Task in develop"
-
-        # Initially, it should be the default list
-        assert app.current_list == "develop"
-        list_view = app.query_one(ListView)
-        assert len(list_view.children) == 1
-        assert list_view.children[0].data.title == "Task in develop"
-
-        # Press '1' to switch to "All Tasks"
-        await pilot.press("1")
-        await pilot.pause()
+        # Initially, it should be the "all" list
         assert app.current_list == "all"
         list_view = app.query_one(ListView)
-        assert len(list_view.children) == 4  # Assuming all tasks for "all" initially
+        assert len(list_view.children) == 4
 
         # Press '2' to switch to the first list 'develop'
         await pilot.press("2")
@@ -120,10 +106,10 @@ async def test_list_switching_resets_index(monkeypatch):
     async with app.run_test() as pilot:
         await pilot.pause()
 
-        # Check that we are on the develop list
-        assert app.current_list == "develop"
+        # Check that we are on the "all" list
+        assert app.current_list == "all"
         list_view = app.query_one(ListView)
-        assert len(list_view.children) == 5
+        assert len(list_view.children) == 8
 
         # Move down to the 3rd item (index 2)
         list_view.focus()
@@ -182,9 +168,9 @@ async def test_switching_lists_resets_selection(monkeypatch):
         await pilot.pause()
         list_view = app.query_one(ListView)
 
-        # Initial state: develop list, 3 tasks
-        assert app.current_list == "develop"
-        assert len(list_view.children) == 3
+        # Initial state: all list, 5 tasks
+        assert app.current_list == "all"
+        assert len(list_view.children) == 5
 
         # Select the second task (index 1)
         list_view.index = 1

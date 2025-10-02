@@ -16,10 +16,10 @@ async def test_move_task_to_list(app: LazyTaskApp, mock_task_manager: MockTaskMa
     async with app.run_test() as pilot:
         await pilot.pause()
 
-        # Check that we are on the develop list
-        assert app.current_list == "develop"
+        # Check that we are on the "all" list
+        assert app.current_list == "all"
         list_view = app.query_one(ListView)
-        assert len(list_view.children) == 3
+        assert len(list_view.children) == 4
 
         # Move down to the 3rd item (index 2)
         await pilot.press("j")

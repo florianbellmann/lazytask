@@ -110,7 +110,7 @@ async def test_filtering_clears_when_switching_list(
     Verify that switching to a different list clears the current filter.
     """
     await mock_task_manager.add_task("Task 1", list_name="develop")
-    await mock_task_manager.add_task("Another task", list_name="develop")
+    await mock_task_manager.add_task("Something else", list_name="develop")
     await mock_task_manager.add_task("Task 2", list_name="develop2")
 
     async with app.run_test() as pilot:

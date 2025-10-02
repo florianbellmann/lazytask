@@ -15,7 +15,7 @@ async def test_list_tabs_from_config(monkeypatch):
         assert "list1" in rendered_text
         assert "list2" in rendered_text
         assert "list3" in rendered_text
-        assert app.current_list == "list1"
+        assert app.current_list == "all"
 
 
 @pytest.mark.asyncio
@@ -39,7 +39,7 @@ async def test_list_tabs_display(monkeypatch):
         assert "work" in rendered_text
 
         # Check initial active tab by checking the current_list property of the app
-        assert app.current_list == "develop"
+        assert app.current_list == "all"
 
         app.current_list = "inbox"
         await app.update_tasks_list()

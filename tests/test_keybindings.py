@@ -63,7 +63,7 @@ async def test_complete_task_keybinding(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
     """Test the 'c' keybinding for completing a task."""
     app = LazyTaskApp()
-    task = Task(id="1", title="Test Task")
+    task = Task(id="1", title="Test Task", list_name="develop")
     app.get_tasks_uc.execute = AsyncMock(return_value=[task])
     app.complete_task_uc = MagicMock()
     app.complete_task_uc.execute = AsyncMock()

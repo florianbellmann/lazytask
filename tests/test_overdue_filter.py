@@ -18,20 +18,27 @@ async def test_toggle_overdue_filter(monkeypatch):
     tomorrow = today + datetime.timedelta(days=1)
 
     tasks = [
-        Task(id="1", title="Overdue task", due_date=yesterday),
-        Task(id="2", title="Due today task", due_date=today),
-        Task(id="3", title="Future task", due_date=tomorrow),
-        Task(id="4", title="Task with no due date"),
+        Task(id="1", title="Overdue task", due_date=yesterday, list_name="develop"),
+        Task(id="2", title="Due today task", due_date=today, list_name="develop"),
+        Task(id="3", title="Future task", due_date=tomorrow, list_name="develop"),
+        Task(id="4", title="Task with no due date", list_name="develop"),
     ]
 
     mock_get_tasks_uc = MagicMock()
-    mock_get_tasks_uc.execute = AsyncMock(return_value=tasks)
+
+    async def get_tasks_side_effect(list_name, include_completed=False):
+        if list_name == "develop":
+            return tasks
+        return []
+
+    mock_get_tasks_uc.execute = AsyncMock(side_effect=get_tasks_side_effect)
     app.get_tasks_uc = mock_get_tasks_uc
 
     async with app.run_test() as pilot:
         await pilot.pause()
 
         list_view = app.query_one(ListView)
+        # App starts on "all" which shows tasks from both develop and develop2 (develop2 is empty, so 4 tasks)
         assert len(list_view.children) == 4
 
         # Press ctrl+d to show only overdue tasks

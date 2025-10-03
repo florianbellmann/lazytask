@@ -70,9 +70,11 @@ class LazyTaskApp(App):
         ("y", "move_task", "Move task"),
         ("d", "edit_date", "Edit date"),
         ("a", "add_task", "Add task"),
+        ("A", "add_task_due_today", "Add task due today"),
         ("c", "complete_task", "Complete task"),
         ("e", "edit_description", "Edit description"),
-        ("t", "move_to_tomorrow", "Move to tomorrow"),
+        ("o", "move_to_tomorrow", "Move to tomorrow"),
+        ("t", "due_today", "Due today"),
         ("m", "move_to_next_monday", "Move to next monday"),
         ("w", "move_to_next_weekend", "Move to next weekend"),
         ("ctrl+d", "toggle_overdue", "Toggle Overdue"),
@@ -123,12 +125,13 @@ class LazyTaskApp(App):
         self.show_completed = False
         self.filter_query = ""
 
-    async def add_task(self, title: str):
+    async def add_task(self, title: str, due_today: bool = False):
         # When viewing "all", add to the first available list
         list_name = (
             self.current_list if self.current_list != "all" else self.available_lists[0]
         )
-        new_task = await self.add_task_uc.execute(title, list_name)
+        due_date = datetime.date.today() if due_today else None
+        new_task = await self.add_task_uc.execute(title, list_name, due_date=due_date)
         await self.update_tasks_list(newly_added_task_id=new_task.id)
 
     async def clear_tasks(self):
@@ -190,6 +193,7 @@ class LazyTaskApp(App):
                 "e",
                 "t",
                 "m",
+                "o",
             ]
             and self.query_one(ListView).index is None
         ):
@@ -325,6 +329,15 @@ class LazyTaskApp(App):
 
         self.push_screen(TextInputModal(prompt="New task title:"), on_submit)
 
+    def action_add_task_due_today(self) -> None:
+        """An action to add a task that is due today."""
+
+        def on_submit(title: str | None) -> None:
+            if title:
+                asyncio.create_task(self.add_task(title, due_today=True))
+
+        self.push_screen(TextInputModal(prompt="New task title (due today):"), on_submit)
+
     def action_switch_list(self) -> None:
         """An action to switch list."""
 
@@ -360,6 +373,16 @@ class LazyTaskApp(App):
             updates = {"due_date": datetime.date.today() + datetime.timedelta(days=1)}
             async with self.show_loading():
                 await self.update_task_uc.execute(task.id, updates, self.current_list)
+                await self.update_tasks_list()
+
+    async def action_due_today(self) -> None:
+        """An action to set a task's due date to today."""
+        tasks_list = self.query_one(ListView)
+        if tasks_list.highlighted_child:
+            task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
+            updates = {"due_date": datetime.date.today()}
+            async with self.show_loading():
+                await self.update_task_uc.execute(task.id, updates, task.list_name)
                 await self.update_tasks_list()
 
     async def action_move_to_next_monday(self) -> None:
@@ -448,7 +471,7 @@ class LazyTaskApp(App):
                     async def update_task_async() -> None:
                         async with self.show_loading():
                             await self.update_task_uc.execute(
-                                task.id, updates, self.current_list
+                                task.id, updates, task.list_name
                             )
                             await self.update_tasks_list()
 
@@ -456,7 +479,9 @@ class LazyTaskApp(App):
 
             self.push_screen(
                 TextInputModal(
-                    prompt="Edit description:", initial_value=task.description or ""
+                    prompt="Edit description:",
+                    initial_value=task.description or "",
+                    multiline=True,
                 ),
                 on_submit,
             )

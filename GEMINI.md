@@ -88,9 +88,9 @@ from the all items view. fix this and cover it with tests
 - [x] i need to be able to move tasks to other lists. implement this feature with the hotkey y to choose a list to move to. cover it with tests
 - [x] instead of using PYTEST_CURRENT_TEST env var. use logging.debug and enable that for the tests
 - [ ] testing and bug fixes 
-  - [ ] when staring the app, i want to start in the all view. fix this and cover it with a test
-  - [ ] when adding an item while all view is focussed, add it to the first list in the env var. meaning the default list. fix this and cover it with a test
-  - [ ] i need a hotkey for adding due date today. fix this and cover it with a test
+  - [x] when staring the app, i want to start in the all view. fix this and cover it with a test
+  - [x] when adding an item while all view is focussed, add it to the first list in the env var. meaning the default list. fix this and cover it with a test
+  - [x] i need a hotkey for adding due date today. fix this and cover it with a test
   - [ ] ctrl o does something. but how do i actually choose a sort type and direction? meaning alphabeticcal or due date. fix this and cover it with a test
   - [ ] hotkey t m and w only work while focussing a list and not in all view. but i need them to work in both. fix this and cover it with a test
   - [ ] i need to be able to add and edit multiline descriptions. fix this and cover it with a test

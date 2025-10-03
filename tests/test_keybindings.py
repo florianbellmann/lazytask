@@ -55,7 +55,9 @@ async def test_add_task_keybinding(monkeypatch):
         await pilot.press("enter")
         await pilot.pause()
 
-        app.add_task_uc.execute.assert_called_once_with("Test Task", "develop")
+        app.add_task_uc.execute.assert_called_once_with(
+            "Test Task", "develop", due_date=None
+        )
 
 
 @pytest.mark.asyncio

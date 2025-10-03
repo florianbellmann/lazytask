@@ -31,19 +31,22 @@ async def test_context_sensitive_actions(app: LazyTaskApp):
         app.action_complete_task = AsyncMock()
         app.action_edit_date = AsyncMock()
         app.action_move_to_tomorrow = AsyncMock()
+        app.action_due_today = AsyncMock()
         app.action_edit_description = AsyncMock()
 
         await pilot.pause()
         # Press keys for context-sensitive actions (no task selected)
         await pilot.press("c")  # complete_task
         await pilot.press("d")  # edit_date
-        await pilot.press("t")  # move_to_tomorrow
+        await pilot.press("o")  # move_to_tomorrow
+        await pilot.press("t")  # due_today
         await pilot.press("e")  # edit_description
 
         # Check that the actions were NOT called
         app.action_complete_task.assert_not_called()
         app.action_edit_date.assert_not_called()
         app.action_move_to_tomorrow.assert_not_called()
+        app.action_due_today.assert_not_called()
         app.action_edit_description.assert_not_called()
 
         # Add a task to the list
@@ -58,11 +61,13 @@ async def test_context_sensitive_actions(app: LazyTaskApp):
         # Press keys for context-sensitive actions (task selected)
         await pilot.press("c")  # complete_task
         await pilot.press("d")  # edit_date
-        await pilot.press("t")  # move_to_tomorrow
+        await pilot.press("o")  # move_to_tomorrow
+        await pilot.press("t")  # due_today
         await pilot.press("e")  # edit_description
 
         # Check that the actions WERE called
         app.action_complete_task.assert_called_once()
         app.action_edit_date.assert_called_once()
         app.action_move_to_tomorrow.assert_called_once()
+        app.action_due_today.assert_called_once()
         app.action_edit_description.assert_called_once()

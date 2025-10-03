@@ -9,7 +9,7 @@ from lazytask.domain.task import Task
 @pytest.mark.asyncio
 async def test_move_to_tomorrow(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
-    """Test the 't' keybinding for moving a task to tomorrow."""
+    """Test the 'o' keybinding for moving a task to tomorrow."""
     app = LazyTaskApp()
 
     mock_task = Task(id="1", title="Test Task")
@@ -26,7 +26,7 @@ async def test_move_to_tomorrow(monkeypatch):
         tasks_list.index = 0
         await pilot.pause()
 
-        await pilot.press("t")
+        await pilot.press("o")
         await pilot.pause()
 
         app.update_task_uc.execute.assert_called_once()

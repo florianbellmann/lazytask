@@ -12,7 +12,7 @@ from lazytask.container import container
 from lazytask.application.use_cases import GetTasks, UpdateTask
 
 
-class EditScreen(ModalScreen[None]):
+class EditScreen(ModalScreen[Task | None]):
     """Screen to edit a task."""
 
     def __init__(

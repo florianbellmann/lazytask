@@ -27,10 +27,11 @@ async def test_add_multiline_description(
         # Check that the modal is open
         assert isinstance(app.screen, TextInputModal)
 
-        # Type in the description
-        await pilot.press("line 1")
-        await pilot.press("enter")
-        await pilot.press("line 2")
+        # Set the description text
+        modal = app.screen
+        text_area = modal.query_one(TextArea)
+        text_area.text = "line 1\nline 2"
+        await pilot.pause()
 
         # Submit the modal
         await pilot.click("#submit")

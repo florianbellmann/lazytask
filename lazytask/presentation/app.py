@@ -428,7 +428,7 @@ class LazyTaskApp(App):
                 asyncio.create_task(self.update_tasks_list())
 
         self.push_screen(
-            EditScreen(task_id=task.id, list_name=self.current_list), on_close
+            EditScreen(task_id=task.id, list_name=task.list_name), on_close
         )
 
     def action_move_task(self) -> None:

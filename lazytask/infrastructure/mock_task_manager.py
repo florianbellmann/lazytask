@@ -71,7 +71,7 @@ class MockTaskManager(TaskManager):
     async def add_task(self, title: str, list_name: str = "develop", **kwargs) -> Task:
         if list_name not in self._tasks:
             self._tasks[list_name] = {}
-        task_id = str(uuid.uuid4())
+        task_id = kwargs.pop("id", None) or str(uuid.uuid4())
         new_task = Task(
             id=task_id,
             title=title,

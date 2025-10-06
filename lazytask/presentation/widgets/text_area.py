@@ -12,6 +12,7 @@ from textual.containers import ScrollableContainer
 from textual.reactive import reactive
 from textual.binding import Binding, BindingType
 from textual.widget import Widget
+from textual.events import Key
 
 
 class TextEditor(Widget):
@@ -241,3 +242,10 @@ class TextArea(ScrollableContainer, TextEditor):
     @on(Widget.blur)
     def _on_blur(self) -> None:
         self.refresh()
+
+    def on_key(self, event: Key) -> None:
+        """Handle key presses."""
+        if event.is_printable and event.character:
+            self.insert_text(event.character)
+            event.prevent_default()
+            event.stop()

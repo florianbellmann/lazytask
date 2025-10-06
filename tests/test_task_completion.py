@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import AsyncMock
 
 
 from lazytask.domain.task import Task
@@ -11,7 +10,9 @@ from lazytask.infrastructure.mock_task_manager import MockTaskManager
 async def test_complete_task(
     app: LazyTaskApp, mock_task_manager: MockTaskManager, monkeypatch
 ):
-    await mock_task_manager.add_task(Task(id="1", title="Test task", list_name="develop"))
+    await mock_task_manager.add_task(
+        Task(id="1", title="Test task", list_name="develop")
+    )
     async with app.run_test() as pilot:
         await pilot.pause(0.1)
 

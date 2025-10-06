@@ -5,7 +5,7 @@ import pytest
 from textual.widgets import ListView
 
 from lazytask.domain.task import Task
-from lazytask.presentation.app import LazyTaskApp, TaskListItem
+from lazytask.presentation.app import TaskListItem
 
 
 @pytest.mark.asyncio
@@ -35,13 +35,16 @@ async def test_edit_date_in_all_view(app, mock_task_manager):
 
         # In the date picker, change the date and select it
         from lazytask.presentation.date_picker_screen import DatePickerScreen
+
         date_picker_screen = app.screen
         assert isinstance(date_picker_screen, DatePickerScreen)
 
         # Change the date to tomorrow
         from textual_datepicker import DatePicker
+
         date_picker = date_picker_screen.query_one(DatePicker)
         import pendulum
+
         date_picker.date = pendulum.instance(datetime.date(2025, 1, 2))
         await pilot.pause()
 

@@ -338,7 +338,9 @@ class LazyTaskApp(App):
             if title:
                 asyncio.create_task(self.add_task(title, due_today=True))
 
-        self.push_screen(TextInputModal(prompt="New task title (due today):"), on_submit)
+        self.push_screen(
+            TextInputModal(prompt="New task title (due today):"), on_submit
+        )
 
     def action_switch_list(self) -> None:
         """An action to switch list."""

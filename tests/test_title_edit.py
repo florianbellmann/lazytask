@@ -6,9 +6,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_edit_title_hotkey(
-    app: LazyTaskApp, mock_task_manager: MockTaskManager
-):
+async def test_edit_title_hotkey(app: LazyTaskApp, mock_task_manager: MockTaskManager):
     """
     When the user presses the hotkey to edit the title of a selected task,
     a modal should appear with the current title.

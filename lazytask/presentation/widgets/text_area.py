@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from rich.style import Style
 from rich.text import Text
 
 from textual import on
@@ -84,7 +83,7 @@ class TextArea(ScrollableContainer, TextEditor):
         self._lines: list[str] = []
 
     def _watch_text(self, text: str) -> None:
-        self._lines = text.split('\n')
+        self._lines = text.split("\n")
         self.virtual_size = Size(
             max(len(line) for line in self._lines) if self._lines else 0,
             len(self._lines),
@@ -197,7 +196,9 @@ class TextArea(ScrollableContainer, TextEditor):
 
     def action_cursor_line_end(self) -> None:
         """Move the cursor to the end of the line."""
-        self.move_cursor(len(self._lines[self.cursor_position[1]]), self.cursor_position[1])
+        self.move_cursor(
+            len(self._lines[self.cursor_position[1]]), self.cursor_position[1]
+        )
 
     def action_delete_left(self) -> None:
         """Delete the character to the left of the cursor."""

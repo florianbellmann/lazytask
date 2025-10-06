@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import AsyncMock
 
 from lazytask.presentation.app import LazyTaskApp

@@ -1,4 +1,3 @@
-
 import pytest
 from textual.widgets import TextArea
 from lazytask.presentation.app import LazyTaskApp
@@ -40,4 +39,3 @@ async def test_add_multiline_description(
         # Check that the description was updated
         updated_task = await mock_task_manager.get_task(task.id, task.list_name)
         assert updated_task.description == "line 1\nline 2"
-

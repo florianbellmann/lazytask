@@ -3,7 +3,6 @@ import datetime
 
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
-from textual.widgets import ListView
 
 
 @pytest.mark.asyncio

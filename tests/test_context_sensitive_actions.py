@@ -1,31 +1,13 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 from lazytask.presentation.app import LazyTaskApp
-from lazytask.domain.task import Task
-
-# completing a task or changing any task details should only be available if a task is selected.
+from lazytask.infrastructure.mock_task_manager import MockTaskManager
 
 
-@pytest.fixture
-def app(monkeypatch) -> LazyTaskApp:
-    monkeypatch.setenv("LAZYTASK_LISTS", "develop ,develop2")
-    # Mock the use case dependencies
-    app = LazyTaskApp()
-    app.add_task_uc = AsyncMock()
-    app.get_tasks_uc = MagicMock()
-    app.get_tasks_uc.execute = AsyncMock(return_value=[Task(id="1", title="Test Task")])
-    app.complete_task_uc = AsyncMock()
-    app.update_task_uc = AsyncMock()
-    app.get_lists_uc = MagicMock()
-    app.get_lists_uc.execute = AsyncMock(return_value=["develop", "develop2"])
-    import logging
-
-    logging.basicConfig(filename="lazytask.log", level=logging.INFO)
-    return app
-
-
-async def test_context_sensitive_actions(app: LazyTaskApp):
+async def test_context_sensitive_actions(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
     async with app.run_test() as pilot:
         # Spy on the action methods
         app.action_complete_task = AsyncMock()
@@ -50,6 +32,7 @@ async def test_context_sensitive_actions(app: LazyTaskApp):
         app.action_edit_description.assert_not_called()
 
         # Add a task to the list
+        await mock_task_manager.add_task(title="Test Task", list_name="develop")
         await app.update_tasks_list()
         await pilot.pause()
 

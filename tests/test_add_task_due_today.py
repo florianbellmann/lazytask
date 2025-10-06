@@ -2,15 +2,12 @@ import datetime
 
 import pytest
 
-from lazytask.domain.task import Task
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 from lazytask.presentation.app import LazyTaskApp
 
 
 @pytest.mark.asyncio
-async def test_add_task_due_today(
-    app: LazyTaskApp, mock_task_manager: MockTaskManager, monkeypatch
-):
+async def test_add_task_due_today(app: LazyTaskApp, mock_task_manager: MockTaskManager):
     async with app.run_test() as pilot:
         await pilot.press("A")
         await pilot.pause(0.1)

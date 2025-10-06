@@ -2,17 +2,14 @@ import datetime
 
 import pytest
 
-from lazytask.domain.task import Task
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 from lazytask.presentation.app import LazyTaskApp
 
 
 @pytest.mark.asyncio
-async def test_due_today_hotkey(
-    app: LazyTaskApp, mock_task_manager: MockTaskManager, monkeypatch
-):
+async def test_due_today_hotkey(app: LazyTaskApp, mock_task_manager: MockTaskManager):
     # Add a task without a due date
-    await mock_task_manager.add_task(Task(id="1", title="Test task", list_name="develop"))
+    await mock_task_manager.add_task(title="Test task", list_name="develop")
 
     async with app.run_test() as pilot:
         await pilot.pause(0.1)

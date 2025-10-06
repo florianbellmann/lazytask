@@ -9,22 +9,20 @@ from textual.widgets import ListView
 @pytest.mark.asyncio
 async def test_move_to_tomorrow(app: LazyTaskApp, mock_task_manager: MockTaskManager):
     """Test the 'o' keybinding for moving a task to tomorrow."""
-    task = await mock_task_manager.add_task(title="Test Task", list_name="develop")
+    await mock_task_manager.add_task(title="Test Task", list_name="develop")
     tomorrow = datetime.date.today() + datetime.timedelta(days=1)
 
     async with app.run_test() as pilot:
-        await app.update_tasks_list()  # Manually update the list
-        await pilot.pause()
+        await pilot.pause(0.1)
 
-        tasks_list = app.query_one("ListView")
-        tasks_list.index = 0
+        await pilot.press("j")  # Select the task
         await pilot.pause()
 
         await pilot.press("o")
-        await pilot.pause()
+        await pilot.pause(0.1)
 
-        updated_task = await mock_task_manager.get_task(task.id, "develop")
-        assert updated_task.due_date == tomorrow
+        task_item = pilot.app.query_one("TaskListItem")
+        assert task_item.data.due_date == tomorrow
 
 
 @pytest.mark.asyncio
@@ -32,7 +30,7 @@ async def test_move_to_next_monday_hotkey(
     app: LazyTaskApp, mock_task_manager: MockTaskManager
 ):
     """Test the 'm' keybinding for moving a task to next Monday."""
-    task = await mock_task_manager.add_task(title="Test Task", list_name="develop")
+    await mock_task_manager.add_task(title="Test Task", list_name="develop")
 
     today = datetime.date.today()
     days_until_monday = (0 - today.weekday() + 7) % 7
@@ -41,18 +39,16 @@ async def test_move_to_next_monday_hotkey(
     next_monday = today + datetime.timedelta(days=days_until_monday)
 
     async with app.run_test() as pilot:
-        await app.update_tasks_list()  # Manually update the list
-        await pilot.pause()
+        await pilot.pause(0.1)
 
-        tasks_list = app.query_one("ListView")
-        tasks_list.index = 0
+        await pilot.press("j")  # Select the task
         await pilot.pause()
 
         await pilot.press("m")
-        await pilot.pause()
+        await pilot.pause(0.1)
 
-        updated_task = await mock_task_manager.get_task(task.id, "develop")
-        assert updated_task.due_date == next_monday
+        task_item = pilot.app.query_one("TaskListItem")
+        assert task_item.data.due_date == next_monday
 
 
 @pytest.mark.asyncio
@@ -60,7 +56,7 @@ async def test_move_to_next_weekend_hotkey(
     app: LazyTaskApp, mock_task_manager: MockTaskManager
 ):
     """Test the 'w' keybinding for moving a task to next weekend."""
-    task = await mock_task_manager.add_task(title="Test Task", list_name="develop")
+    await mock_task_manager.add_task(title="Test Task", list_name="develop")
 
     today = datetime.date.today()
     days_until_saturday = (5 - today.weekday() + 7) % 7
@@ -69,15 +65,13 @@ async def test_move_to_next_weekend_hotkey(
     next_saturday = today + datetime.timedelta(days=days_until_saturday)
 
     async with app.run_test() as pilot:
-        await app.update_tasks_list()  # Manually update the list
-        await pilot.pause()
+        await pilot.pause(0.1)
 
-        tasks_list = app.query_one("ListView")
-        tasks_list.index = 0
+        await pilot.press("j")  # Select the task
         await pilot.pause()
 
         await pilot.press("w")
-        await pilot.pause()
+        await pilot.pause(0.1)
 
-        updated_task = await mock_task_manager.get_task(task.id, "develop")
-        assert updated_task.due_date == next_saturday
+        task_item = pilot.app.query_one("TaskListItem")
+        assert task_item.data.due_date == next_saturday

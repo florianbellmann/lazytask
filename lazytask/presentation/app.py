@@ -72,6 +72,7 @@ class LazyTaskApp(App):
         ("a", "add_task", "Add task"),
         ("A", "add_task_due_today", "Add task due today"),
         ("c", "complete_task", "Complete task"),
+        ("r", "edit_title", "Edit title"),
         ("e", "edit_description", "Edit description"),
         ("o", "move_to_tomorrow", "Move to tomorrow"),
         ("t", "due_today", "Due today"),
@@ -194,6 +195,7 @@ class LazyTaskApp(App):
                 "t",
                 "m",
                 "o",
+                "r",
             ]
             and self.query_one(ListView).index is None
         ):
@@ -372,7 +374,7 @@ class LazyTaskApp(App):
             task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
             updates = {"due_date": datetime.date.today() + datetime.timedelta(days=1)}
             async with self.show_loading():
-                await self.update_task_uc.execute(task.id, updates, self.current_list)
+                await self.update_task_uc.execute(task.id, updates, task.list_name)
                 await self.update_tasks_list()
 
     async def action_due_today(self) -> None:
@@ -397,7 +399,7 @@ class LazyTaskApp(App):
             next_monday = today + datetime.timedelta(days=days_until_monday)
             updates = {"due_date": next_monday}
             async with self.show_loading():
-                await self.update_task_uc.execute(task.id, updates, self.current_list)
+                await self.update_task_uc.execute(task.id, updates, task.list_name)
                 await self.update_tasks_list()
 
     async def action_move_to_next_weekend(self) -> None:
@@ -412,7 +414,7 @@ class LazyTaskApp(App):
             next_saturday = today + datetime.timedelta(days=days_until_saturday)
             updates = {"due_date": next_saturday}
             async with self.show_loading():
-                await self.update_task_uc.execute(task.id, updates, self.current_list)
+                await self.update_task_uc.execute(task.id, updates, task.list_name)
                 await self.update_tasks_list()
 
     def action_edit_task(self) -> None:
@@ -457,6 +459,33 @@ class LazyTaskApp(App):
         async with self.show_loading():
             await self.move_task_uc.execute(task.id, task.list_name, to_list)
             await self.update_tasks_list()
+
+    def action_edit_title(self) -> None:
+        """An action to edit a task's title."""
+        tasks_list = self.query_one(ListView)
+        if tasks_list.highlighted_child:
+            task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
+
+            def on_submit(new_title: str | None) -> None:
+                if new_title is not None:
+                    updates = {"title": new_title}
+
+                    async def update_task_async() -> None:
+                        async with self.show_loading():
+                            await self.update_task_uc.execute(
+                                task.id, updates, task.list_name
+                            )
+                            await self.update_tasks_list()
+
+                    asyncio.create_task(update_task_async())
+
+            self.push_screen(
+                TextInputModal(
+                    prompt="Edit title:",
+                    initial_value=task.title or "",
+                ),
+                on_submit,
+            )
 
     def action_edit_description(self) -> None:
         """An action to edit a task's description."""

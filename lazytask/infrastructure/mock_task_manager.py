@@ -5,6 +5,7 @@ from lazytask.domain.task import Task
 import datetime
 import json
 import os
+import logging
 
 
 class MockTaskManager(TaskManager):
@@ -236,6 +237,7 @@ class MockTaskManager(TaskManager):
     async def edit_task_full(
         self, task_id: str, updates: Dict[str, Any], list_name: str = "develop"
     ) -> Optional[Task]:
+        logging.debug(f"Editing task {task_id} with updates: {updates}")
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             for key, value in updates.items():

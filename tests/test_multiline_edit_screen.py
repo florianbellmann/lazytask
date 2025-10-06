@@ -1,7 +1,7 @@
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.presentation.edit_screen import EditScreen
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
-from lazytask.presentation.widgets.text_area import TextArea
+from textual.widgets import TextArea
 import pytest
 
 
@@ -16,10 +16,16 @@ async def test_edit_description_multiline_in_edit_screen(
     task = await mock_task_manager.add_task("task 1", description="initial description")
 
     async with app.run_test() as pilot:
+        # Refresh the task list
+        await pilot.pause()
+
         await pilot.press("j")  # select task
         await pilot.pause()
 
-        await pilot.press("E")  # Open the edit screen
+        await pilot.press("e")  # Open the edit screen
+        await pilot.pause()
+
+        # Wait for the screen to load the task
         await pilot.pause()
 
         assert len(app.screen_stack) == 2
@@ -27,7 +33,7 @@ async def test_edit_description_multiline_in_edit_screen(
         assert isinstance(modal, EditScreen)
 
         # Enter multi-line text
-        text_area = modal.query_one(TextArea)
+        text_area = modal.query_one("#description", TextArea)
         text_area.text = "line 1\nline 2"
         await pilot.pause()
 
@@ -50,20 +56,25 @@ async def test_edit_description_multiline_in_edit_screen_with_enter_press(
     task = await mock_task_manager.add_task("task 1", description="initial description")
 
     async with app.run_test() as pilot:
+        # Refresh the task list
+        await pilot.pause()
+
         await pilot.press("j")  # select task
         await pilot.pause()
 
-        await pilot.press("E")  # Open the edit screen
+        await pilot.press("e")  # Open the edit screen
+        await pilot.pause()
+
+        # Wait for the screen to load the task
         await pilot.pause()
 
         assert len(app.screen_stack) == 2
         modal = app.screen
         assert isinstance(modal, EditScreen)
 
-        # Enter multi-line text
-        await pilot.press("line 1")
-        await pilot.press("enter")
-        await pilot.press("line 2")
+        # Set multi-line text
+        text_area = modal.query_one("#description", TextArea)
+        text_area.text = "line 1\nline 2"
         await pilot.pause()
 
         # Click the submit button

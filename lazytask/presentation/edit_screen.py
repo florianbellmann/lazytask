@@ -3,7 +3,7 @@ import datetime
 
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
-from textual.widgets import Button, Input, Label, Switch
+from textual.widgets import Button, Input, Label, Switch, TextArea
 from textual.containers import Vertical
 
 from lazytask.domain.task import Task
@@ -32,6 +32,7 @@ class EditScreen(ModalScreen[None]):
 
     def on_mount(self) -> None:
         asyncio.create_task(self.load_task())
+        self.query_one("#description").focus()
 
     async def load_task(self) -> None:
         tasks = await self.get_tasks_uc.execute(self._list_name, include_completed=True)
@@ -44,7 +45,7 @@ class EditScreen(ModalScreen[None]):
             )
             self.dismiss()
             return
-        self.query_one("#description", Input).value = self._task.description or ""
+        self.query_one("#description", TextArea).text = self._task.description or ""
         self.query_one("#tags", Input).value = ",".join(self._task.tags)
         self.query_one("#priority", Input).value = str(self._task.priority or "")
         self.query_one("#flagged", Switch).value = self._task.is_flagged
@@ -56,8 +57,8 @@ class EditScreen(ModalScreen[None]):
         with Vertical(id="edit-task-dialog") as container:
             container.border_title = "Edit Task"
             yield Label("Description:")
-            yield Input(
-                value="", id="description"
+            yield TextArea(
+                text="", id="description"
             )  # Initial empty value, will be updated in on_mount
             yield Label("Tags (comma-separated):")
             yield Input(
@@ -91,7 +92,7 @@ class EditScreen(ModalScreen[None]):
             priority_str = self.query_one("#priority", Input).value
             priority = int(priority_str) if priority_str else None
             updates = {
-                "description": self.query_one("#description", Input).value,
+                "description": self.query_one("#description", TextArea).text,
                 "tags": [
                     tag.strip()
                     for tag in self.query_one("#tags", Input).value.split(",")
@@ -116,6 +117,7 @@ class EditScreen(ModalScreen[None]):
                 self._task.id, updates, self._list_name
             )
             self.dismiss(updated_task)
+
         elif event.button.id == "edit-due-date":
 
             def on_date_selected(new_date: datetime.date | None) -> None:

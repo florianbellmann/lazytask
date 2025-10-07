@@ -1,6 +1,37 @@
 import datetime
+from typing import Optional
+
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
+from lazytask.presentation.sort_options_screen import (
+    SORT_OPTIONS,
+    SortOptionsScreen,
+)
+
+
+async def select_sort_option(
+    pilot,
+    app: LazyTaskApp,
+    option_label: str,
+) -> None:
+    await pilot.press("ctrl+o")
+    await pilot.pause()
+    assert isinstance(app.screen, SortOptionsScreen)
+
+    sort_screen = app.screen
+    sort_list_view = sort_screen.query_one("ListView")
+    target_index: Optional[int] = None
+    for index, option in enumerate(SORT_OPTIONS):
+        if option.label == option_label:
+            target_index = index
+            break
+    if target_index is None:
+        raise AssertionError(f"Sort option '{option_label}' not found")
+
+    sort_list_view.index = target_index
+    await pilot.pause()
+    await pilot.press("enter")
+    await pilot.pause()
 
 
 async def test_default_sort_due_date_oldest_first_selected_on_startup(
@@ -60,9 +91,7 @@ async def test_sort_alphabetically_ascending(
     await mock_task_manager.add_task("c task")
 
     async with app.run_test() as pilot:
-        # Default sort is by due_date. Press ctrl+o to switch to title sort.
-        await pilot.press("ctrl+o")
-        await pilot.pause()
+        await select_sort_option(pilot, app, "Title ↑")
 
         assert app.sort_by == "title"
         tasks_list = app.query_one("ListView")
@@ -84,9 +113,7 @@ async def test_sort_alphabetically_descending(
     await mock_task_manager.add_task("c task")
 
     async with app.run_test() as pilot:
-        await pilot.press("ctrl+o")  # sort by title
-        await pilot.press("ctrl+i")  # reverse sort
-        await pilot.pause()
+        await select_sort_option(pilot, app, "Title ↓")
 
         assert app.sort_by == "title"
         assert app.sort_reverse is True
@@ -95,24 +122,25 @@ async def test_sort_alphabetically_descending(
         assert rendered_tasks == ["c task", "b task", "a task"]
 
 
-async def test_sort_cycle(app: LazyTaskApp):
+async def test_sort_modal_allows_selecting_each_option(app: LazyTaskApp):
     """
-    Choosing sort cycles through due_date, title, creation_date.
+    The sort modal allows choosing any combination of field and direction.
     """
     async with app.run_test() as pilot:
         assert app.sort_by == "due_date"
+        assert app.sort_reverse is False
 
-        await pilot.press("ctrl+o")
-        await pilot.pause()
-        assert app.sort_by == "title"
-
-        await pilot.press("ctrl+o")
-        await pilot.pause()
-        assert app.sort_by == "creation_date"
-
-        await pilot.press("ctrl+o")
-        await pilot.pause()
+        await select_sort_option(pilot, app, "Due date ↓")
         assert app.sort_by == "due_date"
+        assert app.sort_reverse is True
+
+        await select_sort_option(pilot, app, "Title ↑")
+        assert app.sort_by == "title"
+        assert app.sort_reverse is False
+
+        await select_sort_option(pilot, app, "Creation date ↓")
+        assert app.sort_by == "creation_date"
+        assert app.sort_reverse is True
 
 
 async def test_sort_by_title_case_insensitive(
@@ -124,8 +152,7 @@ async def test_sort_by_title_case_insensitive(
     await mock_task_manager.add_task("C task")
 
     async with app.run_test() as pilot:
-        await pilot.press("ctrl+o")  # sort by title
-        await pilot.pause()
+        await select_sort_option(pilot, app, "Title ↑")
 
         tasks_list = app.query_one("ListView")
         rendered_tasks = [item.data.title for item in tasks_list.children]
@@ -147,9 +174,7 @@ async def test_sort_by_creation_date(
     )
 
     async with app.run_test() as pilot:
-        await pilot.press("ctrl+o")  # sort by title
-        await pilot.press("ctrl+o")  # sort by creation_date
-        await pilot.pause()
+        await select_sort_option(pilot, app, "Creation date ↑")
 
         assert app.sort_by == "creation_date"
         tasks_list = app.query_one("ListView")

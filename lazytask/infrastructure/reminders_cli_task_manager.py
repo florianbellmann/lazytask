@@ -63,15 +63,23 @@ class RemindersCliTaskManager(TaskManager):
             tags=[],  # reminders-cli doesn't support tags
         )
 
+    def _normalize_list_name(self, list_name: str) -> str:
+        cleaned = (list_name or "").strip()
+        if not cleaned:
+            raise ValueError("List name must not be empty")
+        return cleaned
+
     async def add_task(self, title: str, list_name: str = "develop") -> Task:
-        command = ["add", list_name, title, "--format", "json"]
+        clean_list = self._normalize_list_name(list_name)
+        command = ["add", clean_list, title, "--format", "json"]
         response = await self._run_cli_command(command)
         return self._parse_reminder_json(response)
 
     async def complete_task(
         self, task_id: str, list_name: str = "develop"
     ) -> Optional[Task]:
-        command = ["complete", list_name, task_id]
+        clean_list = self._normalize_list_name(list_name)
+        command = ["complete", clean_list, task_id]
         await self._run_cli_command(command)  # This command doesn't return JSON
         # To get the updated task, we need to fetch it
         # This is a limitation, as the CLI doesn't return the completed task
@@ -82,7 +90,8 @@ class RemindersCliTaskManager(TaskManager):
     async def get_tasks(
         self, list_name: str = "develop", include_completed: bool = False
     ) -> List[Task]:
-        command = ["show", list_name, "--format", "json"]
+        clean_list = self._normalize_list_name(list_name)
+        command = ["show", clean_list, "--format", "json"]
         if include_completed:
             command.extend(["--include-completed"])
 
@@ -95,7 +104,12 @@ class RemindersCliTaskManager(TaskManager):
         command = ["show-lists", "--format", "json"]
         response = await self._run_cli_command(command)
         if isinstance(response, list):
-            return [str(item) for item in response]
+            trimmed_lists = []
+            for item in response:
+                cleaned = str(item).strip()
+                if cleaned:
+                    trimmed_lists.append(cleaned)
+            return trimmed_lists
         return []
 
     async def edit_task_date(
@@ -105,13 +119,14 @@ class RemindersCliTaskManager(TaskManager):
         # Fetch the task, delete it, and re-add with new date
         # This is not atomic and can lead to data loss if re-add fails
         # A better solution would require modifying the reminders-cli
-        tasks = await self.get_tasks(list_name, include_completed=True)
+        clean_list = self._normalize_list_name(list_name)
+        tasks = await self.get_tasks(clean_list, include_completed=True)
         original_task = next((t for t in tasks if t.id == task_id), None)
 
         if original_task:
-            await self._run_cli_command(["delete", list_name, task_id])
+            await self._run_cli_command(["delete", clean_list, task_id])
             # Re-add with new date and original properties
-            command = ["add", list_name, original_task.title, "--format", "json"]
+            command = ["add", clean_list, original_task.title, "--format", "json"]
             if new_date:  # Assuming new_date is in a format reminders-cli understands (e.g., YYYY-MM-DD)
                 command.extend(["--due-date", new_date])
             if original_task.description:
@@ -133,10 +148,11 @@ class RemindersCliTaskManager(TaskManager):
     async def edit_task_description(
         self, task_id: str, description: str, list_name: str = "develop"
     ) -> Optional[Task]:
-        command = ["edit", list_name, task_id, "--notes", description]
+        clean_list = self._normalize_list_name(list_name)
+        command = ["edit", clean_list, task_id, "--notes", description]
         await self._run_cli_command(command)
         # The CLI doesn't return the updated task, so we fetch it
-        tasks = await self.get_tasks(list_name, include_completed=True)
+        tasks = await self.get_tasks(clean_list, include_completed=True)
         return next((t for t in tasks if t.id == task_id), None)
 
     async def edit_task_tags(
@@ -152,12 +168,13 @@ class RemindersCliTaskManager(TaskManager):
         self, task_id: str, priority: int, list_name: str = "develop"
     ) -> Optional[Task]:
         # Similar workaround as edit_task_date
-        tasks = await self.get_tasks(list_name, include_completed=True)
+        clean_list = self._normalize_list_name(list_name)
+        tasks = await self.get_tasks(clean_list, include_completed=True)
         original_task = next((t for t in tasks if t.id == task_id), None)
 
         if original_task:
-            await self._run_cli_command(["delete", list_name, task_id])
-            command = ["add", list_name, original_task.title, "--format", "json"]
+            await self._run_cli_command(["delete", clean_list, task_id])
+            command = ["add", clean_list, original_task.title, "--format", "json"]
             if original_task.due_date:
                 command.extend(["--due-date", original_task.due_date])
             if original_task.description:
@@ -176,7 +193,8 @@ class RemindersCliTaskManager(TaskManager):
         return None
 
     async def refresh_tasks(self, list_name: str = "develop") -> List[Task]:
-        return await self.get_tasks(list_name)
+        clean_list = self._normalize_list_name(list_name)
+        return await self.get_tasks(clean_list)
 
     async def filter_tasks(
         self,
@@ -188,7 +206,8 @@ class RemindersCliTaskManager(TaskManager):
         include_completed: bool = False,
     ) -> List[Task]:
         # Fetch all relevant tasks and then filter in Python
-        tasks = await self.get_tasks(list_name, include_completed=True)
+        clean_list = self._normalize_list_name(list_name)
+        tasks = await self.get_tasks(clean_list, include_completed=True)
         filtered_tasks = []
         for task in tasks:
             match = True

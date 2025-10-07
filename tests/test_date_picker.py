@@ -37,9 +37,39 @@ async def test_date_picker_updates_task_date(
         await pilot.click("#select_date")
 
         # Wait for the async task update to complete
-        await pilot.pause(0.5)
+        await pilot.pause(0.1)
 
         # Verify the task's due date is updated
+        updated_tasks = await mock_task_manager.get_tasks("develop")
+        updated_task = updated_tasks[0]
+        assert updated_task.due_date == new_date
+
+
+@pytest.mark.asyncio
+async def test_date_picker_enter_key_confirms_selection(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
+    """Pressing enter in the date picker should confirm the selection."""
+    await mock_task_manager.add_task("Test Task", due_date=datetime.date(2023, 1, 1))
+
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("j")
+        await pilot.pause()
+
+        await pilot.press("d")
+        await pilot.pause()
+
+        assert isinstance(app.screen, DatePickerScreen)
+        date_picker_screen = app.screen
+
+        new_date = datetime.date(2024, 1, 1)
+        date_picker = date_picker_screen.query_one(DatePicker)
+        date_picker.date = pendulum.instance(new_date)
+
+        await pilot.press("enter")
+        await pilot.pause(0.1)
+
         updated_tasks = await mock_task_manager.get_tasks("develop")
         updated_task = updated_tasks[0]
         assert updated_task.due_date == new_date

@@ -27,6 +27,7 @@ from lazytask.presentation.task_detail import TaskDetail
 from lazytask.presentation.text_input_modal import TextInputModal
 from .date_picker_screen import DatePickerScreen
 from .select_list_screen import SelectListScreen
+from .sort_options_screen import SortOptionsScreen
 from lazytask.container import container
 
 
@@ -173,14 +174,18 @@ class LazyTaskApp(App):
         self.query_one(TaskDetail).update_task(None)
 
     async def switch_list(self, list_name: str):
-        self.current_list = list_name
+        cleaned_list = list_name.strip()
+        if not cleaned_list:
+            self.notify("List name must not be empty", title="Invalid list")
+            return
+        self.current_list = cleaned_list
         self.filter_query = ""
         list_view = self.query_one(ListView)
         list_view.index = None
         await list_view.clear()
-        await self.update_tasks_list(preserve_selection=False)
-        if self.query_one(ListView).children:
-            self.query_one(ListView).index = 0
+        await self.update_tasks_list(
+            preserve_selection=False, select_first_if_available=True
+        )
 
     async def on_key(self, event: events.Key) -> None:
         logging.debug(
@@ -232,6 +237,7 @@ class LazyTaskApp(App):
         preserve_selection: bool = True,
         newly_added_task_id: str | None = None,
         completed_task_index: int | None = None,
+        select_first_if_available: bool = False,
     ):
         """Update the tasks list view."""
         logging.debug(
@@ -242,7 +248,13 @@ class LazyTaskApp(App):
 
         self.query_one(ListTabs).update_lists(self.available_lists, self.current_list)
         tasks_list_view = self.query_one(ListView)
-        tasks_list_view = self.query_one(ListView)
+        previous_task_id: str | None = None
+        previous_index: int | None = None
+        if preserve_selection:
+            highlighted = tasks_list_view.highlighted_child
+            if isinstance(highlighted, TaskListItem):
+                previous_task_id = highlighted.data.id
+            previous_index = tasks_list_view.index
         await tasks_list_view.clear()
         async with self.show_loading():
             try:
@@ -318,9 +330,33 @@ class LazyTaskApp(App):
                 if cast(TaskListItem, item).data.id == newly_added_task_id:
                     tasks_list_view.index = i
                     break
-
+        elif preserve_selection:
+            had_previous_selection = (
+                previous_task_id is not None or previous_index is not None
+            )
+            if previous_task_id:
+                for i, item in enumerate(tasks_list_view.children):
+                    if cast(TaskListItem, item).data.id == previous_task_id:
+                        tasks_list_view.index = i
+                        break
+                else:
+                    if had_previous_selection and tasks_list_view.children:
+                        tasks_list_view.index = 0
+                    else:
+                        tasks_list_view.index = None
+            elif previous_index is not None and 0 <= previous_index < len(
+                tasks_list_view.children
+            ):
+                tasks_list_view.index = previous_index
+            elif had_previous_selection and tasks_list_view.children:
+                tasks_list_view.index = 0
+            else:
+                tasks_list_view.index = None
         else:
-            tasks_list_view.index = None
+            if select_first_if_available and tasks_list_view.children:
+                tasks_list_view.index = 0
+            else:
+                tasks_list_view.index = None
 
     def action_add_task(self) -> None:
         """An action to add a task."""
@@ -347,7 +383,9 @@ class LazyTaskApp(App):
 
         def on_submit(list_name: str | None) -> None:
             if list_name:
-                asyncio.create_task(self.switch_list(list_name))
+                cleaned_list = list_name.strip()
+                if cleaned_list:
+                    asyncio.create_task(self.switch_list(cleaned_list))
 
         self.push_screen(TextInputModal(prompt="Switch to list:"), on_submit)
 
@@ -541,15 +579,23 @@ class LazyTaskApp(App):
 
         self.push_screen(TextInputModal(prompt="Filter tasks:"), on_submit)
 
-    async def action_sort_tasks(self) -> None:
-        """An action to sort tasks."""
-        if self.sort_by == "due_date":
-            self.sort_by = "title"
-        elif self.sort_by == "title":
-            self.sort_by = "creation_date"
-        else:
-            self.sort_by = "due_date"
-        await self.update_tasks_list()
+    def action_sort_tasks(self) -> None:
+        """Open a modal to choose the sort field and direction."""
+
+        def on_sort_selected(selection: tuple[str, bool] | None) -> None:
+            if not selection:
+                return
+            selected_sort, selected_reverse = selection
+            if self.sort_by == selected_sort and self.sort_reverse == selected_reverse:
+                return
+
+            self.sort_by = selected_sort
+            self.sort_reverse = selected_reverse
+            asyncio.create_task(self.update_tasks_list())
+
+        self.push_screen(
+            SortOptionsScreen(self.sort_by, self.sort_reverse), on_sort_selected
+        )
 
     async def action_toggle_sort_direction(self) -> None:
         """An action to toggle the sort direction."""

@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from lazytask.domain.task import Task
 from lazytask.presentation.app import LazyTaskApp
+from lazytask.presentation.text_input_modal import TextInputModal
 from textual.widgets import ListView
 
 
@@ -201,3 +202,25 @@ async def test_switching_lists_resets_selection(monkeypatch):
         assert list_view.index == 0, (
             "Index should be reset to 0 after switching to all view"
         )
+
+
+@pytest.mark.asyncio
+async def test_switch_list_modal_trims_input(monkeypatch):
+    """Switching lists through the modal should trim whitespace."""
+    monkeypatch.setenv("LAZYTASK_LISTS", "develop,another")
+    app = LazyTaskApp()
+
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        app.action_switch_list()
+        await pilot.pause()
+
+        assert isinstance(app.screen, TextInputModal)
+        modal = app.screen
+        input_widget = modal.query_one("#input")
+        input_widget.value = "  another  "
+
+        await pilot.press("enter")
+        await pilot.pause()
+
+        assert app.current_list == "another"

@@ -124,3 +124,17 @@ async def test_set_task_recurring(task_manager):
     task = await task_manager.add_task("Test Task")
     updated_task = await task_manager.set_task_recurring(task.id, "daily")
     assert updated_task.recurring == "daily"
+
+
+@pytest.mark.asyncio
+async def test_list_names_are_trimmed(task_manager):
+    """List names provided with surrounding spaces are trimmed consistently."""
+    task = await task_manager.add_task("Trimmed Task", list_name="  backlog  ")
+    assert task.list_name == "backlog"
+
+    tasks_in_backlog = await task_manager.get_tasks(" backlog ")
+    assert tasks_in_backlog[0].list_name == "backlog"
+
+    lists = await task_manager.get_lists()
+    assert "backlog" in lists
+    assert all(name == name.strip() for name in lists)

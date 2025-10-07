@@ -1,11 +1,12 @@
-import uuid
-from typing import List, Optional, Dict, Any
-from lazytask.domain.task_manager import TaskManager
-from lazytask.domain.task import Task
 import datetime
 import json
-import os
 import logging
+import os
+import uuid
+from typing import Any, Dict, List, Optional
+
+from lazytask.domain.task import Task
+from lazytask.domain.task_manager import TaskManager
 
 
 class MockTaskManager(TaskManager):
@@ -20,12 +21,19 @@ class MockTaskManager(TaskManager):
         if self.use_persistence:
             self._load_tasks()
 
+    def _normalize_list_name(self, list_name: str) -> str:
+        cleaned = (list_name or "").strip()
+        if not cleaned:
+            raise ValueError("List name must not be empty")
+        return cleaned
+
     def _load_tasks(self):
         if os.path.exists(self.file_path):
             with open(self.file_path, "r") as f:
                 data = json.load(f)
-                for list_name, tasks in data.items():
-                    self._tasks[list_name] = {}
+                for raw_list_name, tasks in data.items():
+                    list_name = self._normalize_list_name(raw_list_name)
+                    list_bucket = self._tasks.setdefault(list_name, {})
                     for task_id, task_data in tasks.items():
                         if task_data.get("due_date") and isinstance(
                             task_data.get("due_date"), str
@@ -42,7 +50,7 @@ class MockTaskManager(TaskManager):
                                 )
                             )
                         task_data["list_name"] = list_name
-                        self._tasks[list_name][task_id] = Task(**task_data)
+                        list_bucket[task_id] = Task(**task_data)
 
     def _save_tasks(self):
         if not self.use_persistence:
@@ -69,6 +77,7 @@ class MockTaskManager(TaskManager):
         self._save_tasks()
 
     async def add_task(self, title: str, list_name: str = "develop", **kwargs) -> Task:
+        list_name = self._normalize_list_name(list_name)
         if list_name not in self._tasks:
             self._tasks[list_name] = {}
         task_id = kwargs.pop("id", None) or str(uuid.uuid4())
@@ -90,6 +99,7 @@ class MockTaskManager(TaskManager):
     async def complete_task(
         self, task_id: str, list_name: str = "develop"
     ) -> Optional[Task]:
+        list_name = self._normalize_list_name(list_name)
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             task.completed = True
@@ -100,6 +110,7 @@ class MockTaskManager(TaskManager):
     async def get_tasks(
         self, list_name: str = "develop", include_completed: bool = False
     ) -> List[Task]:
+        list_name = self._normalize_list_name(list_name)
         if list_name not in self._tasks:
             return []
         tasks = list(self._tasks[list_name].values())
@@ -110,16 +121,18 @@ class MockTaskManager(TaskManager):
     async def get_task(
         self, task_id: str, list_name: str = "develop"
     ) -> Optional[Task]:
+        list_name = self._normalize_list_name(list_name)
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             return self._tasks[list_name][task_id]
         return None
 
     async def get_lists(self) -> List[str]:
-        return list(self._tasks.keys())
+        return [name for name in self._tasks.keys()]
 
     async def edit_task_date(
         self, task_id: str, new_date: str, list_name: str = "develop"
     ) -> Optional[Task]:
+        list_name = self._normalize_list_name(list_name)
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             if isinstance(new_date, str):
@@ -133,6 +146,7 @@ class MockTaskManager(TaskManager):
     async def move_task_to_tomorrow(
         self, task_id: str, list_name: str = "develop"
     ) -> Optional[Task]:
+        list_name = self._normalize_list_name(list_name)
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             tomorrow = datetime.date.today() + datetime.timedelta(days=1)
@@ -144,6 +158,7 @@ class MockTaskManager(TaskManager):
     async def edit_task_description(
         self, task_id: str, description: str, list_name: str = "develop"
     ) -> Optional[Task]:
+        list_name = self._normalize_list_name(list_name)
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             task.description = description
@@ -154,6 +169,7 @@ class MockTaskManager(TaskManager):
     async def edit_task_tags(
         self, task_id: str, tags: List[str], list_name: str = "develop"
     ) -> Optional[Task]:
+        list_name = self._normalize_list_name(list_name)
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             task.tags = tags
@@ -164,6 +180,7 @@ class MockTaskManager(TaskManager):
     async def edit_task_priority(
         self, task_id: str, priority: int, list_name: str = "develop"
     ) -> Optional[Task]:
+        list_name = self._normalize_list_name(list_name)
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             task.priority = priority
@@ -174,6 +191,7 @@ class MockTaskManager(TaskManager):
     async def edit_task_flag(
         self, task_id: str, flagged: bool, list_name: str = "develop"
     ) -> Optional[Task]:
+        list_name = self._normalize_list_name(list_name)
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             task.is_flagged = flagged
@@ -194,6 +212,7 @@ class MockTaskManager(TaskManager):
         flagged: Optional[bool] = None,
         include_completed: bool = False,
     ) -> List[Task]:
+        list_name = self._normalize_list_name(list_name)
         tasks = await self.get_tasks(list_name, include_completed)
         filtered_tasks = []
         for task in tasks:
@@ -217,6 +236,7 @@ class MockTaskManager(TaskManager):
     async def sort_tasks(
         self, list_name: str = "develop", sort_by: str = "due_date"
     ) -> List[Task]:
+        list_name = self._normalize_list_name(list_name)
         tasks = await self.get_tasks(
             list_name, include_completed=True
         )  # Sort all tasks, then filter if needed
@@ -238,6 +258,7 @@ class MockTaskManager(TaskManager):
         self, task_id: str, updates: Dict[str, Any], list_name: str = "develop"
     ) -> Optional[Task]:
         logging.debug(f"Editing task {task_id} with updates: {updates}")
+        list_name = self._normalize_list_name(list_name)
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             for key, value in updates.items():
@@ -252,6 +273,7 @@ class MockTaskManager(TaskManager):
     async def set_task_recurring(
         self, task_id: str, recurring: str, list_name: str = "develop"
     ) -> Optional[Task]:
+        list_name = self._normalize_list_name(list_name)
         if list_name in self._tasks and task_id in self._tasks[list_name]:
             task = self._tasks[list_name][task_id]
             task.recurring = recurring
@@ -262,12 +284,14 @@ class MockTaskManager(TaskManager):
     async def move_task(
         self, task_id: str, from_list: str, to_list: str
     ) -> Optional[Task]:
-        if from_list in self._tasks and task_id in self._tasks[from_list]:
-            task = self._tasks[from_list].pop(task_id)
-            if to_list not in self._tasks:
-                self._tasks[to_list] = {}
-            self._tasks[to_list][task_id] = task
-            task.list_name = to_list
+        from_list_clean = self._normalize_list_name(from_list)
+        to_list_clean = self._normalize_list_name(to_list)
+        if from_list_clean in self._tasks and task_id in self._tasks[from_list_clean]:
+            task = self._tasks[from_list_clean].pop(task_id)
+            if to_list_clean not in self._tasks:
+                self._tasks[to_list_clean] = {}
+            self._tasks[to_list_clean][task_id] = task
+            task.list_name = to_list_clean
             self._save_tasks()
             return task
         return None

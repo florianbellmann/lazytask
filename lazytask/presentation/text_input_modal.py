@@ -1,8 +1,9 @@
 from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Input, Button, Label, TextArea
+from textual.widgets import Input, Button, Label
 from textual.events import Key
+from lazytask.presentation.widgets.text_area import TextArea
 
 
 class TextInputModal(ModalScreen[str | None]):
@@ -44,3 +45,22 @@ class TextInputModal(ModalScreen[str | None]):
                 self.dismiss(self.query_one(Input).value)
         else:
             self.dismiss(None)
+
+    def on_key(self, event: Key) -> None:
+        """Handle keyboard shortcuts for submitting or cancelling the modal."""
+        ctrl_pressed = bool(getattr(event, "ctrl", False))
+        if event.key == "escape":
+            event.stop()
+            self.dismiss(None)
+            return
+
+        if event.key == "enter":
+            if self.multiline and not ctrl_pressed:
+                # Allow plain Enter to insert newlines when multiline is enabled.
+                return
+
+            event.stop()
+            if self.multiline:
+                self.dismiss(self.query_one(TextArea).text)
+            else:
+                self.dismiss(self.query_one(Input).value)

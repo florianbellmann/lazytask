@@ -37,3 +37,10 @@ async def test_app_starts_in_all_view():
     async with app.run_test() as pilot:
         await pilot.pause()
         assert app.current_list == "all"
+
+
+def test_available_lists_trim_spaces(monkeypatch):
+    """Environment list names with spaces should be trimmed."""
+    monkeypatch.setenv("LAZYTASK_LISTS", " work , personal , ops ")
+    app = LazyTaskApp()
+    assert app.available_lists == ["work", "personal", "ops"]

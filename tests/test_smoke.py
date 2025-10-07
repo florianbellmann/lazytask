@@ -4,6 +4,10 @@ from textual.widgets import Label
 
 from lazytask.presentation.app import LazyTaskApp
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
+from lazytask.presentation.sort_options_screen import (
+    SORT_OPTIONS,
+    SortOptionsScreen,
+)
 
 
 @pytest.mark.asyncio
@@ -59,14 +63,24 @@ async def test_smoke_test_workflow(
 
         # 4. List them (already asserted above)
 
-        # 5. Change sorting (ctrl+o cycles through sort options)
-        # Initial sort is by due_date
-        await pilot.press("ctrl+o")  # Sort by title
-        await pilot.pause()
-        await pilot.press("ctrl+o")  # Sort by creation_date
-        await pilot.pause()
-        await pilot.press("ctrl+o")  # Sort by due_date again
-        await pilot.pause()
+        # 5. Change sorting using the modal
+        async def choose_sort_option(option_label: str) -> None:
+            await pilot.press("ctrl+o")
+            await pilot.pause()
+            assert isinstance(app.screen, SortOptionsScreen)
+            sort_screen = app.screen
+            sort_list_view = sort_screen.query_one("ListView")
+            for index, option in enumerate(SORT_OPTIONS):
+                if option.label == option_label:
+                    sort_list_view.index = index
+                    break
+            await pilot.pause()
+            await pilot.press(Keys.Enter)
+            await pilot.pause()
+
+        await choose_sort_option("Title ↑")
+        await choose_sort_option("Creation date ↑")
+        await choose_sort_option("Due date ↑")
 
         # 6. Filter
         await pilot.press("/")

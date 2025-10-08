@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import cast
 
 from textual.app import ComposeResult
+from textual.containers import Center, Vertical
 from textual.events import Key
 from textual.screen import ModalScreen
 from textual.widgets import Label, ListItem, ListView
@@ -31,19 +32,44 @@ class SortOptionListItem(ListItem):
 
 
 class SortOptionsScreen(ModalScreen[tuple[str, bool] | None]):
+    DEFAULT_CSS = """
+    SortOptionsScreen > Center {
+        align: center middle;
+    }
+
+    SortOptionsScreen #sort_options_popup {
+        width: 48;
+        min-width: 42;
+        border: round $accent;
+        padding: 1 2;
+        background: $panel;
+    }
+
+    SortOptionsScreen #sort_options_title {
+        text-style: bold;
+    }
+
+    SortOptionsScreen ListView#sort_options_list {
+        height: auto;
+    }
+    """
+
     def __init__(self, current_sort: str, current_reverse: bool):
         super().__init__()
         self.current_sort = current_sort
         self.current_reverse = current_reverse
 
     def compose(self) -> ComposeResult:
-        yield ListView(
-            *[SortOptionListItem(option) for option in SORT_OPTIONS],
-            id="sort_options_list",
-        )
+        with Center():
+            with Vertical(id="sort_options_popup"):
+                yield Label("Select sort field & direction", id="sort_options_title")
+                yield ListView(
+                    *[SortOptionListItem(option) for option in SORT_OPTIONS],
+                    id="sort_options_list",
+                )
 
     def on_mount(self) -> None:
-        sort_list_view = self.query_one(ListView)
+        sort_list_view = self._list_view()
         for index, option in enumerate(SORT_OPTIONS):
             if (
                 option.sort_by == self.current_sort
@@ -60,6 +86,33 @@ class SortOptionsScreen(ModalScreen[tuple[str, bool] | None]):
         self.dismiss((option.sort_by, option.reverse))
 
     def on_key(self, event: Key) -> None:
+        list_view = self._list_view()
+
+        if event.key in {"j", "down"}:
+            event.stop()
+            list_view.action_cursor_down()
+            return
+
+        if event.key in {"k", "up"}:
+            event.stop()
+            list_view.action_cursor_up()
+            return
+
+        if event.key == "g":
+            event.stop()
+            if list_view.children:
+                list_view.index = 0
+            return
+
+        if event.key == "G":
+            event.stop()
+            if list_view.children:
+                list_view.index = len(list_view.children) - 1
+            return
+
         if event.key == "escape":
             event.stop()
             self.dismiss(None)
+
+    def _list_view(self) -> ListView:
+        return self.query_one("#sort_options_list", ListView)

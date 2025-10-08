@@ -7,6 +7,7 @@ from lazytask.presentation.sort_options_screen import (
     SORT_OPTIONS,
     SortOptionsScreen,
 )
+from textual.widgets import ListView
 
 
 async def select_sort_option(
@@ -180,3 +181,35 @@ async def test_sort_by_creation_date(
         tasks_list = app.query_one("ListView")
         rendered_tasks = [item.data.title for item in tasks_list.children]
         assert rendered_tasks == ["task 2", "task 1", "task 3"]
+
+
+async def test_sort_modal_supports_vim_navigation(app: LazyTaskApp):
+    """The sort modal allows navigating with vim-style keys."""
+    async with app.run_test() as pilot:
+        await pilot.press("ctrl+o")
+        await pilot.pause()
+
+        assert isinstance(app.screen, SortOptionsScreen)
+        sort_screen = app.screen
+        sort_list_view = sort_screen.query_one("#sort_options_list", ListView)
+
+        # Default focus is on the current selection (index 0 at startup)
+        assert sort_list_view.index == 0
+
+        await pilot.press("j")
+        await pilot.pause()
+        assert sort_list_view.index == 1
+
+        await pilot.press("k")
+        await pilot.pause()
+        assert sort_list_view.index == 0
+
+        # Move back down and confirm Enter selects the highlighted option
+        await pilot.press("j")
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        selected_option = SORT_OPTIONS[1]
+        assert app.sort_by == selected_option.sort_by
+        assert app.sort_reverse == selected_option.reverse

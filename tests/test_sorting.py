@@ -213,3 +213,19 @@ async def test_sort_modal_supports_vim_navigation(app: LazyTaskApp):
         selected_option = SORT_OPTIONS[1]
         assert app.sort_by == selected_option.sort_by
         assert app.sort_reverse == selected_option.reverse
+
+
+async def test_tab_alias_toggles_sort_direction(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
+    """Pressing Tab (alias for Ctrl+I) toggles sort direction to support terminals."""
+    await mock_task_manager.add_task("task 1", due_date=datetime.date(2025, 1, 1))
+    await mock_task_manager.add_task("task 2", due_date=datetime.date(2025, 1, 2))
+
+    async with app.run_test() as pilot:
+        assert app.sort_reverse is False
+
+        await pilot.press("tab")
+        await pilot.pause()
+
+        assert app.sort_reverse is True

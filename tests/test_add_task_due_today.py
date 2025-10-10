@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+from textual.widgets import Label
 
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 from lazytask.presentation.app import LazyTaskApp
@@ -25,3 +26,10 @@ async def test_add_task_due_today(app: LazyTaskApp, mock_task_manager: MockTaskM
         assert len(tasks) == 1
         assert tasks[0].title == "Test"
         assert tasks[0].due_date == datetime.date.today()
+
+        # Ensure the UI reflects the due date
+        tasks_list = app.query_one("ListView")
+        first_item = tasks_list.children[0]
+        label = first_item.query_one(Label)
+        label_text = str(label.render())
+        assert f"due: {datetime.date.today().strftime('%Y-%m-%d')}" in label_text

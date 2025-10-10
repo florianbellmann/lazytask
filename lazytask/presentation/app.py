@@ -28,6 +28,7 @@ from lazytask.presentation.text_input_modal import TextInputModal
 from .date_picker_screen import DatePickerScreen
 from .select_list_screen import SelectListScreen
 from .sort_options_screen import SortOptionsScreen
+from lazytask.application.errors import DescriptionEditorError
 from lazytask.container import container
 
 
@@ -108,6 +109,7 @@ class LazyTaskApp(App):
         self.update_task_uc = container.get(UpdateTask)
         self.get_lists_uc = container.get(GetLists)
         self.move_task_uc = container.get(MoveTask)
+        self.description_editor = container.get_description_editor()
         self.sort_by = "due_date"
         self.sort_reverse = False
 
@@ -206,6 +208,12 @@ class LazyTaskApp(App):
         ):
             logging.debug("on_key: preventing default")
             event.prevent_default()
+            return
+
+        if event.key == "tab":
+            logging.debug("on_key: remapping tab to toggle sort direction")
+            event.prevent_default()
+            asyncio.create_task(self.action_toggle_sort_direction())
             return
 
         if event.key.isdigit():
@@ -527,33 +535,40 @@ class LazyTaskApp(App):
                 on_submit,
             )
 
-    def action_edit_description(self) -> None:
-        """An action to edit a task's description."""
-        tasks_list = self.query_one(ListView)
-        if tasks_list.highlighted_child:
-            task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
+    async def action_edit_description(self) -> None:
+        """An action to edit a task's description using an external editor."""
+        tasks_list_view = self.query_one(ListView)
+        highlighted_item = tasks_list_view.highlighted_child
+        if highlighted_item is None:
+            return
 
-            def on_submit(new_description: str | None) -> None:
-                if new_description is not None:
-                    updates = {"description": new_description}
+        selected_task_item = cast(TaskListItem, highlighted_item)
+        task: Task = selected_task_item.data
+        initial_description = task.description or ""
 
-                    async def update_task_async() -> None:
-                        async with self.show_loading():
-                            await self.update_task_uc.execute(
-                                task.id, updates, task.list_name
-                            )
-                            await self.update_tasks_list()
-
-                    asyncio.create_task(update_task_async())
-
-            self.push_screen(
-                TextInputModal(
-                    prompt="Edit description:",
-                    initial_value=task.description or "",
-                    multiline=True,
-                ),
-                on_submit,
+        try:
+            edited_description = await self.description_editor.edit(
+                self, initial_description
             )
+        except DescriptionEditorError as error:
+            logging.exception("Description editor failed")
+            self.notify(
+                str(error),
+                title="Editor Error",
+                severity="error",
+            )
+            return
+
+        if edited_description is None or edited_description == initial_description:
+            return
+
+        async with self.show_loading():
+            await self.update_task_uc.execute(
+                task.id,
+                {"description": edited_description},
+                task.list_name,
+            )
+            await self.update_tasks_list()
 
     async def action_refresh(self) -> None:
         """An action to refresh the list."""

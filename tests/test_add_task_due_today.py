@@ -30,6 +30,6 @@ async def test_add_task_due_today(app: LazyTaskApp, mock_task_manager: MockTaskM
         # Ensure the UI reflects the due date
         tasks_list = app.query_one("ListView")
         first_item = tasks_list.children[0]
-        label = first_item.query_one(Label)
-        label_text = str(label.render())
-        assert f"due: {datetime.date.today().strftime('%Y-%m-%d')}" in label_text
+        due_label = first_item.query_one("Label#task-due-date", Label)
+        due_text = str(due_label.render())
+        assert f"due: {datetime.date.today().strftime('%Y-%m-%d')}" in due_text

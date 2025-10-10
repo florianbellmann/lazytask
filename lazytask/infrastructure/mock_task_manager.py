@@ -76,7 +76,22 @@ class MockTaskManager(TaskManager):
         self._tasks = {"develop": {}}
         self._save_tasks()
 
-    async def add_task(self, title: str, list_name: str = "develop", **kwargs) -> Task:
+    async def add_task(
+        self, title: str | Task, list_name: str = "develop", **kwargs
+    ) -> Task:
+        if isinstance(title, Task):
+            task_obj = title
+            target_list = self._normalize_list_name(task_obj.list_name or list_name)
+            self._tasks.setdefault(target_list, {})
+            if not task_obj.id:
+                task_obj.id = str(uuid.uuid4())
+            if not task_obj.creation_date:
+                task_obj.creation_date = datetime.datetime.now()
+            task_obj.list_name = target_list
+            self._tasks[target_list][task_obj.id] = task_obj
+            self._save_tasks()
+            return task_obj
+
         list_name = self._normalize_list_name(list_name)
         if list_name not in self._tasks:
             self._tasks[list_name] = {}

@@ -1,0 +1,142 @@
+* {
+    color: #e9e9e9;
+    scrollbar-background: #0a0e1b;
+    scrollbar-background-hover: #0a0e1b;
+    scrollbar-background-active: #0a0e1b;
+    scrollbar-color: #33405d;
+    scrollbar-color-hover: #404f71;
+    scrollbar-color-active: #4f608a;
+}
+
+LazyTaskApp, Screen {
+    background: #0a0e1b;
+}
+
+Header {
+    background: #192036;
+    color: #e9e9e9;
+    text-style: bold;
+    content-align: center middle;
+    padding: 0 1;
+    height: 1;
+}
+
+Header Static#title {
+    color: #b7c7ee;
+}
+
+Header Static#clock {
+    color: #8fb0ee;
+}
+
+Footer {
+    background: #192036;
+    color: #8fb0ee;
+    height: 1;
+    padding: 0 1;
+}
+
+ListTabs {
+    background: #111322;
+    border-bottom: solid #1c2440;
+    color: #8fb0ee;
+    content-align: center middle;
+    padding: 0 1;
+}
+
+#main_layout {
+    height: 1fr;
+}
+
+Horizontal > #tasks_panel {
+    width: 3fr;
+    background: #0f1525;
+    border-right: solid #1c2440;
+}
+
+ListView#tasks_list {
+    background: #0f1525;
+    padding: 0;
+}
+
+TaskListItem {
+    background: #0f1525;
+    border-bottom: solid #131a2c;
+    padding: 0 1;
+}
+
+TaskListItem #task-item-row {
+    width: 100%;
+    content-align: left middle;
+}
+
+TaskListItem.-highlight {
+    background: #171e2f;
+}
+
+TaskListItem.-highlight #task-title {
+    text-style: bold;
+}
+
+TaskListItem.completed #task-title {
+    color: #606e88;
+}
+
+TaskListItem Label#task-due-date {
+    width: 16;
+    content-align: right middle;
+}
+
+TaskDetail {
+    width: 2fr;
+    background: #111322;
+    border-left: solid #1c2440;
+    padding: 1;
+}
+
+ModalScreen {
+    background: #0d1015;
+}
+
+TextInputModal #dialog,
+EditScreen #edit-task-dialog,
+SelectListScreen ListView#select_list_view,
+SortOptionsScreen #sort_options_popup,
+HelpScreen #help-text,
+DatePicker {
+    background: #111322;
+    border: solid #1c2440;
+    padding: 1;
+}
+
+Input,
+TextInputModal TextArea#input,
+EditScreen TextArea,
+EditScreen Input {
+    background: #0f1525;
+    border: solid #1c2440;
+    color: #e9e9e9;
+}
+
+Input:focus,
+TextInputModal TextArea#input:focus,
+EditScreen TextArea:focus,
+EditScreen Input:focus {
+    border: solid #8fb0ee;
+}
+
+Button {
+    background: #0f1525;
+    border: solid transparent;
+    color: #e9e9e9;
+    padding: 0 2;
+}
+
+Button.-primary {
+    background: #8fb0ee;
+    color: #0a0e1b;
+}
+
+LoadingIndicator {
+    color: #8fb0ee;
+}

@@ -9,36 +9,66 @@ class TaskDetail(Static):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.text = Text()
+        self._last_signature: tuple | str | None = None
 
     def update_task(self, task: Task | None) -> None:
         if task:
-            details = []
+            signature = (
+                task.id,
+                task.title,
+                task.list_name,
+                task.due_date,
+                task.creation_date,
+                task.description,
+                tuple(task.tags),
+                task.priority,
+                task.is_flagged,
+                task.recurring,
+                task.completed,
+            )
+            if signature == self._last_signature:
+                return
+            detail_rows: list[tuple[str, str]] = []
             if task.list_name:
-                details.append(f"List: {task.list_name}")
+                detail_rows.append(("List", task.list_name))
             if task.due_date:
-                details.append(f"Due Date: {task.due_date.strftime('%Y-%m-%d')}")
+                detail_rows.append(("Due Date", task.due_date.strftime("%Y-%m-%d")))
             if task.creation_date:
-                details.append(
-                    f"Created Date: {task.creation_date.strftime('%Y-%m-%d')}"
+                detail_rows.append(
+                    ("Created Date", task.creation_date.strftime("%Y-%m-%d"))
                 )
             if task.description:
-                details.append(f"Notes: {task.description}")
+                detail_rows.append(("Notes", task.description))
             if task.tags:
-                details.append(f"Tags: {', '.join(task.tags)}")
+                detail_rows.append(("Tags", ", ".join(task.tags)))
             if task.priority:
-                details.append(f"Priority: {task.priority}")
+                detail_rows.append(("Priority", str(task.priority)))
             if task.is_flagged:
-                details.append("Flagged")
+                detail_rows.append(("Flagged", "Yes"))
             if task.recurring:
-                details.append(f"Recurring: {task.recurring}")
-            if task.completed:
-                details.append("Status: Completed")
-            else:
-                details.append("Status: Pending")
+                detail_rows.append(("Recurring", task.recurring))
+            detail_rows.append(
+                ("Status", "Completed" if task.completed else "Pending")
+            )
 
-            details_str = "\n".join(details)
-            self.text = Text(f"## {task.title}\n\n{details_str}")
+            renderable = Text()
+            renderable.append_text(Text(task.title, style="bold #b7c7ee"))
+            if detail_rows:
+                renderable.append("\n\n")
+                for index, (label, value) in enumerate(detail_rows):
+                    line = Text.assemble(
+                        (f"{label}: ", "#8fb0ee"),
+                        (value, "#e9e9e9"),
+                    )
+                    renderable.append_text(line)
+                    if index < len(detail_rows) - 1:
+                        renderable.append("\n")
+            self.text = renderable
             self.update(self.text)
+            self._last_signature = signature
         else:
-            self.text = Text("No task selected")
+            if self._last_signature == "NO_TASK":
+                return
+            self.text = Text("No task selected", style="#606e88")
             self.update(self.text)
+            self._last_signature = "NO_TASK"

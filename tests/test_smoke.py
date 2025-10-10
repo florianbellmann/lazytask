@@ -32,10 +32,14 @@ async def test_smoke_test_workflow(
         tasks_list_view = app.query_one("#tasks_list")
         assert len(tasks_list_view.children) == 2
         assert "Task 1 Develop" in str(
-            tasks_list_view.children[0].query_one(Label).render()
+            tasks_list_view.children[0]
+            .query_one("Label#task-title", Label)
+            .render()
         )
         assert "Task 2 Develop" in str(
-            tasks_list_view.children[1].query_one(Label).render()
+            tasks_list_view.children[1]
+            .query_one("Label#task-title", Label)
+            .render()
         )
 
         # 3. Add 2 tasks to the second list ("develop2")
@@ -51,10 +55,14 @@ async def test_smoke_test_workflow(
         await pilot.pause()
 
         assert "Task 1 Develop2" in str(
-            tasks_list_view.children[0].query_one(Label).render()
+            tasks_list_view.children[0]
+            .query_one("Label#task-title", Label)
+            .render()
         )
         assert "Task 2 Develop2" in str(
-            tasks_list_view.children[1].query_one(Label).render()
+            tasks_list_view.children[1]
+            .query_one("Label#task-title", Label)
+            .render()
         )
 
         # Switch back to develop list
@@ -90,7 +98,9 @@ async def test_smoke_test_workflow(
         tasks_list_view = app.query_one("#tasks_list")
         assert len(tasks_list_view.children) == 1
         assert "Task 1 Develop" in str(
-            tasks_list_view.children[0].query_one(Label).render()
+            tasks_list_view.children[0]
+            .query_one("Label#task-title", Label)
+            .render()
         )
 
         # 7. Complete one item
@@ -108,7 +118,9 @@ async def test_smoke_test_workflow(
         tasks_list_view = app.query_one("#tasks_list")
         assert len(tasks_list_view.children) == 1
         assert "Task 2 Develop" in str(
-            tasks_list_view.children[0].query_one(Label).render()
+            tasks_list_view.children[0]
+            .query_one("Label#task-title", Label)
+            .render()
         )
 
         # 9. Change the list view (to develop2)
@@ -117,10 +129,14 @@ async def test_smoke_test_workflow(
         tasks_list_view = app.query_one("#tasks_list")
         assert len(tasks_list_view.children) == 2
         assert "Task 1 Develop2" in str(
-            tasks_list_view.children[0].query_one(Label).render()
+            tasks_list_view.children[0]
+            .query_one("Label#task-title", Label)
+            .render()
         )
         assert "Task 2 Develop2" in str(
-            tasks_list_view.children[1].query_one(Label).render()
+            tasks_list_view.children[1]
+            .query_one("Label#task-title", Label)
+            .render()
         )
 
         # 10. Remove the other items that the smoke test created

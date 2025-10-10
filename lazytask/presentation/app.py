@@ -10,6 +10,7 @@ from textual.app import App, ComposeResult
 from textual import events
 from textual.widgets import Header, Footer, ListView, ListItem, Label, LoadingIndicator
 from textual.containers import Container, Horizontal
+from rich.text import Text
 
 from lazytask.domain.task import Task
 from lazytask.application.use_cases import (
@@ -36,35 +37,61 @@ class TaskListItem(ListItem):
     def __init__(self, task: Task):
         super().__init__()
         self.data = task
+        self.add_class("task-list-item")
+        if task.completed:
+            self.add_class("completed")
+        if task.is_flagged:
+            self.add_class("flagged")
 
     def compose(self) -> ComposeResult:
-        details = []
-        if self.data.due_date:
-            details.append(f"due: {self.data.due_date.strftime('%Y-%m-%d')}")
+        status_token = "[x]" if self.data.completed else "[ ]"
+        meta_parts: list[str] = []
         if self.data.tags:
-            details.append(f"tags: {','.join(self.data.tags)}")
+            meta_parts.append(f"tags: {','.join(self.data.tags)}")
         if self.data.priority:
-            details.append(f"prio: {self.data.priority}")
+            meta_parts.append(f"prio: {self.data.priority}")
         if self.data.is_flagged:
-            details.append("flagged")
-        details_str = f" ({', '.join(details)})" if details else ""
+            meta_parts.append("flagged")
 
-        yield Label(
-            f"{'[x]' if self.data.completed else '[ ]'} {self.data.title}{details_str}"
+        status_color = "#74e3b5" if self.data.completed else "#8fb0ee"
+        title_color = "#e9e9e9"
+        meta_color = "#606e88"
+        due_color = "#8fb0ee"
+
+        due_text = Text()
+        if self.data.due_date:
+            due_color = "#74e3b5" if self.data.completed else "#8fb0ee"
+            today = datetime.date.today()
+            if not self.data.completed and self.data.due_date < today:
+                due_color = "#f28b82"
+            due_text.append(
+                f"due: {self.data.due_date.strftime('%Y-%m-%d')}", style=due_color
+            )
+        else:
+            due_text.append("due: -", style=meta_color)
+
+        display_text = Text()
+        display_text.append(status_token, style=status_color)
+        display_text.append(f" {self.data.title}", style=title_color)
+        if meta_parts:
+            display_text.append(f" ({', '.join(meta_parts)})", style=meta_color)
+
+        title_label = Label(display_text, id="task-title")
+        title_label.styles.flex = 1
+
+        due_label = Label(due_text, id="task-due-date")
+
+        yield Horizontal(
+            title_label,
+            due_label,
+            id="task-item-row",
         )
 
 
 class LazyTaskApp(App):
     """A Textual app to manage tasks."""
 
-    DEFAULT_CSS = """
-    #tasks_list {
-        width: 50%;
-    }
-    #task_detail {
-        width: 50%;
-    }
-    """
+    CSS_PATH = "theme.tcss"
 
     LOGGING = True
 
@@ -151,12 +178,16 @@ class LazyTaskApp(App):
         """Create child widgets for the app."""
         yield Header()
         yield ListTabs()
+        loading_indicator = LoadingIndicator(id="tasks_loading")
+        loading_indicator.display = False
         yield Horizontal(
             Container(
-                LoadingIndicator(),
+                loading_indicator,
                 ListView(id="tasks_list"),
+                id="tasks_panel",
             ),
             TaskDetail(id="task_detail"),
+            id="main_layout",
         )
         yield Footer()
 

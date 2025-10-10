@@ -9,13 +9,12 @@ class ListTabs(Static):
         self.tabs = Text()
 
     def update_lists(self, lists: List[str], current_list: str):
-        tabs = Text.from_markup(
-            " | ".join(
-                [
-                    f"[bold reverse]{lst}[/]" if lst == current_list else f"{lst}"
-                    for lst in ["all"] + lists
-                ]
-            )
-        )
-        self.tabs = tabs
+        normalized_lists = ["all"] + [name for name in lists if name != "all"]
+        tab_segments = []
+        for name in normalized_lists:
+            if name == current_list:
+                tab_segments.append(f"[#0a0e1b on #8fb0ee] {name} [/]")
+            else:
+                tab_segments.append(f"[#8fb0ee]{name}[/]")
+        self.tabs = Text.from_markup("   ".join(tab_segments))
         self.update(self.tabs)

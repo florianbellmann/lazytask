@@ -87,19 +87,25 @@ Keep a checklist of what you did and what your status is. So next time we can co
 from the all items view. fix this and cover it with tests
 - [x] i need to be able to move tasks to other lists. implement this feature with the hotkey y to choose a list to move to. cover it with tests
 - [x] instead of using PYTEST_CURRENT_TEST env var. use logging.debug and enable that for the tests
-- [ ] testing and bug fixes 
+- [x] testing and bug fixes
   - [x] when staring the app, i want to start in the all view. fix this and cover it with a test
   - [x] when adding an item while all view is focussed, add it to the first list in the env var. meaning the default list. fix this and cover it with a test
   - [x] i need a hotkey for adding due date today. fix this and cover it with a test
-  - [ ] use single line input for title. hotkey also missing
-  - [ ] ctrl o does something. but how do i actually choose a sort type and direction? meaning alphabeticcal or due date. fix this and cover it with a test
-  - [ ] hotkey t m and w only work while focussing a list and not in all view. but i need them to work in both. fix this and cover it with a test
-  - [ ] i need to be able to add and edit multiline descriptions. fix this and cover it with a test
-  - [ ] editing the date with d breaks the app. fix this and cover it with a test
-  - [ ] . fix this and cover it with a test
-  - [ ] the lists are getting parsed with spaces. even some tests assert that
+  - [x] use single line input for title. hotkey also missing
+  - [x] hotkey t m and w only work while focussing a list and not in all view. but i need them to work in both. fix this and cover it with a test
+  - [x] i need to be able to add and edit multiline descriptions. fix this and cover it with a test
+  - [x] ctrl o does something. but how do i actually choose a sort type and direction? meaning alphabeticcal or due date. fix this and cover it with a test
+  - [x] editing the date with d breaks the app. fix this and cover it with a test
+  - [x] the lists are getting parsed with spaces. even some tests assert that. i want to test with spaces, but should get parsed to trimmed strings
+  - [x] A does not add the today as due date. only normal creation. it should add something for today though. fix this and cover it with a test
+  - [x] in the sort direction view i cant use vim keydings. change this to a popup. fix this and cover it with a test
+  - [x] toggle sort direction key binding c-i does not work. fix this and cover it with a test
+  - [x] no keyboard movement in date picker
+- [x] use nvim for desc
+- [x] I cant config desc editing with tab enter
+- [x] change description editing to be a popup
+- [x] change title editing to be a popup
 - [ ] recurring tasks handling
-
 - [ ] i need to be able to create a new task zhrough a singular prompt. mesning running a quick cli prompt for getting the title and confirming the creation. then the process stops. this should be independent from the normal main application. recurring tasks loading indicators
 
 

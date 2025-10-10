@@ -69,9 +69,28 @@ class RemindersCliTaskManager(TaskManager):
             raise ValueError("List name must not be empty")
         return cleaned
 
-    async def add_task(self, title: str, list_name: str = "develop") -> Task:
+    async def add_task(
+        self, title: str, list_name: str = "develop", **kwargs: Any
+    ) -> Task:
         clean_list = self._normalize_list_name(list_name)
         command = ["add", clean_list, title, "--format", "json"]
+
+        due_date = kwargs.get("due_date")
+        if due_date:
+            if isinstance(due_date, datetime.date):
+                due_date_str = due_date.isoformat()
+            else:
+                due_date_str = str(due_date)
+            command.extend(["--due-date", due_date_str])
+
+        description = kwargs.get("description")
+        if description:
+            command.extend(["--notes", description])
+
+        priority = kwargs.get("priority")
+        if priority is not None:
+            command.extend(["--priority", str(priority)])
+
         response = await self._run_cli_command(command)
         return self._parse_reminder_json(response)
 

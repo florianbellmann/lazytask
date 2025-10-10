@@ -6,8 +6,10 @@ from lazytask.domain.task import Task
 
 class TaskManager(ABC):
     @abstractmethod
-    async def add_task(self, title: str, list_name: str = "develop") -> Task:
-        """Adds a new task to the specified list."""
+    async def add_task(
+        self, title: str, list_name: str = "develop", **kwargs: Any
+    ) -> Task:
+        """Adds a new task to the specified list with optional metadata (e.g., due date)."""
         pass
 
     @abstractmethod

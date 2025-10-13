@@ -1,6 +1,10 @@
-from textual.widgets import Static
 from rich.text import Text
+from textual.widgets import Static
+
 from lazytask.domain.task import Task
+from lazytask.presentation.palette import get_palette
+
+PALETTE = get_palette()
 
 
 class TaskDetail(Static):
@@ -52,13 +56,15 @@ class TaskDetail(Static):
             )
 
             renderable = Text()
-            renderable.append_text(Text(task.title, style="bold #b7c7ee"))
+            renderable.append_text(
+                Text(task.title, style=f"bold {PALETTE.accent_secondary}")
+            )
             if detail_rows:
                 renderable.append("\n\n")
                 for index, (label, value) in enumerate(detail_rows):
                     line = Text.assemble(
-                        (f"{label}: ", "#8fb0ee"),
-                        (value, "#e9e9e9"),
+                        (f"{label}: ", PALETTE.accent_primary),
+                        (value, PALETTE.text_primary),
                     )
                     renderable.append_text(line)
                     if index < len(detail_rows) - 1:
@@ -69,6 +75,6 @@ class TaskDetail(Static):
         else:
             if self._last_signature == "NO_TASK":
                 return
-            self.text = Text("No task selected", style="#606e88")
+            self.text = Text("No task selected", style=PALETTE.text_muted)
             self.update(self.text)
             self._last_signature = "NO_TASK"

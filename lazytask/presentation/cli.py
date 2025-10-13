@@ -6,6 +6,9 @@ from textual.reactive import var
 from lazytask.container import container
 from lazytask.domain.task import Task
 from lazytask.application.use_cases import AddTask, GetTasks, CompleteTask, GetLists
+from lazytask.presentation.palette import get_palette
+
+PALETTE = get_palette()
 
 
 class TaskDisplay(Static):
@@ -87,7 +90,9 @@ class LazyTaskCLI(App):
             content = f"[b]Tasks in '{self.current_list_name}'[/b]\n\n"
             for task in tasks:
                 content += f"[dim]{task.id[:8]}[/dim] - "
-                status = "[green]✓[/green]" if task.completed else "[red]✗[/red]"
+                status_color = PALETTE.success if task.completed else PALETTE.danger
+                status_symbol = "✓" if task.completed else "✗"
+                status = f"[{status_color}]{status_symbol}[/]"
                 content += f"{status} {task.title}\n"
             task_list_display.update(content)
         else:

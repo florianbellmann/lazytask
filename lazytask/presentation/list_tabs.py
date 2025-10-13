@@ -1,6 +1,11 @@
-from textual.widgets import Static
-from rich.text import Text
 from typing import List
+
+from rich.text import Text
+from textual.widgets import Static
+
+from lazytask.presentation.palette import get_palette
+
+PALETTE = get_palette()
 
 
 class ListTabs(Static):
@@ -13,8 +18,10 @@ class ListTabs(Static):
         tab_segments = []
         for name in normalized_lists:
             if name == current_list:
-                tab_segments.append(f"[#0a0e1b on #8fb0ee] {name} [/]")
+                tab_segments.append(
+                    f"[{PALETTE.tab_active_text} on {PALETTE.tab_active_background}] {name} [/]"
+                )
             else:
-                tab_segments.append(f"[#8fb0ee]{name}[/]")
+                tab_segments.append(f"[{PALETTE.tab_inactive_text}]{name}[/]")
         self.tabs = Text.from_markup("   ".join(tab_segments))
         self.update(self.tabs)

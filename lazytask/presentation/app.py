@@ -26,11 +26,15 @@ from lazytask.presentation.help_screen import HelpScreen
 from lazytask.presentation.list_tabs import ListTabs
 from lazytask.presentation.task_detail import TaskDetail
 from lazytask.presentation.text_input_modal import TextInputModal
+from lazytask.presentation.theme import build_theme_css
+from lazytask.presentation.palette import get_palette
 from .date_picker_screen import DatePickerScreen
 from .select_list_screen import SelectListScreen
 from .sort_options_screen import SortOptionsScreen
 from lazytask.application.errors import DescriptionEditorError
 from lazytask.container import container
+
+PALETTE = get_palette()
 
 
 class TaskListItem(ListItem):
@@ -53,22 +57,33 @@ class TaskListItem(ListItem):
         if self.data.is_flagged:
             meta_parts.append("flagged")
 
-        status_color = "#74e3b5" if self.data.completed else "#8fb0ee"
-        title_color = "#e9e9e9"
-        meta_color = "#606e88"
-        due_color = "#8fb0ee"
+        status_color = (
+            PALETTE.success if self.data.completed else PALETTE.accent_primary
+        )
+        title_color = (
+            PALETTE.text_muted if self.data.completed else PALETTE.text_primary
+        )
+        meta_color = PALETTE.text_secondary
+        due_color = PALETTE.accent_primary
 
         due_text = Text()
         if self.data.due_date:
-            due_color = "#74e3b5" if self.data.completed else "#8fb0ee"
             today = datetime.date.today()
-            if not self.data.completed and self.data.due_date < today:
-                due_color = "#f28b82"
+            if self.data.completed:
+                due_color = PALETTE.success
+            elif self.data.due_date < today:
+                due_color = PALETTE.danger
+            elif self.data.due_date == today:
+                due_color = PALETTE.warning
+            else:
+                due_color = PALETTE.accent_primary
+            effective_due_color = due_color
             due_text.append(
                 f"due: {self.data.due_date.strftime('%Y-%m-%d')}", style=due_color
             )
         else:
             due_text.append("due: -", style=meta_color)
+            effective_due_color = meta_color
 
         display_text = Text()
         display_text.append(status_token, style=status_color)
@@ -76,10 +91,11 @@ class TaskListItem(ListItem):
         if meta_parts:
             display_text.append(f" ({', '.join(meta_parts)})", style=meta_color)
 
-        title_label = Label(display_text, id="task-title")
-        title_label.styles.flex = 1
+        title_label = Label(display_text, id="task-title", expand=True)
+        title_label.styles.color = title_color
 
         due_label = Label(due_text, id="task-due-date")
+        due_label.styles.color = effective_due_color
 
         yield Horizontal(
             title_label,
@@ -91,8 +107,8 @@ class TaskListItem(ListItem):
 class LazyTaskApp(App):
     """A Textual app to manage tasks."""
 
-    CSS_PATH = "theme.tcss"
-
+    CSS_PATH = None
+    CSS = build_theme_css(PALETTE)
     LOGGING = True
 
     BINDINGS = [
@@ -215,7 +231,6 @@ class LazyTaskApp(App):
         self.filter_query = ""
         list_view = self.query_one(ListView)
         list_view.index = None
-        await list_view.clear()
         await self.update_tasks_list(
             preserve_selection=False, select_first_if_available=True
         )
@@ -294,7 +309,7 @@ class LazyTaskApp(App):
             if isinstance(highlighted, TaskListItem):
                 previous_task_id = highlighted.data.id
             previous_index = tasks_list_view.index
-        await tasks_list_view.clear()
+
         async with self.show_loading():
             try:
                 if self.current_list == "all":
@@ -316,8 +331,8 @@ class LazyTaskApp(App):
                 )
                 return
 
-        # Re-query ListView here to ensure we have the latest instance
-        tasks_list_view = self.query_one(ListView)
+            # Clear the list after fetching data to minimize visible delay
+            await tasks_list_view.clear()
 
         if self.show_overdue_only:
             today = datetime.date.today()

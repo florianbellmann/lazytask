@@ -95,3 +95,20 @@ async def test_completing_task_selects_next_one(
         highlighted_task = cast(TaskListItem, tasks_list.highlighted_child)
         assert highlighted_task is not None
         assert highlighted_task.data.title == "task 1"
+
+
+@pytest.mark.asyncio
+async def test_all_tasks_render_in_list_view(
+    app: LazyTaskApp, mock_task_manager: MockTaskManager
+):
+    await mock_task_manager.clear_tasks()
+    titles = [f"bulk task {index}" for index in range(10)]
+    for title in titles:
+        await mock_task_manager.add_task(title)
+
+    async with app.run_test() as pilot:
+        await app.update_tasks_list()
+        await pilot.pause()
+
+        tasks_list = app.query_one("ListView")
+        assert len(tasks_list.children) == len(titles)

@@ -94,9 +94,11 @@ class TaskListItem(ListItem):
 
         title_label = Label(display_text, id="task-title", expand=True)
         title_label.styles.color = title_color
+        title_label.styles.padding = 0
 
         due_label = Label(due_text, id="task-due-date")
         due_label.styles.color = effective_due_color
+        due_label.styles.padding = 0
 
         logger.debug(
             "TaskListItem compose: title=%s status_color=%s title_color=%s due_color=%s classes=%s tags=%s",

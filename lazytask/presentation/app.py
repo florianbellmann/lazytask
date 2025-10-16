@@ -47,6 +47,8 @@ class TaskListItem(ListItem):
             self.add_class("completed")
         if task.is_flagged:
             self.add_class("flagged")
+        # eliminate extra spacing between items
+        self.styles.margin = 0
 
     def compose(self) -> ComposeResult:
         status_token = "[x]" if self.data.completed else "[ ]"
@@ -209,10 +211,13 @@ class LazyTaskApp(App):
         yield ListTabs()
         loading_indicator = LoadingIndicator(id="tasks_loading")
         loading_indicator.display = False
+        tasks_list = ListView(id="tasks_list")
+        tasks_list.styles.row_gap = 0
+        tasks_list.styles.margin = 0
         yield Horizontal(
             Container(
                 loading_indicator,
-                ListView(id="tasks_list"),
+                tasks_list,
                 id="tasks_panel",
             ),
             TaskDetail(id="task_detail"),

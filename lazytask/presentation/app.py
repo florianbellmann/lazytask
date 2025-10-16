@@ -35,6 +35,7 @@ from lazytask.application.errors import DescriptionEditorError
 from lazytask.container import container
 
 PALETTE = get_palette()
+logger = logging.getLogger(__name__)
 
 
 class TaskListItem(ListItem):
@@ -96,6 +97,16 @@ class TaskListItem(ListItem):
 
         due_label = Label(due_text, id="task-due-date")
         due_label.styles.color = effective_due_color
+
+        logger.debug(
+            "TaskListItem compose: title=%s status_color=%s title_color=%s due_color=%s classes=%s tags=%s",
+            self.data.title,
+            status_color,
+            title_color,
+            effective_due_color,
+            sorted(self.classes),
+            self.data.tags,
+        )
 
         yield Horizontal(
             title_label,

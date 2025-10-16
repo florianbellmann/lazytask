@@ -71,7 +71,7 @@ TaskListItem {{
     background: {list_panel_background};
     border-bottom: solid {list_item_border};
     padding: 0 1;
-    height: 1;
+    height: auto;
 }}
 
 TaskListItem #task-item-row {{

@@ -108,6 +108,7 @@ from the all items view. fix this and cover it with tests
 - [x] use red, green, yellow from https://github.com/charles-001/dolphie/blob/main/dolphie/Dolphie.tcss to highlight different texts
 - [ ] remove vertical space betwen list items
 - [ ] show tags in the list view. cover it with a test
+- [ ] add time stamp to logs
 - [ ] recurring tasks handling
 - [ ] i need to be able to create a new task zhrough a singular prompt. mesning running a quick cli prompt for getting the title and confirming the creation. then the process stops. this should be independent from the normal main application. recurring tasks loading indicators
 

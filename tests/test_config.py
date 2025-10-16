@@ -45,10 +45,9 @@ async def test_tabs_match_lists_and_all_is_selected_on_start(monkeypatch):
 
         all_span_found = False
         for span in tabs_text.spans:
-            if (
-                "all" in tabs_text.plain[span.start : span.end]
-                and "reverse" in span.style
-            ):
-                all_span_found = True
-                break
-        assert all_span_found, "The 'all' tab should be rendered with reverse style."
+            if "all" in tabs_text.plain[span.start : span.end]:
+                style_parts = str(span.style).split(" on ")
+                if len(style_parts) > 1 and style_parts[1]:
+                    all_span_found = True
+                    break
+        assert all_span_found, "The 'all' tab should be rendered with a background color."

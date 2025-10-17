@@ -12,6 +12,7 @@ async def test_switch_list_with_number_keys(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2,inbox,work")
     """Test that switching lists with number keys works."""
     app = LazyTaskApp()
+    app.show_overdue_only = False
 
     # Create mock use cases
     mock_get_lists_uc = MagicMock()
@@ -87,6 +88,7 @@ async def test_list_switching_resets_index(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
     """Test that switching lists resets the highlighted index to 0."""
     app = LazyTaskApp()
+    app.show_overdue_only = False
 
     mock_get_tasks_uc = MagicMock()
     develop_tasks = [Task(id=f"{i}", title=f"Task {i}") for i in range(5)]
@@ -148,6 +150,7 @@ async def test_list_switching_resets_index(monkeypatch):
 async def test_switching_lists_resets_selection(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
     app = LazyTaskApp()
+    app.show_overdue_only = False
 
     mock_get_tasks_uc = MagicMock()
     develop_tasks = [Task(id=f"dev_{i}", title=f"Task {i}") for i in range(3)]
@@ -209,6 +212,7 @@ async def test_switch_list_modal_trims_input(monkeypatch):
     """Switching lists through the modal should trim whitespace."""
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,another")
     app = LazyTaskApp()
+    app.show_overdue_only = False
 
     async with app.run_test() as pilot:
         await pilot.pause()

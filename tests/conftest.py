@@ -28,4 +28,7 @@ async def app(
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
     await mock_task_manager.clear_tasks()
     app = LazyTaskApp()
+    # Most tests expect to work with the full task list; disable the overdue-only
+    # filter up-front so they can operate without additional toggling.
+    app.show_overdue_only = False
     return app

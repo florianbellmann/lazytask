@@ -9,6 +9,7 @@ async def test_recurring_task_display_in_list_view(monkeypatch):
     monkeypatch.setenv("LAZYTASK_LISTS", "develop,develop2")
 
     app = LazyTaskApp()
+    app.show_overdue_only = False
 
     # Mock the task manager to control the tasks
     class MockTaskManager:

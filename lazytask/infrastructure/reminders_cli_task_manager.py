@@ -7,7 +7,7 @@ from lazytask.domain.task import Task
 import datetime
 
 REMINDERS_CLI_PATH = (
-    "/home/flo/lazytask/adapters/reminders-cli/reminders"  # Assuming binary is here
+    "adapters/reminders-cli/reminders"  # Assuming binary is here
 )
 
 
@@ -262,6 +262,17 @@ class RemindersCliTaskManager(TaskManager):
         elif sort_by == "completed":
             tasks.sort(key=lambda t: t.completed)
         return tasks
+
+    async def move_task(
+        self, task_id: str, from_list: str, to_list: str
+    ) -> Optional[Task]:
+        cleaned_source = self._normalize_list_name(from_list)
+        cleaned_target = self._normalize_list_name(to_list)
+        raise NotImplementedError(
+            "reminders-cli adapter cannot move tasks between lists "
+            f"(task_id={task_id}, from='{cleaned_source}', to='{cleaned_target}'). "
+            "Use a backend that supports task moves (e.g. the mock task manager)."
+        )
 
     async def edit_task_full(
         self, task_id: str, updates: Dict[str, Any], list_name: str = "develop"

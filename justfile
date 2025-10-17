@@ -1,5 +1,5 @@
 run:
-	LAZYTASK_TASK_MANAGER="reminders-cli" LAZYTASK_LISTS="develop" uv run lazytask/__main__.py
+	LAZYTASK_TASK_MANAGER="reminders-cli" LAZYTASK_LISTS="develop, Develop 2" uv run lazytask/__main__.py
 
 dev: 
   LAZYTASK_LISTS="develop,develop2" uv run python lazytask

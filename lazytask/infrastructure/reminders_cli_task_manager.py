@@ -12,6 +12,68 @@ REMINDERS_CLI_PATH = (
 
 
 class RemindersCliTaskManager(TaskManager):
+    _PRIORITY_INT_TO_CLI_NAME = {
+        0: "none",
+        1: "high",
+        2: "medium",
+        3: "low",
+        5: "medium",
+        9: "low",
+    }
+    _PRIORITY_NAME_SET = {"none", "low", "medium", "high"}
+
+    def _due_date_to_cli_value(self, due_date: Any) -> Optional[str]:
+        if due_date is None:
+            return None
+
+        if isinstance(due_date, datetime.datetime):
+            return due_date.isoformat()
+
+        if isinstance(due_date, datetime.date):
+            return due_date.isoformat()
+
+        if isinstance(due_date, str):
+            candidate = due_date.strip()
+            if not candidate:
+                raise ValueError("Due date string cannot be empty.")
+            return candidate
+
+        raise ValueError(
+            f"Unsupported due date type '{type(due_date).__name__}'. "
+            "Use datetime.date, datetime.datetime, or ISO-8601 string inputs."
+        )
+
+    def _priority_to_cli_value(self, priority: Any) -> Optional[str]:
+        if priority is None:
+            return None
+
+        if isinstance(priority, str):
+            normalized_priority = priority.strip().lower()
+            if normalized_priority in self._PRIORITY_NAME_SET:
+                return normalized_priority
+            if normalized_priority.isdigit():
+                priority = int(normalized_priority)
+            else:
+                raise ValueError(
+                    f"Unsupported priority value '{priority}'. "
+                    f"Expected one of {sorted(self._PRIORITY_NAME_SET)} or numeric values {sorted(self._PRIORITY_INT_TO_CLI_NAME)}."
+                )
+
+        try:
+            priority_value = int(priority)
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                f"Unsupported priority type '{priority}'. Unable to convert to reminders-cli priority."
+            ) from error
+
+        if priority_value in self._PRIORITY_INT_TO_CLI_NAME:
+            return self._PRIORITY_INT_TO_CLI_NAME[priority_value]
+
+        raise ValueError(
+            f"Unsupported numeric priority '{priority_value}'. "
+            f"Supported values: {sorted(self._PRIORITY_INT_TO_CLI_NAME)}."
+        )
+
     async def _run_cli_command(self, command: List[str]) -> Dict[str, Any]:
         process = await asyncio.create_subprocess_exec(
             REMINDERS_CLI_PATH,
@@ -77,11 +139,13 @@ class RemindersCliTaskManager(TaskManager):
 
         due_date = kwargs.get("due_date")
         if due_date:
-            if isinstance(due_date, datetime.date):
-                due_date_str = due_date.isoformat()
-            else:
-                due_date_str = str(due_date)
-            command.extend(["--due-date", due_date_str])
+            try:
+                due_date_argument = self._due_date_to_cli_value(due_date)
+            except ValueError as error:
+                raise ValueError(
+                    f"Invalid due date '{due_date}' while adding task '{title}' to '{clean_list}'."
+                ) from error
+            command.extend(["--due-date", due_date_argument])
 
         description = kwargs.get("description")
         if description:
@@ -89,7 +153,13 @@ class RemindersCliTaskManager(TaskManager):
 
         priority = kwargs.get("priority")
         if priority is not None:
-            command.extend(["--priority", str(priority)])
+            try:
+                priority_argument = self._priority_to_cli_value(priority)
+            except ValueError as error:
+                raise ValueError(
+                    f"Invalid priority '{priority}' while adding task '{title}' to '{clean_list}'."
+                ) from error
+            command.extend(["--priority", priority_argument])
 
         response = await self._run_cli_command(command)
         return self._parse_reminder_json(response)
@@ -132,30 +202,72 @@ class RemindersCliTaskManager(TaskManager):
         return []
 
     async def edit_task_date(
-        self, task_id: str, new_date: str, list_name: str = "develop"
+        self,
+        task_id: str,
+        new_date: datetime.date | datetime.datetime | str | None,
+        list_name: str = "develop",
     ) -> Optional[Task]:
-        # This is a workaround as reminders-cli edit doesn't support due date directly
-        # Fetch the task, delete it, and re-add with new date
-        # This is not atomic and can lead to data loss if re-add fails
-        # A better solution would require modifying the reminders-cli
         clean_list = self._normalize_list_name(list_name)
         tasks = await self.get_tasks(clean_list, include_completed=True)
         original_task = next((t for t in tasks if t.id == task_id), None)
 
-        if original_task:
-            await self._run_cli_command(["delete", clean_list, task_id])
-            # Re-add with new date and original properties
-            command = ["add", clean_list, original_task.title, "--format", "json"]
-            if new_date:  # Assuming new_date is in a format reminders-cli understands (e.g., YYYY-MM-DD)
-                command.extend(["--due-date", new_date])
-            if original_task.description:
-                command.extend(["--notes", original_task.description])
-            if original_task.priority is not None:
-                command.extend(["--priority", str(original_task.priority)])
+        if not original_task:
+            return None
 
-            new_task_json = await self._run_cli_command(command)
-            return self._parse_reminder_json(new_task_json)
-        return None
+        if original_task.completed:
+            raise RuntimeError(
+                f"Completed task '{task_id}' cannot be rescheduled on '{clean_list}'. "
+                "Mark it as incomplete first."
+            )
+
+        recreation_kwargs: Dict[str, Any] = {}
+        if new_date is not None:
+            try:
+                recreation_kwargs["due_date"] = self._due_date_to_cli_value(new_date)
+            except ValueError as error:
+                raise ValueError(
+                    f"Invalid due date '{new_date}' for task '{task_id}' on '{clean_list}'."
+                ) from error
+        if original_task.description:
+            recreation_kwargs["description"] = original_task.description
+        if original_task.priority is not None:
+            recreation_kwargs["priority"] = original_task.priority
+
+        try:
+            recreated_task = await self.add_task(
+                original_task.title,
+                list_name=clean_list,
+                **recreation_kwargs,
+            )
+        except Exception as error:
+            raise RuntimeError(
+                f"Failed to create task '{original_task.title}' on '{clean_list}' "
+                "while updating the due date."
+            ) from error
+
+        try:
+            await self._run_cli_command(["delete", clean_list, task_id])
+        except Exception as error:
+            cleanup_error: Optional[Exception] = None
+            try:
+                await self._run_cli_command(
+                    ["delete", clean_list, recreated_task.id]
+                )
+            except Exception as attempted_cleanup_error:
+                cleanup_error = attempted_cleanup_error
+
+            if cleanup_error:
+                raise RuntimeError(
+                    f"Failed to delete original task '{task_id}' from '{clean_list}' "
+                    f"and rollback of recreated task '{recreated_task.id}' also failed."
+                ) from error
+
+            raise RuntimeError(
+                f"Failed to delete original task '{task_id}' from '{clean_list}' "
+                "after recreating it with a new due date."
+            ) from error
+
+        return recreated_task
 
     async def move_task_to_tomorrow(
         self, task_id: str, list_name: str = "develop"
@@ -195,10 +307,17 @@ class RemindersCliTaskManager(TaskManager):
             await self._run_cli_command(["delete", clean_list, task_id])
             command = ["add", clean_list, original_task.title, "--format", "json"]
             if original_task.due_date:
-                command.extend(["--due-date", original_task.due_date])
+                due_date_argument = self._due_date_to_cli_value(original_task.due_date)
+                command.extend(["--due-date", due_date_argument])
             if original_task.description:
                 command.extend(["--notes", original_task.description])
-            command.extend(["--priority", str(priority)])
+            try:
+                priority_argument = self._priority_to_cli_value(priority)
+            except ValueError as error:
+                raise ValueError(
+                    f"Invalid priority '{priority}' while updating task '{task_id}' on '{clean_list}'."
+                ) from error
+            command.extend(["--priority", priority_argument])
 
             new_task_json = await self._run_cli_command(command)
             return self._parse_reminder_json(new_task_json)
@@ -268,11 +387,71 @@ class RemindersCliTaskManager(TaskManager):
     ) -> Optional[Task]:
         cleaned_source = self._normalize_list_name(from_list)
         cleaned_target = self._normalize_list_name(to_list)
-        raise NotImplementedError(
-            "reminders-cli adapter cannot move tasks between lists "
-            f"(task_id={task_id}, from='{cleaned_source}', to='{cleaned_target}'). "
-            "Use a backend that supports task moves (e.g. the mock task manager)."
+        if cleaned_source == cleaned_target:
+            raise ValueError(
+                f"Source and target lists are identical ('{cleaned_source}'); nothing to move."
+            )
+
+        tasks_on_source = await self.get_tasks(
+            cleaned_source, include_completed=True
         )
+        original_task = next((task for task in tasks_on_source if task.id == task_id), None)
+        if original_task is None:
+            raise ValueError(
+                f"Task '{task_id}' not found on list '{cleaned_source}'. Cannot move task."
+            )
+
+        if original_task.completed:
+            raise RuntimeError(
+                f"Completed task '{task_id}' cannot be moved from '{cleaned_source}'. "
+                "reminders-cli only deletes incomplete tasks; mark it as incomplete first."
+            )
+
+        recreation_kwargs: Dict[str, Any] = {}
+        if original_task.due_date:
+            recreation_kwargs["due_date"] = original_task.due_date
+        if original_task.description:
+            recreation_kwargs["description"] = original_task.description
+        if original_task.priority is not None:
+            recreation_kwargs["priority"] = original_task.priority
+
+        try:
+            recreated_task = await self.add_task(
+                original_task.title,
+                list_name=cleaned_target,
+                **recreation_kwargs,
+            )
+        except Exception as error:
+            raise RuntimeError(
+                f"Failed to create task '{original_task.title}' on '{cleaned_target}' "
+                f"while moving from '{cleaned_source}'."
+            ) from error
+
+        recreated_task.list_name = cleaned_target
+
+        try:
+            await self._run_cli_command(["delete", cleaned_source, task_id])
+        except Exception as error:
+            cleanup_error: Optional[Exception] = None
+            try:
+                await self._run_cli_command(
+                    ["delete", cleaned_target, recreated_task.id]
+                )
+            except Exception as attempted_cleanup_error:
+                cleanup_error = attempted_cleanup_error
+
+            if cleanup_error:
+                raise RuntimeError(
+                    f"Failed to delete original task '{task_id}' from '{cleaned_source}' "
+                    f"and rollback of newly created task '{recreated_task.id}' on '{cleaned_target}' also failed."
+                ) from error
+
+            raise RuntimeError(
+                f"Failed to delete original task '{task_id}' from '{cleaned_source}' "
+                f"after recreating it on '{cleaned_target}'."
+            ) from error
+
+        return recreated_task
 
     async def edit_task_full(
         self, task_id: str, updates: Dict[str, Any], list_name: str = "develop"

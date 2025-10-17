@@ -29,9 +29,7 @@ def capture_list_snapshot() -> list[dict[str, Any]]:
                             "title_plain_text": str(
                                 getattr(title_label.renderable, "plain", "")
                             ),
-                            "due_text": str(
-                                getattr(due_label.renderable, "plain", "")
-                            ),
+                            "due_text": str(getattr(due_label.renderable, "plain", "")),
                             "due_color": str(due_label.styles.color),
                             "item_classes": sorted(child.classes),
                         }

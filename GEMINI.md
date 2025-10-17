@@ -107,6 +107,9 @@ from the all items view. fix this and cover it with tests
 - [x] change title editing to be a popup
 - [x] use red, green, yellow from https://github.com/charles-001/dolphie/blob/main/dolphie/Dolphie.tcss to highlight different texts
 - [x] remove vertical space betwen list items
+- [ ] real tests with reminders cli
+  - [x] moving an item to another list does not work. make sure by analyzing with real reminders cli swift code again and adapting the reminders-cli-task controller
+  - [x] using the real reminders cli task conttoller. editing the date with d does not work. make sure by analyzing with real reminders cli swift code again and adapting the reminders-cli-task controller
 - [ ] show tags in the list view. cover it with a test
 - [x] add time stamp to logs
 - [ ] recurring tasks handling

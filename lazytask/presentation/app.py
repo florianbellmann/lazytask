@@ -469,10 +469,21 @@ class LazyTaskApp(App):
             def on_date_selected(new_date: datetime.date | None) -> None:
                 if new_date:
                     updates = {"due_date": new_date}
-                    asyncio.create_task(
-                        self.update_task_uc.execute(task.id, updates, task.list_name)
-                    )
-                    asyncio.create_task(self.update_tasks_list())
+
+                    async def apply_update() -> None:
+                        async with self.show_loading():
+                            updated_task = await self.update_task_uc.execute(
+                                task.id, updates, task.list_name
+                            )
+                            highlight_task_id = (
+                                updated_task.id if isinstance(updated_task, Task) else None
+                            )
+                            await self.update_tasks_list(
+                                newly_added_task_id=highlight_task_id,
+                                preserve_selection=highlight_task_id is None,
+                            )
+
+                    asyncio.create_task(apply_update())
 
             self.push_screen(
                 DatePickerScreen(initial_date=task.due_date), on_date_selected

@@ -38,19 +38,20 @@ async def test_toggle_overdue_filter(monkeypatch):
         await pilot.pause()
 
         list_view = app.query_one(ListView)
-        # App starts on "all" which shows tasks from both develop and develop2 (develop2 is empty, so 4 tasks)
-        assert len(list_view.children) == 4
-
-        # Press ctrl+d to show only overdue tasks
-        await pilot.press("ctrl+d")
-        await pilot.pause()
-
+        # App starts on "all" but only overdue tasks are shown by default
         assert app.show_overdue_only is True
         assert len(list_view.children) == 2
 
-        # Press ctrl+d again to show all tasks
+        # Press ctrl+d to show all tasks
         await pilot.press("ctrl+d")
         await pilot.pause()
 
         assert app.show_overdue_only is False
         assert len(list_view.children) == 4
+
+        # Press ctrl+d again to show overdue tasks only
+        await pilot.press("ctrl+d")
+        await pilot.pause()
+
+        assert app.show_overdue_only is True
+        assert len(list_view.children) == 2

@@ -10,7 +10,9 @@ from lazytask.infrastructure.reminders_cli_task_manager import (
 
 
 @pytest.mark.asyncio
-async def test_reminders_cli_move_task_recreates_and_deletes(monkeypatch: pytest.MonkeyPatch):
+async def test_reminders_cli_move_task_recreates_and_deletes(
+    monkeypatch: pytest.MonkeyPatch,
+):
     manager = RemindersCliTaskManager()
 
     source_task = Task(
@@ -101,7 +103,9 @@ async def test_reminders_cli_move_task_recreates_and_deletes(monkeypatch: pytest
 
 
 @pytest.mark.asyncio
-async def test_reminders_cli_move_task_rejects_completed_tasks(monkeypatch: pytest.MonkeyPatch):
+async def test_reminders_cli_move_task_rejects_completed_tasks(
+    monkeypatch: pytest.MonkeyPatch,
+):
     manager = RemindersCliTaskManager()
     completed_task = Task(
         id="completed-id",
@@ -125,7 +129,9 @@ async def test_reminders_cli_move_task_rejects_completed_tasks(monkeypatch: pyte
 
 
 @pytest.mark.asyncio
-async def test_reminders_cli_edit_task_date_recreates_and_deletes(monkeypatch: pytest.MonkeyPatch):
+async def test_reminders_cli_edit_task_date_recreates_and_deletes(
+    monkeypatch: pytest.MonkeyPatch,
+):
     manager = RemindersCliTaskManager()
     original_task = Task(
         id="task-id",
@@ -208,7 +214,9 @@ async def test_reminders_cli_edit_task_date_recreates_and_deletes(monkeypatch: p
 
 
 @pytest.mark.asyncio
-async def test_reminders_cli_edit_task_date_aborts_on_add_failure(monkeypatch: pytest.MonkeyPatch):
+async def test_reminders_cli_edit_task_date_aborts_on_add_failure(
+    monkeypatch: pytest.MonkeyPatch,
+):
     manager = RemindersCliTaskManager()
     original_task = Task(
         id="task-id",
@@ -245,13 +253,13 @@ async def test_reminders_cli_edit_task_date_aborts_on_add_failure(monkeypatch: p
         RuntimeError,
         match="Failed to create task 'Due Soon' on 'develop' while updating the due date.",
     ):
-        await manager.edit_task_date(
-            "task-id", datetime.date(2024, 9, 1), "develop"
-        )
+        await manager.edit_task_date("task-id", datetime.date(2024, 9, 1), "develop")
 
 
 @pytest.mark.asyncio
-async def test_reminders_cli_edit_task_date_rejects_completed_tasks(monkeypatch: pytest.MonkeyPatch):
+async def test_reminders_cli_edit_task_date_rejects_completed_tasks(
+    monkeypatch: pytest.MonkeyPatch,
+):
     manager = RemindersCliTaskManager()
     completed_task = Task(
         id="task-id",
@@ -272,3 +280,21 @@ async def test_reminders_cli_edit_task_date_rejects_completed_tasks(monkeypatch:
         match="Completed task 'task-id' cannot be rescheduled on 'develop'.",
     ):
         await manager.edit_task_date("task-id", datetime.date.today(), "develop")
+
+
+def test_reminders_cli_parse_handles_zulu_datetime():
+    manager = RemindersCliTaskManager()
+    raw = {
+        "externalId": "abc",
+        "title": "Test",
+        "dueDate": "2024-09-07T00:00:00Z",
+        "creationDate": "2024-09-01T12:30:00Z",
+        "isCompleted": False,
+        "priority": 0,
+        "list": "develop",
+    }
+
+    task = manager._parse_reminder_json(raw)
+
+    assert task.due_date == datetime.date(2024, 9, 7)
+    assert task.creation_date is not None

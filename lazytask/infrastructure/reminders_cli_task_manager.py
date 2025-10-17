@@ -6,9 +6,7 @@ from lazytask.domain.task import Task
 
 import datetime
 
-REMINDERS_CLI_PATH = (
-    "adapters/reminders-cli/reminders"  # Assuming binary is here
-)
+REMINDERS_CLI_PATH = "adapters/reminders-cli/reminders"  # Assuming binary is here
 
 
 class RemindersCliTaskManager(TaskManager):
@@ -21,6 +19,37 @@ class RemindersCliTaskManager(TaskManager):
         9: "low",
     }
     _PRIORITY_NAME_SET = {"none", "low", "medium", "high"}
+
+    @staticmethod
+    def _parse_cli_datetime(value: str | None) -> Optional[datetime.datetime]:
+        if not value:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            return None
+        if normalized.endswith("Z"):
+            normalized = normalized[:-1] + "+00:00"
+        try:
+            return datetime.datetime.fromisoformat(normalized)
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _parse_cli_date(value: str | None) -> Optional[datetime.date]:
+        if not value:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            return None
+        if normalized.endswith("Z"):
+            normalized = normalized[:-1] + "+00:00"
+        try:
+            return datetime.datetime.fromisoformat(normalized).date()
+        except ValueError:
+            try:
+                return datetime.datetime.strptime(normalized, "%Y-%m-%d").date()
+            except ValueError:
+                return None
 
     def _due_date_to_cli_value(self, due_date: Any) -> Optional[str]:
         if due_date is None:
@@ -99,18 +128,12 @@ class RemindersCliTaskManager(TaskManager):
         creation_date = None
         creation_date_str = reminder_json.get("creationDate")
         if creation_date_str:
-            try:
-                creation_date = datetime.datetime.fromisoformat(creation_date_str)
-            except (ValueError, TypeError):
-                creation_date = None
+            creation_date = self._parse_cli_datetime(creation_date_str)
 
         due_date = None
         due_date_str = reminder_json.get("dueDate")
         if due_date_str:
-            try:
-                due_date = datetime.datetime.fromisoformat(due_date_str).date()
-            except (ValueError, TypeError):
-                due_date = None
+            due_date = self._parse_cli_date(due_date_str)
 
         return Task(
             id=reminder_json.get("externalId"),
@@ -141,11 +164,12 @@ class RemindersCliTaskManager(TaskManager):
         if due_date:
             try:
                 due_date_argument = self._due_date_to_cli_value(due_date)
+                if due_date_argument:
+                    command.extend(["--due-date", due_date_argument])
             except ValueError as error:
                 raise ValueError(
                     f"Invalid due date '{due_date}' while adding task '{title}' to '{clean_list}'."
                 ) from error
-            command.extend(["--due-date", due_date_argument])
 
         description = kwargs.get("description")
         if description:
@@ -155,11 +179,12 @@ class RemindersCliTaskManager(TaskManager):
         if priority is not None:
             try:
                 priority_argument = self._priority_to_cli_value(priority)
+                if priority_argument:
+                    command.extend(["--priority", priority_argument])
             except ValueError as error:
                 raise ValueError(
                     f"Invalid priority '{priority}' while adding task '{title}' to '{clean_list}'."
                 ) from error
-            command.extend(["--priority", priority_argument])
 
         response = await self._run_cli_command(command)
         return self._parse_reminder_json(response)
@@ -250,9 +275,7 @@ class RemindersCliTaskManager(TaskManager):
         except Exception as error:
             cleanup_error: Optional[Exception] = None
             try:
-                await self._run_cli_command(
-                    ["delete", clean_list, recreated_task.id]
-                )
+                await self._run_cli_command(["delete", clean_list, recreated_task.id])
             except Exception as attempted_cleanup_error:
                 cleanup_error = attempted_cleanup_error
 
@@ -308,7 +331,8 @@ class RemindersCliTaskManager(TaskManager):
             command = ["add", clean_list, original_task.title, "--format", "json"]
             if original_task.due_date:
                 due_date_argument = self._due_date_to_cli_value(original_task.due_date)
-                command.extend(["--due-date", due_date_argument])
+                if due_date_argument:
+                    command.extend(["--due-date", due_date_argument])
             if original_task.description:
                 command.extend(["--notes", original_task.description])
             try:
@@ -392,10 +416,10 @@ class RemindersCliTaskManager(TaskManager):
                 f"Source and target lists are identical ('{cleaned_source}'); nothing to move."
             )
 
-        tasks_on_source = await self.get_tasks(
-            cleaned_source, include_completed=True
+        tasks_on_source = await self.get_tasks(cleaned_source, include_completed=True)
+        original_task = next(
+            (task for task in tasks_on_source if task.id == task_id), None
         )
-        original_task = next((task for task in tasks_on_source if task.id == task_id), None)
         if original_task is None:
             raise ValueError(
                 f"Task '{task_id}' not found on list '{cleaned_source}'. Cannot move task."

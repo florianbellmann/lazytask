@@ -52,13 +52,15 @@ class TaskListItem(ListItem):
 
     def compose(self) -> ComposeResult:
         status_token = "[x]" if self.data.completed else "[ ]"
-        meta_parts: list[str] = []
+        self.meta_parts: list[str] = []
         if self.data.tags:
-            meta_parts.append(f"tags: {','.join(self.data.tags)}")
+            self.meta_parts.append(f"tags: {','.join(self.data.tags)}")
         if self.data.priority:
-            meta_parts.append(f"prio: {self.data.priority}")
+            self.meta_parts.append(f"prio: {self.data.priority}")
         if self.data.is_flagged:
-            meta_parts.append("flagged")
+            self.meta_parts.append("flagged")
+        if self.data.recurring:
+            self.meta_parts.append(f"recurring: {self.data.recurring}")
 
         status_color = (
             PALETTE.success if self.data.completed else PALETTE.accent_primary
@@ -91,8 +93,8 @@ class TaskListItem(ListItem):
         display_text = Text()
         display_text.append(status_token, style=status_color)
         display_text.append(f" {self.data.title}", style=title_color)
-        if meta_parts:
-            display_text.append(f" ({', '.join(meta_parts)})", style=meta_color)
+        if self.meta_parts:
+            display_text.append(f" ({', '.join(self.meta_parts)})", style=meta_color)
 
         title_label = Label(display_text, id="task-title")
         title_label.styles.color = title_color
@@ -144,6 +146,7 @@ class LazyTaskApp(App):
         ("/", "filter_tasks", "Filter tasks"),
         ("ctrl+o", "sort_tasks", "Sort tasks"),
         ("ctrl+i", "toggle_sort_direction", "Toggle sort direction"),
+        ("ctrl+u", "edit_recurring", "Edit recurring"),
         ("?", "show_help", "Show help"),
         ("j", "cursor_down", "Cursor Down"),
         ("k", "cursor_up", "Cursor Up"),
@@ -183,9 +186,14 @@ class LazyTaskApp(App):
         self.current_list = "all"
 
         self.title = f"LazyTask - {self.current_list}"
-        self.show_overdue_only = False
+        self.show_overdue_only = True
         self.show_completed = False
         self.filter_query = ""
+
+    @property
+    def bindings(self):
+        """Expose current bindings map for tests and footer updates."""
+        return self._bindings
 
     async def add_task(self, title: str, due_today: bool = False):
         # When viewing "all", add to the first available list
@@ -228,11 +236,18 @@ class LazyTaskApp(App):
         """Called when the app is mounted."""
         if "pytest" in sys.modules:
             logging.basicConfig(
-                filename="lazytask.log", level=logging.DEBUG, force=True
+                filename="lazytask.log",
+                level=logging.DEBUG,
+                force=True,
+                format="%(asctime)s - %(levelname)s - %(message)s",
             )
             logging.debug("on_mount called")
         elif self.LOGGING:
-            logging.basicConfig(filename="lazytask.log", level=logging.INFO)
+            logging.basicConfig(
+                filename="lazytask.log",
+                level=logging.INFO,
+                format="%(asctime)s - %(levelname)s - %(message)s",
+            )
         if not self.available_lists:
             self.available_lists = await self.get_lists_uc.execute()
         await self.update_tasks_list()
@@ -251,6 +266,19 @@ class LazyTaskApp(App):
         await self.update_tasks_list(
             preserve_selection=False, select_first_if_available=True
         )
+
+    async def action_switch_to_all(self) -> None:
+        """Switch to the aggregate 'all' list."""
+        await self.switch_list("all")
+
+    async def action_switch_to_list(self, index: str) -> None:
+        """Switch to a concrete list by index."""
+        try:
+            position = int(index)
+            list_name = self.available_lists[position]
+        except (ValueError, IndexError):
+            return
+        await self.switch_list(list_name)
 
     async def on_key(self, event: events.Key) -> None:
         logging.debug(
@@ -280,6 +308,8 @@ class LazyTaskApp(App):
             return
 
         if event.key.isdigit():
+            if event.key in self._bindings.key_to_bindings:
+                return
             digit = int(event.key)
             if digit == 1:
                 await self.switch_list("all")
@@ -317,6 +347,7 @@ class LazyTaskApp(App):
         if filter_query is not None:
             self.filter_query = filter_query
 
+        self._register_list_bindings()
         self.query_one(ListTabs).update_lists(self.available_lists, self.current_list)
         tasks_list_view = self.query_one(ListView)
         previous_task_id: str | None = None
@@ -468,22 +499,7 @@ class LazyTaskApp(App):
 
             def on_date_selected(new_date: datetime.date | None) -> None:
                 if new_date:
-                    updates = {"due_date": new_date}
-
-                    async def apply_update() -> None:
-                        async with self.show_loading():
-                            updated_task = await self.update_task_uc.execute(
-                                task.id, updates, task.list_name
-                            )
-                            highlight_task_id = (
-                                updated_task.id if isinstance(updated_task, Task) else None
-                            )
-                            await self.update_tasks_list(
-                                newly_added_task_id=highlight_task_id,
-                                preserve_selection=highlight_task_id is None,
-                            )
-
-                    asyncio.create_task(apply_update())
+                    asyncio.create_task(self._apply_due_date_update(task, new_date))
 
             self.push_screen(
                 DatePickerScreen(initial_date=task.due_date), on_date_selected
@@ -494,20 +510,15 @@ class LazyTaskApp(App):
         tasks_list = self.query_one(ListView)
         if tasks_list.highlighted_child:
             task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
-            updates = {"due_date": datetime.date.today() + datetime.timedelta(days=1)}
-            async with self.show_loading():
-                await self.update_task_uc.execute(task.id, updates, task.list_name)
-                await self.update_tasks_list()
+            tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+            await self._apply_due_date_update(task, tomorrow)
 
     async def action_due_today(self) -> None:
         """An action to set a task's due date to today."""
         tasks_list = self.query_one(ListView)
         if tasks_list.highlighted_child:
             task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
-            updates = {"due_date": datetime.date.today()}
-            async with self.show_loading():
-                await self.update_task_uc.execute(task.id, updates, task.list_name)
-                await self.update_tasks_list()
+            await self._apply_due_date_update(task, datetime.date.today())
 
     async def action_move_to_next_monday(self) -> None:
         """An action to move a task to next monday."""
@@ -519,10 +530,7 @@ class LazyTaskApp(App):
             if days_until_monday == 0:  # if today is monday, move to next monday
                 days_until_monday = 7
             next_monday = today + datetime.timedelta(days=days_until_monday)
-            updates = {"due_date": next_monday}
-            async with self.show_loading():
-                await self.update_task_uc.execute(task.id, updates, task.list_name)
-                await self.update_tasks_list()
+            await self._apply_due_date_update(task, next_monday)
 
     async def action_move_to_next_weekend(self) -> None:
         """An action to move a task to next weekend."""
@@ -534,10 +542,7 @@ class LazyTaskApp(App):
             if days_until_saturday == 0:  # if today is saturday, move to next saturday
                 days_until_saturday = 7
             next_saturday = today + datetime.timedelta(days=days_until_saturday)
-            updates = {"due_date": next_saturday}
-            async with self.show_loading():
-                await self.update_task_uc.execute(task.id, updates, task.list_name)
-                await self.update_tasks_list()
+            await self._apply_due_date_update(task, next_saturday)
 
     def action_edit_task(self) -> None:
         """An action to edit a task."""
@@ -581,6 +586,20 @@ class LazyTaskApp(App):
         async with self.show_loading():
             await self.move_task_uc.execute(task.id, task.list_name, to_list)
             await self.update_tasks_list()
+
+    async def _apply_due_date_update(self, task: Task, new_date: datetime.date) -> None:
+        """Apply a due date update and refresh list selection."""
+        updates = {"due_date": new_date}
+        async with self.show_loading():
+            updated_task = await self.update_task_uc.execute(
+                task.id, updates, task.list_name
+            )
+            highlight_task_id = task.id
+            if isinstance(updated_task, Task):
+                highlight_task_id = updated_task.id
+        await self.update_tasks_list(
+            newly_added_task_id=highlight_task_id, preserve_selection=False
+        )
 
     def action_edit_title(self) -> None:
         """An action to edit a task's title."""
@@ -691,6 +710,33 @@ class LazyTaskApp(App):
         self.sort_reverse = not self.sort_reverse
         await self.update_tasks_list()
 
+    def action_edit_recurring(self) -> None:
+        """An action to edit a task's recurring status."""
+        tasks_list = self.query_one(ListView)
+        if tasks_list.highlighted_child:
+            task: Task = cast(TaskListItem, tasks_list.highlighted_child).data
+
+            def on_submit(new_recurring: str | None) -> None:
+                if new_recurring is not None:
+                    updates = {"recurring": new_recurring}
+
+                    async def update_task_async() -> None:
+                        async with self.show_loading():
+                            await self.update_task_uc.execute(
+                                task.id, updates, task.list_name
+                            )
+                            await self.update_tasks_list()
+
+                    asyncio.create_task(update_task_async())
+
+            self.push_screen(
+                TextInputModal(
+                    prompt="Edit recurring (e.g., daily, weekly):",
+                    initial_value=task.recurring or "",
+                ),
+                on_submit,
+            )
+
     async def action_toggle_overdue(self) -> None:
         """Toggle showing only overdue tasks."""
         self.show_overdue_only = not self.show_overdue_only
@@ -704,6 +750,23 @@ class LazyTaskApp(App):
     def action_show_help(self) -> None:
         """An action to show the help screen."""
         self.push_screen(HelpScreen())
+
+    def _register_list_bindings(self) -> None:
+        """Refresh numeric bindings so the footer shows accurate list names."""
+        for key in map(str, range(1, 10)):
+            self._bindings.key_to_bindings.pop(key, None)
+
+        self.bind("1", "switch_to_all", description="All")
+
+        for offset, list_name in enumerate(self.available_lists):
+            key_number = offset + 2  # Keys 2..9 map to configured lists
+            if key_number > 9:
+                break
+            key = str(key_number)
+            description = list_name or f"List {key_number - 1}"
+            self.bind(key, f"switch_to_list({offset})", description=description)
+
+        self.refresh_bindings()
 
     def action_cursor_down(self) -> None:
         """Move cursor down in the list."""

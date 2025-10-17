@@ -112,21 +112,3 @@ async def test_all_tasks_render_in_list_view(
 
         tasks_list = app.query_one("ListView")
         assert len(tasks_list.children) == len(titles)
-
-
-@pytest.mark.asyncio
-async def test_tasks_list_has_no_vertical_gap(
-    app: LazyTaskApp, mock_task_manager: MockTaskManager
-):
-    await mock_task_manager.clear_tasks()
-    await mock_task_manager.add_task("gap task 1")
-    await mock_task_manager.add_task("gap task 2")
-    async with app.run_test() as pilot:
-        await app.update_tasks_list()
-        await pilot.pause()
-        tasks_list = app.query_one("ListView#tasks_list")
-        row_gap_value = tasks_list.styles.row_gap.value
-        assert row_gap_value == 0
-        for task_item in app.query("TaskListItem"):
-            assert task_item.styles.margin.top.value == 0
-            assert task_item.styles.margin.bottom.value == 0

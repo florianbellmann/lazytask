@@ -51,9 +51,7 @@ class TaskDetail(Static):
                 detail_rows.append(("Flagged", "Yes"))
             if task.recurring:
                 detail_rows.append(("Recurring", task.recurring))
-            detail_rows.append(
-                ("Status", "Completed" if task.completed else "Pending")
-            )
+            detail_rows.append(("Status", "Completed" if task.completed else "Pending"))
 
             renderable = Text()
             renderable.append_text(

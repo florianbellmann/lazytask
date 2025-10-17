@@ -94,7 +94,7 @@ class TaskListItem(ListItem):
         if meta_parts:
             display_text.append(f" ({', '.join(meta_parts)})", style=meta_color)
 
-        title_label = Label(display_text, id="task-title", expand=True)
+        title_label = Label(display_text, id="task-title")
         title_label.styles.color = title_color
         title_label.styles.padding = 0
 
@@ -212,7 +212,6 @@ class LazyTaskApp(App):
         loading_indicator = LoadingIndicator(id="tasks_loading")
         loading_indicator.display = False
         tasks_list = ListView(id="tasks_list")
-        tasks_list.styles.row_gap = 0
         tasks_list.styles.margin = 0
         yield Horizontal(
             Container(

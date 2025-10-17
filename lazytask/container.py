@@ -1,3 +1,5 @@
+import os
+
 from lazytask.infrastructure.mock_task_manager import MockTaskManager
 from lazytask.infrastructure.neovim_editor import NeovimDescriptionEditor
 from lazytask.application.ports.editor import DescriptionEditor
@@ -9,13 +11,29 @@ from lazytask.application.use_cases import (
     GetLists,
     MoveTask,
 )
+from lazytask.domain.task_manager import TaskManager
 
 
 class DependencyContainer:
     def __init__(self):
-        self.task_manager = MockTaskManager()
+        backend_name = os.getenv("LAZYTASK_TASK_MANAGER", "mock").strip().lower()
+        self.task_manager = self._create_task_manager(backend_name)
         self.description_editor: DescriptionEditor = NeovimDescriptionEditor()
         self._update_use_cases()
+
+    def _create_task_manager(self, backend_name: str) -> TaskManager:
+        if backend_name in {"", "mock"}:
+            return MockTaskManager()
+        if backend_name in {"reminders", "reminders_cli", "reminders-cli"}:
+            from lazytask.infrastructure.reminders_cli_task_manager import (
+                RemindersCliTaskManager,
+            )
+
+            return RemindersCliTaskManager()
+        raise ValueError(
+            f"Unknown LAZYTASK_TASK_MANAGER value '{backend_name}'. "
+            "Valid options are 'mock' or 'reminders-cli'."
+        )
 
     def set_task_manager(self, task_manager):
         self.task_manager = task_manager

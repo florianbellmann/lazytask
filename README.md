@@ -13,11 +13,15 @@ LazyTask can be configured using environment variables:
 | Variable         | Description                                   | Default   |
 | ---------------- | --------------------------------------------- | --------- |
 | `LAZYTASK_LISTS` | Comma-separated list of reminder lists to use | `develop` |
+| `LAZYTASK_TASK_MANAGER` | Task manager backend to use (`mock` or `reminders-cli`) | `mock` |
 
 Example:
 
 ```sh
 LAZYTASK_LISTS=work,personal,shopping uv run python -m lazytask
+
+# Use the reminders-cli backend (enabled by default in `just run`)
+LAZYTASK_TASK_MANAGER=reminders-cli LAZYTASK_LISTS=develop uv run python -m lazytask
 ```
 
 ## ➤ License

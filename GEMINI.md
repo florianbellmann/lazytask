@@ -110,8 +110,18 @@ from the all items view. fix this and cover it with tests
 - [ ] real tests with reminders cli
   - [x] moving an item to another list does not work. make sure by analyzing with real reminders cli swift code again and adapting the reminders-cli-task controller
   - [x] using the real reminders cli task conttoller. editing the date with d does not work. make sure by analyzing with real reminders cli swift code again and adapting the reminders-cli-task controller
+- [ ] More bugs during usage
+  - [ ] CRITICAL: Moving a task remove the repeat settiing
+  - [ ] The list name is not shown
+    in the name of the task in the
+    listbar. Add that and cover it
+    with a test
+  - [ ] some items that are due tomorrow, get shown today
+  - [ ] 'A' is not needed. 'a' should already add for today. adapt the code and tests
+  - [ ] Moving an item to tomorrow with 'o', might not refresh the list
 - [ ] show tags in the list view. cover it with a test
 - [x] add time stamp to logs
+- [ ] add counter for todays left open tasks at the top
 - [ ] recurring tasks handling
 - [ ] footer help is wrong
 - [ ] i need to be able to create a new task zhrough a singular prompt. mesning running a quick cli prompt for getting the title and confirming the creation. then the process stops. this should be independent from the normal main application. recurring tasks loading indicators
